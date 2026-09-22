@@ -2,6 +2,7 @@
 name: David
 role: Lead QA & responsible human
 kind: human
+label: Human
 summary: Set the goals, did the few things an agent may not, and checked everything before it went live.
 order: 3
 ---

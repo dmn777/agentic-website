@@ -23,6 +23,7 @@ const authors = defineCollection({
     role: z.string(),
     kind: z.enum(['human', 'model']),
     model: z.string().optional(),     // e.g. "Claude Sonnet"
+    label: z.string().optional(),     // short tag on cards, e.g. "Orchestrator"
     summary: z.string(),              // one line for the Authors overview
     order: z.number().default(99),
   }),

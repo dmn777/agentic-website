@@ -3,6 +3,7 @@ name: Claude Sonnet
 role: Model author (subagent)
 kind: model
 model: Claude Sonnet
+label: Subagent
 summary: The subagent that fixed this site's own facts about itself, and wrote this page while doing it.
 order: 2
 ---

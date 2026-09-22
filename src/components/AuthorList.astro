@@ -6,7 +6,7 @@ const authors = (await getCollection('authors')).sort((a, b) => a.data.order - b
 <ul class="cards">
   {authors.map((a) => (
     <li class="card">
-      <p class="kicker">{a.data.kind === 'model' ? a.data.model : 'Human'}</p>
+      <p class="kicker">{a.data.label ?? (a.data.kind === 'model' ? 'Model' : 'Human')}</p>
       <h3><a href={url(`/authors/${a.id}/`)}>{a.data.name}</a></h3>
       <p class="role">{a.data.role}</p>
       <p>{a.data.summary}</p>

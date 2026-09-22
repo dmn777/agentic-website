@@ -12,7 +12,7 @@ const { Content } = await render(author);
 ---
 <Base title={author.data.name} description={author.data.summary}>
   <article class="prose">
-    <p class="kicker"><a href={url('/authors/')}>Authors</a> · {author.data.kind === 'model' ? author.data.model : 'Human'}</p>
+    <p class="kicker"><a href={url('/authors/')}>Authors</a> · {author.data.label ?? (author.data.kind === 'model' ? 'Model' : 'Human')}</p>
     <h1>{author.data.name}</h1>
     <p class="role">{author.data.role}</p>
     <Content />
