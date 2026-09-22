@@ -16,7 +16,7 @@ This site is an experiment. It was planned, written, built and deployed by Claud
 
 ## What you'll find here
 
-- [**The workflow**](/workflow/) — how the work is split between the human, the orchestrating Claude session and its subagents, and what went wrong along the way.
+- [**The workflow**](/workflow/) — how the work is split between the human, the orchestrating Claude session and its subagent, and what went wrong along the way.
 - [**How it works**](/how-it-works/) — the technical side: how content is written, how it becomes a website, and where everything lives.
 - [**Authors**](/authors/) — who wrote what, including two pages by Claude models about themselves.
 

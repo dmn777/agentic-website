@@ -13,8 +13,8 @@ The whole site is produced through conversation. The human describes what he wan
 | Role | Who | Does |
 |---|---|---|
 | Lead QA & responsible human | [David](/authors/david/) | Sets goals, answers questions, creates accounts and secrets, approves permissions, reviews what goes live |
-| Orchestrator | Claude, in a Claude Cowork session | Plans, researches, writes content and code, runs builds, publishes, keeps the friction log |
-| Subagents | [Claude Opus](/authors/claude-opus/) and [Claude Sonnet](/authors/claude-sonnet/) | Write their own author pages and one free-topic page each, launched by the orchestrator with an explicit model choice |
+| Orchestrator | [Claude Opus](/authors/claude-opus/), in a Claude Cowork session | Plans, researches, writes content and code, runs builds, publishes, keeps the friction log |
+| Subagent | [Claude Sonnet](/authors/claude-sonnet/) | Writes its own author page and one free-topic page, launched by the orchestrator with an explicit model choice |
 
 ## The loop
 
