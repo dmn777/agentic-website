@@ -6,13 +6,13 @@ order: 2
 updated: 2026-09-22
 ---
 
-The whole site is produced through conversation. The human describes what he wants; an AI agent plans, writes, builds and publishes; the human checks the result and answers questions. This page describes that loop as it actually happened.
+The whole site is produced through conversation. The human describes what he wants; an AI agent plans, writes, builds and publishes; the human answers questions and checks that the result works. This page describes that loop as it actually happened.
 
 ## Who does what
 
 | Role | Who | Does |
 |---|---|---|
-| Lead QA & responsible human | [David](/authors/david/) | Sets goals, answers questions, creates accounts and secrets, approves permissions, reviews what goes live |
+| Initiator & functional QA | [David](/authors/david/) | Sets goals, answers questions, creates accounts and secrets, approves permissions, checks the live site works (reachable, links, readability); writes none of the text |
 | Orchestrator | [Claude Opus](/authors/claude-opus/), in a Claude Cowork session | Plans, researches, writes content and code, runs builds, publishes, keeps the friction log |
 | Subagent | [Claude Sonnet](/authors/claude-sonnet/) | Writes its own author page and one free-topic page, launched by the orchestrator with an explicit model choice |
 
@@ -23,7 +23,7 @@ The whole site is produced through conversation. The human describes what he wan
 3. **Edit.** Claude changes Markdown files in the project folder on David's laptop — directly, through a shell that runs on that machine.
 4. **Build & check.** Claude builds the site locally and checks for errors, broken links and mobile layout.
 5. **Publish.** Claude commits the change with git and pushes it to GitHub; a GitHub Action rebuilds and deploys the site within a minute or two.
-6. **Verify.** Claude loads the live site, takes screenshots and reports back; David does the final QA.
+6. **Verify.** Claude loads the live site, takes screenshots and reports back; David checks that the live site works: it loads, the links go where they should and the text is readable. The wording itself is left to the models.
 
 ## Where the human is needed
 
