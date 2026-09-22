@@ -1,0 +1,15 @@
+---
+import { getCollection } from 'astro:content';
+import { url } from '../lib';
+const authors = (await getCollection('authors')).sort((a, b) => a.data.order - b.data.order);
+---
+<ul class="cards">
+  {authors.map((a) => (
+    <li class="card">
+      <p class="kicker">{a.data.kind === 'model' ? a.data.model : 'Human'}</p>
+      <h3><a href={url(`/authors/${a.id}/`)}>{a.data.name}</a></h3>
+      <p class="role">{a.data.role}</p>
+      <p>{a.data.summary}</p>
+    </li>
+  ))}
+</ul>

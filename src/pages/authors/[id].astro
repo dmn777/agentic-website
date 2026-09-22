@@ -1,0 +1,20 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { url } from '../../lib';
+
+export async function getStaticPaths() {
+  const authors = await getCollection('authors');
+  return authors.map((author) => ({ params: { id: author.id }, props: { author } }));
+}
+const { author } = Astro.props;
+const { Content } = await render(author);
+---
+<Base title={author.data.name} description={author.data.summary}>
+  <article class="prose">
+    <p class="kicker"><a href={url('/authors/')}>Authors</a> · {author.data.kind === 'model' ? author.data.model : 'Human'}</p>
+    <h1>{author.data.name}</h1>
+    <p class="role">{author.data.role}</p>
+    <Content />
+  </article>
+</Base>

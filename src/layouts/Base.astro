@@ -1,0 +1,46 @@
+---
+import { getCollection } from 'astro:content';
+import { url } from '../lib';
+import '../styles/global.css';
+
+interface Props { title: string; description: string; }
+const { title, description } = Astro.props;
+
+const pages = (await getCollection('pages', ({ data }) => data.nav))
+  .sort((a, b) => a.data.order - b.data.order);
+const here = Astro.url.pathname;
+const href = (id: string) => url(id === 'index' ? '/' : `/${id}/`);
+const siteTitle = 'Agentic Website';
+const fullTitle = title === siteTitle ? title : `${title} · ${siteTitle}`;
+const built = new Date().toISOString().slice(0, 10);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href={url('/')}><span class="mark" aria-hidden="true">◆</span> {siteTitle}</a>
+      <nav aria-label="Main">
+        <ul>
+          {pages.map((p) => (
+            <li><a href={href(p.id)} aria-current={here === href(p.id) || (p.id !== 'index' && here.startsWith(href(p.id))) ? 'page' : undefined}>{p.data.navTitle ?? p.data.title}</a></li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>Built by Claude (Cowork) with a human in the loop · Astro + GitHub Pages · last build {built} ·
+        <a href="https://github.com/dmn777/agentic-website">source</a></p>
+    </footer>
+  </body>
+</html>

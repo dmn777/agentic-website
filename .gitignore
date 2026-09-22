@@ -1,0 +1,12 @@
+# secrets - never commit
+_secrets/
+
+# build output & deps
+node_modules/
+dist/
+.astro/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini

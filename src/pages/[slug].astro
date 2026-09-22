@@ -1,0 +1,20 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import AuthorList from '../components/AuthorList.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', (p) => p.id !== 'index');
+  return pages.map((page) => ({ params: { slug: page.id }, props: { page } }));
+}
+const { page } = Astro.props;
+const { Content } = await render(page);
+---
+<Base title={page.data.title} description={page.data.description}>
+  <article class="prose">
+    <h1>{page.data.title}</h1>
+    {page.data.updated && <p class="meta">Last updated {page.data.updated.toISOString().slice(0, 10)}</p>}
+    <Content />
+    {page.id === 'authors' && <AuthorList />}
+  </article>
+</Base>
