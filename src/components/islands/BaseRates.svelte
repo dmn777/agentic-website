@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { usable } from '../../lib/measure';
   // Plate II: Bayes' rule as natural frequencies. 1000 squares, one per person.
   import { naturalFrequencies, BAYES_PRESETS, type BayesPreset } from '../../lib/stats/bayes';
 
@@ -7,7 +8,7 @@
   let sens = $state(BAYES_PRESETS[0].sensitivity);
   let spec = $state(BAYES_PRESETS[0].specificity);
   let wRaw = $state(720);
-  const w = $derived(wRaw || 720); // 0 for a moment during hydration
+  const w = $derived(usable(wRaw, 720)); // see lib/measure.ts
 
   // Prior slider on a log scale from 0.1 % to 50 %.
   const LO = Math.log10(0.001), HI = Math.log10(0.5);

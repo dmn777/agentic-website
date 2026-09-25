@@ -7,14 +7,15 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check",
+    "check": "astro check && svelte-check --tsconfig ./tsconfig.json --threshold error",
     "test": "vitest run",
     "test:watch": "vitest",
     "qa:shots": "node scripts/qa/shots.mjs",
     "qa:deploy": "node scripts/qa/deploy.mjs",
     "qa:serve": "node scripts/qa/serve.mjs",
     "qa:links": "node scripts/qa/links.mjs",
-    "qa:redirects": "node scripts/qa/redirects.mjs"
+    "qa:redirects": "node scripts/qa/redirects.mjs",
+    "qa:sheet": "node scripts/qa/sheet.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
@@ -30,6 +31,7 @@
     "@types/node": "^24.13.6",
     "playwright": "^1.60.0",
     "pngjs": "^7.0.0",
+    "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",
     "vitest": "^5.0.2"
   }

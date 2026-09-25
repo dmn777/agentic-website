@@ -17,13 +17,14 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
 ---
 <Base title={entry.title} description={description ?? entry.blurb}>
   <article class="wrap labpage">
-    <header class="labpage__head plate-grid">
-      <p class="margin label labpage__plate">Pl. {roman(entry.plate)}<br /><span>{entry.kind}</span></p>
-      <div class="labpage__intro">
-        {entry.series && <p class="label labpage__series">{entry.series} · {seriesPos} of {inSeries.length}</p>}
-        <h1>{entry.title}</h1>
-        <p class="lede">{lede}</p>
-      </div>
+    <header class="labpage__head">
+      <p class="label labpage__plate">Pl. {roman(entry.plate)}<br /><span>{entry.kind}</span></p>
+      <p class="label labpage__kicker">
+        <span class="labpage__kicker-plate">Pl. {roman(entry.plate)} · {entry.kind}</span>{entry.series && <span class="labpage__kicker-series"> · {entry.series} {seriesPos}/{inSeries.length}</span>}
+      </p>
+      {entry.series && <p class="label labpage__series">{entry.series} · {seriesPos} of {inSeries.length}</p>}
+      <h1 class="labpage__title">{entry.title}</h1>
+      <p class="lede labpage__lede">{lede}</p>
       <div class="labpage__specimen" aria-hidden="true">
         <Plot seed={`lab/${entry.slug}`} species={entry.species} detail={0.7} draw duration={2200} />
       </div>
@@ -43,18 +44,26 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
 
 <style>
   .labpage { padding-block: var(--space-xl) 0; }
+  /* The header is one flat grid so its parts can be rearranged per width:
+     desktop: margin label | series + title + lede | specimen
+     mobile:  one kicker line; title beside a small specimen; the lede at full width. */
   .labpage__head {
+    display: grid;
     grid-template-columns: var(--margin-col) minmax(0, 1fr) minmax(0, 13rem);
+    grid-template-areas: "plate series spec" "plate title spec" "plate lede spec";
+    grid-template-rows: auto auto 1fr;
+    column-gap: var(--space-l);
     align-items: start;
     padding-bottom: var(--space-l);
     border-bottom: var(--hair) solid var(--rule);
   }
-  .labpage__plate { color: var(--accent-ink); }
+  .labpage__plate { grid-area: plate; color: var(--accent-ink); padding-top: 0.45em; }
   .labpage__plate span { color: var(--ink-3); }
-  .labpage__series { margin-bottom: var(--space-2xs); }
-  .labpage__intro h1 { margin-bottom: var(--space-s); }
-  .labpage__intro .lede { max-width: 40rem; }
-  .labpage__specimen { width: 100%; max-width: 13rem; justify-self: end; }
+  .labpage__kicker { display: none; }
+  .labpage__series { grid-area: series; margin-bottom: var(--space-2xs); }
+  .labpage__title { grid-area: title; margin-bottom: var(--space-s); }
+  .labpage__lede { grid-area: lede; max-width: 40rem; }
+  .labpage__specimen { grid-area: spec; width: 100%; max-width: 13rem; justify-self: end; }
   .labpage__body { padding-block: var(--space-l); }
   .labpage__pager { padding-block: var(--space-l); border-top: var(--hair) solid var(--rule); }
   .pager { display: flex; justify-content: space-between; gap: var(--space-m); flex-wrap: wrap; }
@@ -63,8 +72,16 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
   .pager__title { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.1; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
   .pager__link .label { color: var(--accent-ink); }
   @media (max-width: 52rem) {
-    .labpage__head { grid-template-columns: minmax(0, 1fr) 6.5rem; }
-    .labpage__head .margin { grid-column: 1 / -1; }
-    .labpage__specimen { max-width: 6.5rem; }
+    .labpage__head {
+      grid-template-columns: minmax(0, 1fr) 5.5rem;
+      grid-template-areas: "kicker kicker" "title spec" "lede lede";
+      grid-template-rows: auto auto auto;
+      column-gap: var(--space-s);
+    }
+    .labpage__plate, .labpage__series { display: none; }
+    .labpage__kicker { display: block; grid-area: kicker; margin-bottom: var(--space-2xs); }
+    .labpage__kicker-plate { color: var(--accent-ink); }
+    .labpage__title { align-self: center; margin-bottom: var(--space-2xs); }
+    .labpage__specimen { max-width: 5.5rem; align-self: center; }
   }
 </style>

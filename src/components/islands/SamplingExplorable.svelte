@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { usable } from '../../lib/measure';
   // Plate I: the sampling distribution of the mean (central limit theorem).
   // All maths lives in src/lib/stats (tested); this file is only state and drawing.
   import { onDestroy } from 'svelte';
@@ -15,7 +16,7 @@
   let last = $state<number[]>([]);
   let running = $state(false);
   let wRaw = $state(720);
-  const w = $derived(wRaw || 720); // 0 for a moment during hydration
+  const w = $derived(usable(wRaw, 720)); // see lib/measure.ts
   let timer: ReturnType<typeof setInterval> | undefined;
 
   const pop = $derived(getPopulation(popId));

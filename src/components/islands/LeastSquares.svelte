@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { usable } from '../../lib/measure';
   // Plate III: least squares you can push around. Points are stored in [0, 1]² and shown
   // on a 0–10 scale. Drag with mouse or touch, add by clicking empty space, or focus a
   // point and use the arrow keys (Delete removes it).
@@ -17,7 +18,7 @@
   let showSquares = $state(false);
   let wRaw = $state(640);
   // bind:clientWidth reports 0 for a moment during hydration; keep the geometry sane.
-  const w = $derived(wRaw || 640);
+  const w = $derived(usable(wRaw, 640));
   let svgEl: SVGSVGElement;
 
   const fit = $derived(ols(pts));

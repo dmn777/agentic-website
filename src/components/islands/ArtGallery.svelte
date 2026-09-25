@@ -9,14 +9,14 @@
   import { tokenColor, onThemeChange, prefersReducedMotion } from '../../scripts/theme';
 
   let pal: Palette | null = null;
-  let reduced = false;
+  let reduced = $state(false);
   const thumbs: HTMLCanvasElement[] = [];
   const insts: (Instance | null)[] = PIECES.map(() => null);
   let hoverRaf = 0;
 
   // Detail view state
   let dialog: HTMLDialogElement;
-  let big: HTMLCanvasElement;
+  let big = $state<HTMLCanvasElement>();
   let current = $state<Piece | null>(null);
   let seed = $state(0);
   let params = $state<Record<string, number>>({});
@@ -74,8 +74,9 @@
   function writeHash() { if (current) history.replaceState(null, '', `#art=${current.id}&seed=${seed}`); }
   function rebuild(animate: boolean) {
     if (!current || !pal || !big) return;
+    const canvas = big;
     cancelAnimationFrame(raf);
-    const { ctx, w, h } = sized(big);
+    const { ctx, w, h } = sized(canvas);
     bigInst = current.make({ w, h, seed, params: { ...params }, pal });
     if (!animate || reduced) { bigInst.still(ctx); playing = false; return; }
     playing = true;
@@ -93,9 +94,9 @@
     clearTimeout(timer);
     timer = setTimeout(() => rebuild(false), 90); // params redraw as stills; Replay animates
   }
-  function stop() { cancelAnimationFrame(raf); playing = false; bigInst?.still(big.getContext('2d')!); }
+  function stop() { cancelAnimationFrame(raf); playing = false; if (big) bigInst?.still(big.getContext('2d')!); }
   function download() {
-    if (!current) return;
+    if (!current || !big) return;
     big.toBlob((b) => {
       if (!b) return;
       const a = document.createElement('a');
@@ -155,7 +156,9 @@
         <button type="button" class="detail__close" onclick={close} aria-label="Close">×</button>
       </header>
       <div class="detail__body">
-        <canvas bind:this={big} class="detail__canvas" width="800" height="600" role="img" aria-label={`${current.title}: ${current.description}`}></canvas>
+        <div class="detail__art" role="img" aria-label={`${current.title}: ${current.description}`}>
+          <canvas bind:this={big} class="detail__canvas" width="800" height="600" aria-hidden="true"></canvas>
+        </div>
         <aside class="detail__side">
           <p class="detail__desc">{current.description}</p>
           {#each current.params as q}

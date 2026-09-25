@@ -177,9 +177,9 @@ Established by the three statistics plates, and to be followed by later ones:
   island only holds state and draws.
 - **Measure, don't scale.** Charts use `bind:clientWidth` and draw at real pixel width,
   so 11 px mono tick labels stay legible at 390 px. A viewBox scaled down would shrink the
-  text. Guard the width against the `0` that Svelte reports for one frame during
-  hydration (`wRaw || default`): a negative `<rect>` width is a console error, and the
-  gate fails on it.
+  text. Guard the measured size with `usable(px, fallback)` from `src/lib/measure.ts`.
+  During hydration Svelte can report `0` *or a tiny transient width (16 px was seen)*.
+  A negative `<rect>` width is a console error, and the gate fails on it.
 - **Colour roles.**
   - Ink bars or dots: observed data.
   - Vermilion: the model or prediction (fitted line, CLT curve, "has the condition").

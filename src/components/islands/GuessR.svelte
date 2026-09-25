@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { usable } from '../../lib/measure';
   // "Guess the r": a cloud with an exact, hidden correlation; the reader guesses by eye.
   // Rounds are seeded (round k always shows the same cloud), so results are reproducible.
   import { rngFrom } from '../../lib/random';
@@ -10,7 +11,7 @@
   let revealed = $state(false);
   let history = $state<number[]>([]);
   let wRaw = $state(360);
-  const w = $derived(wRaw || 360); // 0 for a moment during hydration
+  const w = $derived(usable(wRaw, 360)); // see lib/measure.ts
 
   const target = $derived(Math.round(rngFrom(`plate-3/guess/${round}`).range(-0.95, 0.95) * 100) / 100);
   const pts = $derived(pointsWithCorrelation(40, target, rngFrom(`plate-3/cloud/${round}`), { exact: true }));
