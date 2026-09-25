@@ -7,6 +7,8 @@
 /* ── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
+/* The reset above removes the UA's margin:auto that centres modal dialogs; restore it. */
+dialog { margin: auto; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; hanging-punctuation: first last; }
 body { min-height: 100svh; }
 img, picture, video, canvas, svg { display: block; max-width: 100%; }

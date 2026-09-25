@@ -32,6 +32,12 @@ export const lab: LabEntry[] = [
     blurb: 'Drag the points and watch the best-fit line chase them. Then try to guess a correlation by eye.',
     tags: ['stats', 'explorable', 'game'],
   },
+  {
+    slug: 'art', plate: 4, kind: 'Gallery', species: 'radial',
+    title: 'A gallery of seeds',
+    blurb: 'Eight drawings made by small programs. Each one comes from a number: change the number and you get a sibling.',
+    tags: ['art', 'generative'],
+  },
 ];
 
 export const labEntry = (slug: string): LabEntry => {

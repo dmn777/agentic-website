@@ -1,0 +1,24 @@
+---
+import LabPage from '../../../layouts/LabPage.astro';
+import Section from '../../../components/Section.astro';
+import ArtGallery from '../../../components/islands/ArtGallery.svelte';
+---
+<LabPage slug="art" lede="Eight drawings, each made by a short program and a single number, the seed. The same seed always gives the same drawing. Change it, and you get a sibling that has never been drawn before.">
+  <Section label="§1 · Hang" id="gallery">
+    <h2 id="gallery" class="visually-hidden">The gallery</h2>
+    <div class="prose intro">
+      <p>Hover over a drawing, or tab to it, to watch it being made. Open one to change its settings, draw it again from a new seed, or download it.</p>
+    </div>
+    <ArtGallery client:visible />
+  </Section>
+  <Section label="§2 · Method" id="method">
+    <div class="prose">
+      <h2 id="method">How they are made</h2>
+      <p>Every piece is a function that takes a seed and a few settings and returns lines, dots or shapes. All of its randomness comes from a small generator started from that seed, so nothing depends on the time or the machine. The drawing code is separate from the geometry, and the geometry is tested. Circles in the packing never overlap. Stipple dots keep their minimum distance. Streamlines never touch. The rectangles in the partitions tile the sheet exactly.</p>
+      <p>Each piece uses a different technique, from Poisson-disk sampling and marching squares to curl noise and Truchet tiles, and all of them are drawn in the site's inks, with one vermilion pen for emphasis. Switch the site to its dark theme and the gallery is reprinted on night paper.</p>
+    </div>
+  </Section>
+</LabPage>
+<style>
+  .intro { margin-bottom: var(--space-l); }
+</style>
