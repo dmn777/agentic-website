@@ -29,7 +29,7 @@ export const plates: LabEntry[] = [
   {
     slug: 'stats/sampling', plate: 1, series: 'stats', kind: 'Explorable', species: 'ridge',
     title: 'Sampling, seen',
-    blurb: 'Draw samples from lopsided populations and watch their averages line up into a bell curve anyway.',
+    blurb: 'Draw samples from odd-shaped populations and watch their averages line up into a bell curve anyway.',
     tags: ['sampling', 'CLT'],
   },
   {

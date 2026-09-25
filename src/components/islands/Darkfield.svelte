@@ -227,7 +227,6 @@
   <div
     class="stage"
     style:width="{size}px"
-    style:height="{size}px"
     tabindex="0"
     role="application"
     aria-label="Darkfield game. Arrow keys or A and D steer; P pauses; M turns the sound on or off."
@@ -309,7 +308,9 @@
     .hud__ink.low .gauge { animation: low 0.6s ease-in-out infinite alternate; }
   }
   @keyframes low { to { opacity: 0.35; } }
-  .stage { position: relative; outline-offset: 4px; border-radius: 50%; touch-action: none; }
+  /* Width from the measured size; before hydration (or without JS) the fallback width is
+     capped by the column and the square kept by the aspect ratio, so nothing overflows. */
+  .stage { position: relative; max-width: 100%; aspect-ratio: 1; outline-offset: 4px; border-radius: 50%; touch-action: none; }
   .stage:focus-visible { outline: 2px solid var(--focus); }
   canvas { display: block; border-radius: 50%; touch-action: none; cursor: crosshair; }
   .scrim { position: absolute; inset: 0; border-radius: 50%; background: rgba(4, 7, 11, 0.45); pointer-events: none; }

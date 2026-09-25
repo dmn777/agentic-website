@@ -150,9 +150,10 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       b.moveTo(u, 0); b.lineTo(u, -h);
     }
     b.stroke();
-    // Scale bar (100 µm, by the fiction's convention), inside the disc, bottom right.
+    // Scale bar (100 µm, by the fiction's convention), inside the disc, lower right, clear
+    // of the phone's Start button.
     b.strokeStyle = COLORS.label; b.fillStyle = COLORS.label; b.lineWidth = px(1);
-    const bx = R * 0.2, by = R * 0.8, tick = px(4);
+    const bx = R * 0.45, by = R * 0.62, tick = px(4);
     b.beginPath(); b.moveTo(bx, by); b.lineTo(bx + 100, by);
     b.moveTo(bx, by - tick); b.lineTo(bx, by + tick); b.moveTo(bx + 100, by - tick); b.lineTo(bx + 100, by + tick);
     b.stroke();
