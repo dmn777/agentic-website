@@ -75,6 +75,8 @@ pens, frames and focus ≥ 3:1, in both themes.
 | `--rule` | `#cbc2b0` | `#2a3846` | 1.5 / 1.5 | hairlines, grids (decorative only) |
 | `--rule-strong` | `#6f6a60` | `#6f7c8a` | 4.6 / 4.3 | frames, axes, crop marks |
 | `--focus` | `#1f56c9` | `#8fb3ff` | 5.6 / 8.8 | keyboard focus ring (a blue pen, used nowhere else) |
+| `--code-bg` | `#f8f5ee` | `#141e28` | n/a | code blocks (the same as `--paper-raised`; kept separate so code can change alone) |
+| `--accent-wash` / `--teal-wash` | vermilion / teal at 12–14% | the same | n/a | quiet fills: secondary-button shadow, residual squares, the Maunakea band |
 
 - **Usage rules.**
   - Vermilion is the *one* accent: underlines, the plate number, the misregistered shadow
@@ -82,6 +84,10 @@ pens, frames and focus ≥ 3:1, in both themes.
   - Links are ink-coloured text with a vermilion underline.
   - Data visualisations use ink, then teal, then ochre, then vermilion for the highlighted
     series.
+  - **Exception: the art gallery (Pl. IV).** Its pieces may use teal and ochre as
+    decorative pens, because it is a set of drawings, not data. Even there, colour is
+    drawn with a pen (hatched or stroked) and never flat-filled over a large area. The
+    exception does not extend to other pages.
 - **Paper grain.** A tiled `feTurbulence` noise image is part of the `body` background and
   is blended into `--paper` (multiply on paper, screen at night). It is never an overlay,
   so it can't sit on top of content or canvases.
@@ -143,6 +149,10 @@ species:
   the rules on Home. This is the atlas convention.
 - **§ numbers:** in the notebook margin, for the sections of a long page (§1 · What).
 - **Arabic numerals:** ordinary ordered lists inside prose, and "Fig. n" labels.
+- **"No. n":** items in a collection that are not figures, i.e. the gallery's pieces and
+  the hero specimen ("Specimen no. 3").
+- The styleguide is "Plate 0". It is the one spelled-out plate label, because it is the
+  unlisted zeroth plate, not a Lab plate.
 
 ## Components (`src/components/`)
 
@@ -189,9 +199,25 @@ Established by the three statistics plates, and to be followed by later ones:
 - **Encodings are stated in the caption.** For example: "Filled: tested positive.
   Outlined: tested negative." Every mark in a figure is explained in its caption or
   legend.
-- **Controls panel.** Controls sit in a raised panel above the figure, use the shared form
-  controls, and give every button a text label. Readouts sit below in mono with tabular
-  numerals, as `<dl>` with `aria-live="polite"`.
+- **The explorable kit** (`src/styles/explorable.css`, shown on `/styleguide/` §5).
+  Islands use it and keep only their chart-mark styles; defining a local button,
+  segmented control or panel is a regression (grep for it).
+  - `.controls`: the raised panel that holds an island's controls, above the figure.
+  - `.seg` / `.seg__opt`: a radio group drawn as joined square buttons. Use it for any
+    "pick one" choice, such as populations or scenarios; never pill-shaped chips, which
+    on this site mean non-clickable tags.
+  - `.btn .btn--primary | --secondary | --quiet` (and `.btn--sm` in panels): the same
+    plate buttons as `<Button>`, mono and uppercase. **At most one primary per panel:**
+    the action that moves the reader forward (Run, Check my guess, Next cloud, New seed).
+    Panels driven by direct manipulation (sliders, dragging) carry no primary button,
+    since the slider or the drag *is* the main action.
+  - `.fig` > `.fig__plot` (raised, hairline frame, 8 px padding) + `.fig__cap` **below
+    the plot**, always on two lines: a `.fig__label` ("Fig. n · …"), then a `.fig__note`
+    stating the encodings. The caption goes below everywhere, the atlas convention.
+  - `.readout` (`<dl>`, mono, tabular numerals, `aria-live="polite"`) under the figure,
+    and `.answer-num` for the headline number of an answer.
+- **Headings.** `h2` is `--step-2` everywhere: sections, prose and Home. `h3` is
+  `--step-1`. Ledes share one measure (`.lede`, max 40 rem).
 - **Determinism.** Every random element is seeded (`plate-N/...`), so the first view and
   every QA screenshot are reproducible.
 

@@ -16,7 +16,7 @@
   let last = $state<number[]>([]);
   let running = $state(false);
   let wRaw = $state(720);
-  const w = $derived(usable(wRaw, 720)); // see lib/measure.ts
+  const w = $derived(usable(wRaw - 16, 720)); // plot frame has 8 px padding; see lib/measure.ts
   let timer: ReturnType<typeof setInterval> | undefined;
 
   const pop = $derived(getPopulation(popId));
@@ -80,13 +80,13 @@
   const spread = $derived(means.length > 1 ? sd(means) : NaN);
 </script>
 
-<div class="explorable" bind:clientWidth={wRaw}>
+<div class="explorable">
   <div class="controls" role="group" aria-label="Sampling controls">
-    <fieldset class="control seg">
+    <fieldset class="seg">
       <legend class="label">Population</legend>
       <div class="seg__row">
         {#each POPULATIONS as p}
-          <label class="seg__opt" class:is-on={popId === p.id}>
+          <label class="seg__opt">
             <input type="radio" name="population" value={p.id} checked={popId === p.id} onchange={() => { popId = p.id; reset(); }} />
             {p.label}
           </label>
@@ -98,16 +98,16 @@
       <input type="range" min="1" max="100" step="1" bind:value={n} oninput={reset} style={`--fill:${((n - 1) / 99) * 100}%`} aria-describedby="n-help" />
       <span id="n-help" class="visually-hidden">Changing the sample size starts the collection of means over.</span>
     </label>
-    <div class="buttons">
-      <button type="button" class="b" onclick={() => draw(1)}>Draw 1 sample</button>
-      <button type="button" class="b" onclick={() => draw(100)}>Draw 100</button>
-      <button type="button" class="b b--ink" onclick={toggleRun} aria-pressed={running}>{running ? 'Pause' : 'Run'}</button>
-      <button type="button" class="b b--quiet" onclick={clear}>Clear</button>
+    <div class="btn-row">
+      <button type="button" class="btn btn--primary btn--sm run" onclick={toggleRun} aria-pressed={running}>{running ? 'Pause' : 'Run'}</button>
+      <button type="button" class="btn btn--secondary btn--sm" onclick={() => draw(1)}>Draw 1 sample</button>
+      <button type="button" class="btn btn--secondary btn--sm" onclick={() => draw(100)}>Draw 100</button>
+      <button type="button" class="btn btn--quiet btn--sm" onclick={clear}>Clear</button>
     </div>
   </div>
 
-  <figure class="panel">
-    <figcaption class="panel__cap"><span class="label">Fig. 1 · The population</span> <span class="panel__note">{pop.blurb} <span class="key key--rug"></span> latest sample <span class="key key--xbar">▼</span> its mean x̄</span></figcaption>
+  <figure class="fig">
+    <div class="fig__plot" bind:clientWidth={wRaw}>
     <svg width={w} height={hA} viewBox={`0 0 ${w} ${hA}`} role="img" aria-label={`Population shape: ${pop.label}. Mean ${fmt(pop.mean)}, standard deviation ${fmt(pop.sd)}.${last.length ? ` Latest sample of ${n} has mean ${fmt(lastMean)}.` : ''}`}>
       <defs>
         <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -131,10 +131,12 @@
         <text x={x(t)} y={yA(0) + 17} class="t" text-anchor="middle">{t}</text>
       {/each}
     </svg>
+    </div>
+    <figcaption class="fig__cap"><span class="fig__label">Fig. 1 · The population</span> <span class="fig__note">{pop.blurb} <span class="key key--rug"></span> latest sample <span class="key key--xbar">▼</span> its mean x̄</span></figcaption>
   </figure>
 
-  <figure class="panel">
-    <figcaption class="panel__cap"><span class="label">Fig. 2 · Means of {means.length.toLocaleString('en')} samples of size {n}</span> <span class="panel__note"><span class="key key--bars"></span> observed <span class="key key--curve"></span> predicted by the CLT</span></figcaption>
+  <figure class="fig">
+    <div class="fig__plot">
     <svg width={w} height={hB} viewBox={`0 0 ${w} ${hB}`} role="img" aria-label={`Histogram of ${means.length} sample means. Their spread is ${fmt(spread)}; the central limit theorem predicts ${fmt(se)}.`}>
       {#each yBt as t}
         <line x1={pad.l} x2={x(view[1])} y1={yB(t)} y2={yB(t)} class="grid" />
@@ -152,48 +154,20 @@
         <text x={x(t)} y={yB(0) + 17} class="t" text-anchor="middle">{t}</text>
       {/each}
     </svg>
-    <dl class="readout" aria-live="polite">
-      <div><dt>Mean of the means</dt><dd>{fmt(means.length ? mean(means) : NaN)} <span class="muted">μ = {fmt(pop.mean)}</span></dd></div>
-      <div><dt>Spread of the means</dt><dd>{fmt(spread)} <span class="muted">σ/√n = {fmt(pop.sd)}/√{n} = {fmt(se)}</span></dd></div>
-    </dl>
+    </div>
+    <figcaption class="fig__cap"><span class="fig__label">Fig. 2 · Means of {means.length.toLocaleString('en')} samples of size {n}</span> <span class="fig__note"><span class="key key--bars"></span> observed <span class="key key--curve"></span> predicted by the CLT</span></figcaption>
   </figure>
+  <dl class="readout" aria-live="polite">
+      <div class="readout__wide"><dt>Mean of the means</dt><dd>{fmt(means.length ? mean(means) : NaN)} <span class="muted">μ = {fmt(pop.mean)}</span></dd></div>
+      <div class="readout__wide"><dt>Spread of the means</dt><dd>{fmt(spread)} <span class="muted">σ/√n = {fmt(pop.sd)}/√{n} = {fmt(se)}</span></dd></div>
+  </dl>
 </div>
 
 <style>
+  /* Controls, buttons, figures and readouts come from the kit (styles/explorable.css);
+     only this plate's chart marks are styled here. */
   .explorable { display: grid; gap: var(--space-m); }
-  .controls {
-    display: grid; grid-template-columns: minmax(0, auto) minmax(12rem, 1fr); gap: var(--space-m) var(--space-l);
-    align-items: end; padding: var(--space-m); background: var(--paper-raised); border: var(--hair) solid var(--rule);
-  }
-  .buttons { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
-  .seg { border: 0; padding: 0; display: grid; gap: 0.4rem; }
-  .seg__row { display: flex; flex-wrap: wrap; }
-  .seg__opt {
-    position: relative; cursor: pointer; font-family: var(--font-mono); font-size: var(--step--1);
-    padding: 0.55rem 0.9rem; border: var(--hair) solid var(--rule-strong); margin-right: -1px; min-height: 2.75rem;
-    display: inline-flex; align-items: center; background: var(--paper);
-  }
-  .seg__opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; width: 100%; height: 100%; border: 0; }
-  .seg__opt.is-on { background: var(--ink); color: var(--paper); border-color: var(--ink); z-index: 1; }
-  .seg__opt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; z-index: 2; }
-  .b {
-    font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: 0.03em;
-    min-height: 2.75rem; padding: 0.5rem 0.95rem; cursor: pointer;
-    background: var(--paper); color: var(--ink); border: var(--stroke) solid var(--ink); border-radius: var(--radius);
-    box-shadow: 3px 3px 0 -1px color-mix(in srgb, var(--accent) 35%, transparent);
-    transition: transform var(--dur-ui) var(--ease-out), box-shadow var(--dur-ui);
-  }
-  .b:hover { background: var(--paper-sunk); }
-  .b:active { transform: translate(2px, 2px); box-shadow: none; }
-  .b--ink { background: var(--ink); color: var(--paper); min-width: 6rem; }
-  .b--ink:hover { background: var(--ink); }
-  .b--quiet { border-color: transparent; box-shadow: none; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.3em; background: transparent; }
-  .panel { display: grid; gap: var(--space-2xs); }
-  .panel svg { display: block; overflow: visible; }
-  .panel__cap { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: baseline; justify-content: space-between; }
-  .panel__cap .label { color: var(--accent-ink); }
-  .panel__note { font-size: var(--step--1); color: var(--ink-2); font-style: italic; display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
-  .key { display: inline-block; width: 1.4em; height: 0.7em; }
+  .run { min-width: 6.5rem; }
   .key--bars { background: var(--ink); opacity: 0.8; }
   .key--curve { height: 0; border-top: 2.5px solid var(--accent); margin-left: 0.6em; }
   .key--rug { width: 0.7em; height: 0.8em; margin-left: 0.6em; background: repeating-linear-gradient(to right, var(--teal) 0 1.5px, transparent 1.5px 4px); }
@@ -210,12 +184,4 @@
   .t { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-3); }
   .t--mu { fill: var(--ink-2); }
   .t--xbar { fill: var(--accent-ink); font-size: 13px; font-weight: 600; }
-  .readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-2xs) var(--space-l); margin-top: var(--space-2xs); }
-  .readout dt { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-3); }
-  .readout dd { font-family: var(--font-mono); font-size: var(--step-0); font-variant-numeric: tabular-nums; }
-  .readout .muted { font-size: var(--step--1); margin-left: 0.4rem; }
-  @media (max-width: 40rem) {
-    .controls { grid-template-columns: minmax(0, 1fr); padding: var(--space-s); }
-    .seg__opt { padding-inline: 0.7rem; }
-  }
 </style>

@@ -135,18 +135,37 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
       <p class="margin label">§5 · Controls</p>
       <div class="stack" style="--flow: var(--space-m)">
         <h2 id="sg-controls">Instruments</h2>
-        <p class="muted sg-note">Explorables use these; no browser-default controls. The live island below re-plots a specimen with the same generator the server uses.</p>
-        <form class="controls-demo" onsubmit="return false">
+        <p class="muted sg-note">Explorables are built from one kit (<code>styles/explorable.css</code>): a raised control panel, segmented radios, range sliders, checkboxes, plate buttons, framed figures with the caption <em>below</em>, and mono readouts. The live island below re-plots a specimen with the same generator the server uses.</p>
+        <div class="controls">
+          <fieldset class="seg">
+            <legend class="label">Population</legend>
+            <div class="seg__row">
+              <label class="seg__opt"><input type="radio" name="sg-pop" checked /> Skewed</label>
+              <label class="seg__opt"><input type="radio" name="sg-pop" /> Two humps</label>
+              <label class="seg__opt"><input type="radio" name="sg-pop" /> Flat</label>
+            </div>
+          </fieldset>
           <label class="control"><span class="control__head"><span class="label">Sample size n</span><span class="control__value">30</span></span><input type="range" min="1" max="100" value="30" /></label>
-          <label class="control"><span class="control__head"><span class="label">Population</span></span>
-            <select><option>Skewed (exponential)</option><option>Bimodal</option><option>Uniform</option></select></label>
-          <fieldset class="control"><legend class="label">Overlay</legend>
+          <div class="btn-row">
+            <button type="button" class="btn btn--primary btn--sm">Run</button>
+            <button type="button" class="btn btn--secondary btn--sm">Draw 100</button>
+            <button type="button" class="btn btn--quiet btn--sm">Clear</button>
             <label class="check"><input type="checkbox" checked /> Normal curve</label>
-            <label class="check"><input type="checkbox" /> Sample points</label></fieldset>
-          <fieldset class="control"><legend class="label">Speed</legend>
-            <label class="check"><input type="radio" name="speed" checked /> Slow</label>
-            <label class="check"><input type="radio" name="speed" /> Fast</label></fieldset>
-        </form>
+          </div>
+        </div>
+        <figure class="fig sg-fig">
+          <div class="fig__plot">
+            <svg viewBox="0 0 480 120" width="480" height="120" role="img" aria-label="A sample bar chart">
+              {[18, 34, 58, 82, 96, 88, 64, 40, 22, 10].map((v, i) => <rect x={20 + i * 44} y={110 - v} width="36" height={v} class="sg-bar" />)}
+              <line x1="10" x2="470" y1="110.5" y2="110.5" class="sg-axis" />
+            </svg>
+          </div>
+          <figcaption class="fig__cap"><span class="fig__label">Fig. 5 · A framed figure</span> <span class="fig__note">The caption sits below the plot and states every encoding.</span></figcaption>
+        </figure>
+        <dl class="readout">
+          <div><dt>Mean of the means</dt><dd>2.01 <span class="muted">μ = 2.00</span></dd></div>
+          <div><dt>Share true</dt><dd><span class="answer-num">9.2%</span></dd></div>
+        </dl>
         <PlotPlayground client:visible />
       </div>
     </section>
@@ -191,8 +210,10 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
   .lab-grid > li { display: flex; }
   .lab-grid > li > :global(*) { flex: 1; }
   .plain-card { max-width: 26rem; }
-  .controls-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-m); max-width: 56rem; align-items: start; }
-  fieldset.control { border: 0; padding: 0; display: grid; gap: 0.4rem; }
+  .sg-fig { max-width: 32rem; }
+  .sg-fig svg { width: 100%; height: auto; }
+  .sg-bar { fill: var(--ink); opacity: 0.8; }
+  .sg-axis { stroke: var(--rule-strong); }
   .check { display: flex; align-items: center; gap: 0.55rem; font-size: var(--step--1); cursor: pointer; }
   @media (max-width: 40rem) {
     .scale li { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }

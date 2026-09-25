@@ -18,7 +18,7 @@
   let showSquares = $state(false);
   let wRaw = $state(640);
   // bind:clientWidth reports 0 for a moment during hydration; keep the geometry sane.
-  const w = $derived(usable(wRaw, 640));
+  const w = $derived(usable(wRaw - 16, 640)); // plot frame has 8 px padding
   let svgEl: SVGSVGElement;
 
   const fit = $derived(ols(pts));
@@ -83,16 +83,19 @@
   function reset() { pts = START.map((p) => ({ ...p })); active = null; }
 </script>
 
-<div class="explorable" bind:clientWidth={wRaw}>
-  <div class="toolbar">
-    <label class="check"><input type="checkbox" bind:checked={showResiduals} /> Residuals</label>
-    <label class="check"><input type="checkbox" bind:checked={showSquares} /> Squared residuals</label>
-    <span class="spacer"></span>
-    <button type="button" class="b" onclick={addOutlier}>Add a far-out point</button>
-    <button type="button" class="b b--quiet" onclick={reset}>Reset</button>
+<div class="explorable">
+  <div class="controls">
+    <div class="btn-row">
+      <label class="check"><input type="checkbox" bind:checked={showResiduals} /> Residuals</label>
+      <label class="check"><input type="checkbox" bind:checked={showSquares} /> Squared residuals</label>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn--secondary btn--sm" onclick={addOutlier}>Add a far-out point</button>
+      <button type="button" class="btn btn--quiet btn--sm" onclick={reset}>Reset</button>
+    </div>
   </div>
 
-  <figure class="panel">
+  <figure class="fig">
+    <div class="fig__plot" bind:clientWidth={wRaw}>
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <svg bind:this={svgEl} width={w} height={H} viewBox={`0 0 ${w} ${H}`} class="plotarea" class:is-dragging={dragging !== null}
       role="application" aria-label={`Scatter plot of ${pts.length} points with the least-squares line. Slope ${fmt(fit.slope)}, r ${fmt(fit.r)}. Click empty space to add a point; focus a point and use arrow keys to move it.`}
@@ -125,9 +128,10 @@
           onkeydown={(e) => key(i, e)} onfocus={() => (active = i)} />
       {/each}
     </svg>
-    <figcaption class="panel__cap">
-      <span class="label">Fig. 1 · Drag the points</span>
-      <span class="panel__note">Click empty space to add one. Keyboard: Tab to a point, then arrows to move it (Shift for big steps), Delete to remove it. Circled points have high leverage.</span>
+    </div>
+    <figcaption class="fig__cap">
+      <span class="fig__label">Fig. 1 · Drag the points</span>
+      <span class="fig__note">Click empty space to add one. Keyboard: Tab to a point, then arrows to move it (Shift for big steps), Delete to remove it. Circled points have high leverage.</span>
     </figcaption>
   </figure>
 
@@ -144,22 +148,12 @@
 </div>
 
 <style>
+  /* Controls, buttons, the figure frame and the readout come from the kit
+     (styles/explorable.css); only this plate's chart marks are styled here. */
   .explorable { display: grid; gap: var(--space-s); }
-  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-m); padding: var(--space-xs) var(--space-s); background: var(--paper-raised); border: var(--hair) solid var(--rule); }
   .spacer { flex: 1; }
-  .check { display: inline-flex; align-items: center; gap: 0.5rem; font-size: var(--step--1); cursor: pointer; min-height: 2.75rem; }
-  .b {
-    font-family: var(--font-mono); font-size: var(--step--1); min-height: 2.75rem; padding: 0.5rem 0.95rem; cursor: pointer;
-    background: var(--paper); color: var(--ink); border: var(--stroke) solid var(--ink); border-radius: var(--radius);
-    box-shadow: 3px 3px 0 -1px color-mix(in srgb, var(--accent) 35%, transparent);
-  }
-  .b:hover { background: var(--paper-sunk); }
-  .b--quiet { border-color: transparent; box-shadow: none; background: transparent; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.3em; }
-  .panel { display: grid; gap: var(--space-2xs); }
-  .panel__cap { display: grid; gap: 0.2rem; }
-  .panel__cap .label { color: var(--accent-ink); }
-  .panel__note { font-size: var(--step--1); color: var(--ink-2); font-style: italic; }
-  .plotarea { display: block; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; background: var(--paper-raised); }
+  .check { display: inline-flex; align-items: center; gap: 0.5rem; font-size: var(--step--1); cursor: pointer; min-height: 2.75rem; margin-right: var(--space-s); }
+  .plotarea { display: block; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; }
   .plotarea.is-dragging { cursor: grabbing; }
   .frame { fill: none; stroke: var(--rule-strong); }
   .grid { stroke: var(--rule); stroke-dasharray: 2 4; }
@@ -171,10 +165,4 @@
   .pt--hi { stroke: var(--accent); stroke-width: 2.5; }
   .pt--on { fill: var(--ink); }
   .pt:focus-visible { outline: none; stroke: var(--focus); stroke-width: 3; }
-  .readout { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: var(--space-2xs) var(--space-m); }
-  .readout__wide { grid-column: span 2; }
-  @media (max-width: 30rem) { .readout__wide { grid-column: 1 / -1; } }
-  .readout dt { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-3); }
-  .readout dd { font-family: var(--font-mono); font-size: var(--step-0); font-variant-numeric: tabular-nums; }
-  .readout .muted { font-size: var(--step--1); }
 </style>

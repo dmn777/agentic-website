@@ -1,0 +1,97 @@
+/* The explorable kit (T21): the controls, buttons, figures and readouts every island uses.
+   Before this, each island carried its own copies, and they had drifted (sweep 1, M4/M5).
+   Islands use these classes and keep only what is genuinely specific to them.
+   Shown on /styleguide/ §5; rules in DESIGN.md §Charts. */
+
+/* ── Buttons: square-cut, mono, uppercase, a misregistered vermilion "second impression" ── */
+.btn {
+  --shift: 4px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6em;
+  min-height: 2.75rem;
+  padding: 0.7em 1.15em 0.66em;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1.1;
+  border: var(--stroke) solid var(--ink);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform var(--dur-ui) var(--ease-out), box-shadow var(--dur-ui) var(--ease-out), background-color var(--dur-ui), color var(--dur-ui);
+}
+.btn--primary { background: var(--ink); color: var(--paper); box-shadow: var(--shift) var(--shift) 0 0 var(--accent); }
+.btn--secondary { background: var(--paper-raised); color: var(--ink); box-shadow: var(--shift) var(--shift) 0 -1px var(--accent-wash); }
+.btn--quiet { border-color: transparent; background: transparent; color: var(--ink); padding-inline: 0.3em; }
+.btn--quiet .btn__label, .btn--quiet:not(:has(.btn__label)) { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.3em; }
+.btn:hover { color: inherit; }
+.btn--primary:hover { color: var(--paper); transform: translate(-1px, -1px); box-shadow: calc(var(--shift) + 2px) calc(var(--shift) + 2px) 0 0 var(--accent); }
+.btn--secondary:hover { background: var(--paper-sunk); transform: translate(-1px, -1px); box-shadow: calc(var(--shift) + 1px) calc(var(--shift) + 1px) 0 0 var(--accent); }
+.btn--primary:active, .btn--secondary:active { transform: translate(var(--shift), var(--shift)); box-shadow: 0 0 0 0 var(--accent); }
+.btn__arrow { transition: transform var(--dur-ui) var(--ease-out); font-family: var(--font-text); font-size: 1.15em; line-height: 0; }
+.btn:hover .btn__arrow { transform: translateX(3px); }
+.btn:disabled, .btn:disabled:hover {
+  background: transparent; color: var(--ink-3); border-style: dashed; border-color: var(--rule-strong);
+  cursor: not-allowed; transform: none; box-shadow: none;
+}
+/* Compact size for control panels: same touch height, less padding and shadow. */
+.btn--sm { --shift: 3px; padding: 0.5em 0.85em 0.46em; letter-spacing: 0.04em; }
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--space-2xs); align-items: center; }
+
+/* ── Segmented control: a radio group drawn as joined square buttons ── */
+.seg { border: 0; padding: 0; margin: 0; display: grid; gap: 0.4rem; min-width: 0; }
+.seg__row { display: flex; flex-wrap: wrap; }
+.seg__opt {
+  position: relative; cursor: pointer;
+  font-family: var(--font-mono); font-size: var(--step--1);
+  padding: 0.55rem 0.9rem; min-height: 2.75rem; margin-right: -1px;
+  border: var(--hair) solid var(--rule-strong); background: var(--paper);
+  display: inline-flex; align-items: center;
+}
+.seg__opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; border: 0; }
+.seg__opt:hover { background: var(--paper-sunk); }
+.seg__opt:has(input:checked) { background: var(--ink); color: var(--paper); border-color: var(--ink); z-index: 1; }
+.seg__opt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; z-index: 2; }
+
+/* ── Control panel: raised paper holding an island's controls ──
+   Flex, not grid: sliders share the row, a segmented control keeps its natural width (so
+   its options never wrap one by one), and button rows or __wide items take a full row. */
+.controls {
+  display: flex; flex-wrap: wrap; gap: var(--space-m) var(--space-l); align-items: flex-end;
+  padding: var(--space-m); background: var(--paper-raised); border: var(--hair) solid var(--rule);
+}
+.controls > * { flex: 1 1 13rem; min-width: 0; }
+.controls > .seg { flex: 0 1 auto; }
+.controls > .btn-row, .controls > .controls__wide { flex-basis: 100%; }
+@media (max-width: 40rem) { .controls { padding: var(--space-s); gap: var(--space-s); } }
+
+/* ── Figures: framed plot area, caption BELOW (the atlas convention) ── */
+.fig { display: grid; gap: var(--space-2xs); margin: 0; min-width: 0; }
+.fig__plot { background: var(--paper-raised); border: var(--hair) solid var(--rule); padding: 8px; min-width: 0; } /* fixed px: islands subtract 16 from the measured width */
+.fig__plot > svg { display: block; overflow: visible; max-width: 100%; }
+/* Always two lines: the label, then the note. Keeps the caption's shape the same on every plate. */
+.fig__cap { display: grid; gap: 0.15rem; justify-items: start; }
+.fig__label {
+  font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps);
+  text-transform: uppercase; color: var(--accent-ink); font-variant-numeric: tabular-nums lining-nums;
+}
+.fig__note { font-size: var(--step--1); color: var(--ink-2); font-style: italic; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+/* Legend swatches inside captions. Islands add their own modifiers. */
+.key { display: inline-block; width: 1.4em; height: 0.7em; vertical-align: middle; }
+
+/* ── Readouts: labelled numbers under a figure ── */
+.readout { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--space-2xs) var(--space-m); }
+.readout > div { min-width: 0; }
+.readout dt { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-3); }
+.readout dd { font-family: var(--font-mono); font-size: var(--step-0); font-variant-numeric: tabular-nums lining-nums; }
+.readout .muted { font-size: var(--step--1); margin-left: 0.3rem; }
+.readout__wide { grid-column: span 2; }
+@media (max-width: 30rem) { .readout__wide { grid-column: 1 / -1; } }
+
+/* The headline number of an answer ("9.2%", "r = 0.62"). */
+.answer-num { font-family: var(--font-display); font-size: var(--step-3); line-height: 1; color: var(--accent-ink); }
+
+/* Tick labels and annotations drawn inside SVG charts. */
+.chart-t { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-3); }
+.chart-t--em { font-size: 13px; fill: var(--ink); font-weight: 500; }

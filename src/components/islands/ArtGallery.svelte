@@ -170,11 +170,11 @@
             </label>
           {/each}
           <div class="detail__actions">
-            <button type="button" class="b b--ink" onclick={regenerate}>New seed</button>
+            <button type="button" class="btn btn--primary btn--sm" onclick={regenerate}>New seed</button>
             {#if !reduced}
-              {#if playing}<button type="button" class="b" onclick={stop}>Finish</button>{:else}<button type="button" class="b" onclick={() => rebuild(true)}>Replay</button>{/if}
+              {#if playing}<button type="button" class="btn btn--secondary btn--sm" onclick={stop}>Finish</button>{:else}<button type="button" class="btn btn--secondary btn--sm" onclick={() => rebuild(true)}>Replay</button>{/if}
             {/if}
-            <button type="button" class="b" onclick={download}>Download PNG</button>
+            <button type="button" class="btn btn--secondary btn--sm" onclick={download}>Download PNG</button>
           </div>
           <p class="detail__note muted">The address bar now holds this seed: copy it to share exactly this drawing.</p>
         </aside>
@@ -206,16 +206,8 @@
   .detail__canvas { width: 100%; height: auto; aspect-ratio: 4 / 3; display: block; border: var(--hair) solid var(--rule); }
   .detail__side { display: grid; gap: var(--space-m); }
   .detail__desc { font-style: italic; color: var(--ink-2); }
-  .detail__actions { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+  .detail__actions { display: flex; flex-wrap: wrap; gap: var(--space-s) var(--space-2xs); }
   .detail__note { font-size: var(--step--1); }
-  .b {
-    font-family: var(--font-mono); font-size: var(--step--1); min-height: 2.75rem; padding: 0.5rem 0.95rem; cursor: pointer;
-    background: var(--paper); color: var(--ink); border: var(--stroke) solid var(--ink); border-radius: var(--radius);
-    box-shadow: 3px 3px 0 -1px color-mix(in srgb, var(--accent) 35%, transparent);
-  }
-  .b:hover { background: var(--paper-sunk); }
-  .b--ink { background: var(--ink); color: var(--paper); }
-  .b--ink:hover { background: var(--ink); }
   @media (max-width: 52rem) {
     .detail__body { grid-template-columns: minmax(0, 1fr); }
     .detail__inner { padding: var(--space-s); }

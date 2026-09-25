@@ -42,7 +42,7 @@ export default [
       {
         name: 'rare-disease',
         run: async (page) => {
-          await page.getByRole('button', { name: 'Rare disease' }).click();
+          await page.getByRole('radio', { name: 'Rare disease' }).check();
           const v = await text(page, '.verdict');
           if (!/Of the 11 people/.test(v)) throw new Error(`verdict: ${v}`);
           await page.locator('.answer').scrollIntoViewIfNeeded();
@@ -58,7 +58,7 @@ export default [
           if (!/Of the 10 people/.test(v)) throw new Error(`verdict: ${v}`);
         },
       },
-      { name: 'mobile-spam', variant: 'mobile-dark', fullPage: true, run: async (page) => { await page.getByRole('button', { name: 'Spam filter' }).tap(); } },
+      { name: 'mobile-spam', variant: 'mobile-dark', fullPage: true, run: async (page) => { await page.getByRole('radio', { name: 'Spam filter' }).check(); } },
     ],
   },
   {

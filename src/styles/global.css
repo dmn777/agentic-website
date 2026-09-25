@@ -3,6 +3,7 @@
    plotter-drawing animation shared by every page. */
 @import './tokens.css';
 @import './crop.css';
+@import './explorable.css';
 
 /* ── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
@@ -41,7 +42,7 @@ body {
   background-blend-mode: var(--grain-blend);
 }
 
-::selection { background: var(--accent); color: #fff; }
+::selection { background: color-mix(in srgb, var(--accent) 32%, var(--paper)); color: var(--ink); }
 
 /* ── Type ──────────────────────────────────────────────────────────── */
 h1, h2, h3, .display {
@@ -52,8 +53,8 @@ h1, h2, h3, .display {
   font-variant-numeric: lining-nums;
 }
 h1 { font-size: var(--step-4); line-height: var(--leading-tight); font-weight: 450; }
-h2 { font-size: var(--step-3); line-height: 1.02; }
-h3 { font-size: var(--step-2); line-height: 1.08; }
+h2 { font-size: var(--step-2); line-height: 1.05; }
+h3 { font-size: var(--step-1); line-height: 1.12; }
 h4 { font-family: var(--font-text); font-size: var(--step-1); font-weight: 600; line-height: var(--leading-snug); }
 
 :not(pre) > code { font-size: 0.84em; }
@@ -72,7 +73,7 @@ h4 { font-family: var(--font-text); font-size: var(--step-1); font-weight: 600; 
   color: var(--ink-3);
   font-variant-numeric: tabular-nums lining-nums;
 }
-.lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-2); font-weight: 380; }
+.lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-2); font-weight: 380; max-width: 40rem; }
 .muted { color: var(--ink-3); }
 .nowrap { white-space: nowrap; }
 
@@ -128,8 +129,8 @@ a:hover { color: var(--accent-ink); text-decoration-thickness: 2px; }
 .prose { max-width: var(--measure); }
 .prose > * + * { margin-top: 1em; }
 .prose > :first-child { margin-top: 0; }
-.prose h2 { font-size: var(--step-2); margin-top: 1.9em; }
-.prose h3 { font-size: var(--step-1); margin-top: 1.6em; }
+.prose h2 { margin-top: 1.9em; }
+.prose h3 { margin-top: 1.6em; }
 .prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
 .prose ul, .prose ol { padding-left: 1.3em; }
 .prose li + li { margin-top: 0.35em; }

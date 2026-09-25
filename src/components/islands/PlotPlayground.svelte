@@ -36,7 +36,7 @@
       <span class="control__head"><span class="label">Detail</span><span class="control__value">{detail.toFixed(2)}</span></span>
       <input type="range" min="0.2" max="1.4" step="0.05" bind:value={detail} style={`--fill:${((detail - 0.2) / 1.2) * 100}%`} />
     </label>
-    <button class="replot" type="button" onclick={shuffle}>New seed</button>
+    <button class="btn btn--secondary btn--sm replot" type="button" onclick={shuffle}>New seed</button>
     <p class="label playground__readout">species: {sp.species} · strokes: {sp.paths.length}</p>
   </div>
   <div class="playground__sheet">
@@ -54,12 +54,6 @@
   .playground__controls { display: grid; gap: var(--space-s); }
   .playground__sheet { aspect-ratio: 1; max-width: 30rem; width: 100%; background: var(--paper-raised); border: var(--hair) solid var(--rule); padding: var(--space-m); }
   .playground__readout { margin-top: var(--space-2xs); }
-  .replot {
-    justify-self: start; min-height: 2.75rem; padding: 0.6em 1em;
-    font-family: var(--font-mono); font-size: var(--step--1); text-transform: uppercase; letter-spacing: 0.06em;
-    background: transparent; border: var(--stroke) solid var(--ink); border-radius: var(--radius); cursor: pointer;
-    box-shadow: 4px 4px 0 -1px var(--accent-wash);
-  }
-  .replot:hover { background: var(--paper-sunk); }
+  .replot { justify-self: start; }
   @media (max-width: 44rem) { .playground { grid-template-columns: minmax(0, 1fr); } }
 </style>
