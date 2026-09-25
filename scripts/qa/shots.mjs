@@ -71,8 +71,14 @@ export function watch(page, origin) {
   return problems;
 }
 
-/** Wait for load, fonts, and scroll the whole page once so lazy islands hydrate. */
+/**
+ * Wait for load, fonts, and scroll the whole page once so lazy islands hydrate and every
+ * plotter drawing starts. Returns problems instead of swallowing timeouts: a plot that
+ * never started drawing, or a finite animation still running, would otherwise be
+ * photographed half-drawn and pass (sweep 1, m11).
+ */
 export async function settle(page) {
+  const problems = [];
   await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
   await page.evaluate(() => document.fonts?.ready);
   await page.evaluate(async () => {
@@ -84,10 +90,20 @@ export async function settle(page) {
     scrollTo(0, 0);
   });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-  // Let finite animations (plotter drawings, reveals) finish so shots show final states.
-  await page.waitForFunction(() => document.getAnimations().every((a) =>
-    a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity), null, { timeout: 8000 }).catch(() => {});
+  // IntersectionObserver callbacks are async: wait until every rendered drawing plot has
+  // actually been told to draw (data-in) before waiting for animations to finish.
+  const started = await page.waitForFunction(() => [...document.querySelectorAll('.plot[data-draw]')]
+    .filter((p) => p.getClientRects().length > 0)
+    .every((p) => p.hasAttribute('data-in')), null, { timeout: 5000 }).then(() => true, () => false);
+  if (!started) {
+    const n = await page.evaluate(() => [...document.querySelectorAll('.plot[data-draw]')].filter((p) => p.getClientRects().length > 0 && !p.hasAttribute('data-in')).length);
+    problems.push({ kind: 'motion', text: `${n} plot(s) never started drawing (no data-in after scrolling)` });
+  }
+  const finished = await page.waitForFunction(() => document.getAnimations().every((a) =>
+    a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity), null, { timeout: 10000 }).then(() => true, () => false);
+  if (!finished) problems.push({ kind: 'motion', text: 'finite animations still running 10 s after settling' });
   await page.waitForTimeout(300);
+  return problems;
 }
 
 /** Elements sticking out past the right edge (for overflow diagnostics). Compares with the
@@ -251,7 +267,7 @@ async function main() {
     try {
       const resp = await page.goto(server.url(r.route), { waitUntil: 'load' });
       if (resp?.status() !== 200) problems.push({ kind: 'http', text: `document ${resp?.status()}` });
-      await settle(page);
+      problems.push(...(await settle(page)));
       if (spec.mobile) {
         const o = await overflow(page, spec.viewport.width);
         if (o) problems.push({ kind: 'overflow', text: `scrollWidth ${o.scrollWidth} > ${o.innerWidth}: ${o.culprits.join(', ')}` });
@@ -283,7 +299,7 @@ async function main() {
       const name = `${slugOf(s.route)}__state-${s.name}__${v}`;
       try {
         await page.goto(server.url(s.route), { waitUntil: 'load' });
-        await settle(page);
+        problems.push(...(await settle(page)));
         await s.run(page);
         await page.waitForTimeout(s.wait ?? 500);
         const file = path.join(outDir, name + '.png');

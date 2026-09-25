@@ -6,8 +6,10 @@
 // Reads a qa:shots output folder (summary.json + full-page PNGs) and lays the top of every
 // page side by side, labelled, so a reviewer can compare typography, colour, cards, header,
 // footer and nav across the whole site in a few images. Desktop and mobile get separate
-// sheets. Also checks that every Lab card (on / and /lab/) links to a page whose <h1>
-// matches the card title, and writes cards.json.
+// sheets. Also runs a *wiring* check: every Lab card (on /, /lab/, /lab/stats/) links to a
+// page that exists and whose <h1> equals the card title (wiring.json). Card and page both
+// come from src/data/lab.ts, so this proves the data is wired through, not that a blurb is
+// true. Blurb accuracy is a reviewer task (sweep 1, m11).
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,7 +60,7 @@ for (const v of variants) {
   }
 }
 
-// Card ↔ page check
+// Wiring check (card → page)
 const server = await start();
 const problems = [], checked = [];
 for (const listing of ['/', '/lab/', '/lab/stats/']) {
@@ -76,7 +78,7 @@ for (const listing of ['/', '/lab/', '/lab/stats/']) {
 }
 await server.close();
 await browser.close();
-fs.writeFileSync(path.join(dir, 'cards.json'), JSON.stringify({ checked, problems }, null, 2));
-console.log(`${checked.length} card(s) checked, ${problems.length} mismatch(es)`);
+fs.writeFileSync(path.join(dir, 'wiring.json'), JSON.stringify({ note: 'Wiring only: cards and pages share lab.ts; blurb accuracy is checked by the reviewer.', checked, problems }, null, 2));
+console.log(`wiring: ${checked.length} card(s) → page, ${problems.length} broken`);
 for (const p of problems) console.log('  ' + p);
 process.exitCode = problems.length ? 1 : 0;
