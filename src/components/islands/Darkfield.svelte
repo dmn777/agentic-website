@@ -29,6 +29,8 @@
   let ink = $state(100);
   let overReason = $state<'ink' | 'contact' | null>(null);
   let newBest = $state(false);
+  /** Where the run ended (world y), so the result card can sit clear of the blot. */
+  let overY = $state(0);
   let muted = $state(true);
   let summary = $state({ loops: 0, captured: 0, bestLoop: { points: 0, n: 0 }, t: 0 });
   let testMode = false;
@@ -48,6 +50,7 @@
   function sync() {
     if (!game) return;
     mode = game.mode; score = game.score; ink = game.ink; overReason = game.overReason; best = game.best;
+    if (game.mode === 'over') overY = game.pen.y;
     if (game.mode === 'over') summary = { loops: game.stats.loops, captured: game.stats.captured, bestLoop: { ...game.stats.bestLoop }, t: game.t };
     sound?.scratch(game.mode === 'play');
   }
@@ -248,7 +251,7 @@
         <button class="btn btn--primary" type="button" data-action="resume" onclick={pause}>Resume</button>
       </div>
     {:else if mode === 'over'}
-      <div class="card" data-screen="over" aria-live="polite">
+      <div class="card card--over" data-screen="over" aria-live="polite" style:--away={overY > 0 ? -1 : 1}>
         <p class="label card__kicker">{overReason === 'ink' ? 'Out of ink' : 'Contaminated'}</p>
         <h2 class="card__title card__score">{score}<span class="label card__unit">points</span></h2>
         <p class="card__best">{newBest ? 'A new personal best.' : `Your best: ${best}.`}</p>
@@ -305,12 +308,14 @@
     display: grid; gap: var(--space-2xs); justify-items: start;
   }
   .card--small { width: auto; min-width: 12rem; }
+  /* The result card moves away from where the run ended, so the ink blot stays in view. */
+  .card--over { top: calc(50% + var(--away, 0) * 12%); }
   .card__kicker { color: var(--accent-ink); margin: 0; }
   .card__title { font-family: var(--font-display); font-size: var(--step-3); line-height: 1; margin: 0 0 var(--space-3xs); }
-  .card__score { font-size: var(--step-4); display: grid; gap: 0.2em; }
+  .card__score { font-size: var(--step-4); display: flex; align-items: baseline; gap: 0.6rem; }
   .card__unit { color: var(--ink-3); }
   .card__rules--short { display: none; margin: 0 0 var(--space-xs); }
-  .card__rules { margin: 0 0 var(--space-xs); padding-left: 1.2em; font-size: var(--step--1); display: grid; gap: 0.35em; }
+  .card__rules { margin: 0 0 var(--space-xs); padding-left: 1.2em; font-size: var(--step-0); line-height: 1.35; display: grid; gap: 0.4em; }
   .card__best { margin: 0; font-size: var(--step--1); color: var(--ink-2); }
   .card__stats { display: flex; gap: var(--space-s); margin: 0 0 var(--space-xs); font-family: var(--font-mono); flex-wrap: wrap; }
   .card__stats dd { margin: 0; font-size: var(--step--1); font-variant-numeric: tabular-nums; }
@@ -343,14 +348,14 @@
   @media (max-width: 40rem) {
     .card { padding: var(--space-s); gap: var(--space-3xs); }
     .card__rules--full { display: none; }
+    .card--over { top: calc(50% + var(--away, 0) * 4%); }
     .card__rules--short { display: block; font-size: var(--step-0); line-height: 1.35; }
     .card__best { font-size: var(--step-0); }
-    .card__score { font-size: var(--step-3); display: flex; align-items: baseline; gap: 0.5rem; }
+    .card__score { font-size: var(--step-3); gap: 0.5rem; }
     .card__stats { gap: var(--space-2xs) var(--space-s); margin-bottom: var(--space-3xs); }
   }
   @media (max-width: 30rem) {
     .hud__stats { gap: var(--space-s); }
-    .hud__slide { display: none; }
     .gauge { width: 4.5rem; }
   }
 </style>

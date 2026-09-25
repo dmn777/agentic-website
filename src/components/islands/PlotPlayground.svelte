@@ -1,7 +1,7 @@
 <script lang="ts">
   // Styleguide island: re-plot the signature specimen in the browser from a seed, using the
   // very same generator the server uses (lib/plot/specimen.ts).
-  import { specimen, SPECIES, type Species } from '../../lib/plot/specimen';
+  import { specimen, ALL_SPECIES, type Species } from '../../lib/plot/specimen';
 
   let seed = $state('unattended');
   let species = $state<Species | 'auto'>('auto');
@@ -29,7 +29,7 @@
       <span class="control__head"><span class="label">Species</span></span>
       <select bind:value={species}>
         <option value="auto">auto (from seed)</option>
-        {#each SPECIES as s}<option value={s}>{s}</option>{/each}
+        {#each ALL_SPECIES as s}<option value={s}>{s}</option>{/each}
       </select>
     </label>
     <label class="control">

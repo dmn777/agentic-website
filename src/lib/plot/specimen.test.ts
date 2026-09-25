@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { specimen, SPECIES, toPath } from './specimen';
+import { specimen, SPECIES, ALL_SPECIES, toPath } from './specimen';
 
 const PATH_RE = /^M-?\d+(\.\d)? -?\d+(\.\d)?( L-?\d+(\.\d)? -?\d+(\.\d)?)*( Z)?$/;
 
@@ -20,7 +20,7 @@ describe('specimen', () => {
     expect(specimen('plate-1').paths).not.toEqual(specimen('plate-2').paths);
   });
   it('can force every species, and each produces a drawing', () => {
-    for (const s of SPECIES) {
+    for (const s of ALL_SPECIES) {
       const sp = specimen('species-test', { species: s });
       expect(sp.species).toBe(s);
       expect(sp.paths.length).toBeGreaterThan(5);
@@ -68,7 +68,7 @@ describe('specimen', () => {
     expect(small.paths.length).toBeLessThan(big.paths.length);
   });
   it('never degenerates into a line: every species covers a 2-D area', () => {
-    for (const s of SPECIES) for (let i = 0; i < 25; i++) {
+    for (const s of ALL_SPECIES) for (let i = 0; i < 25; i++) {
       const sp = specimen(`area-${s}-${i}`, { species: s, detail: 0.6 });
       const nums = sp.paths.flatMap((p) => p.d.replace(/[MLZ]/g, ' ').trim().split(/\s+/).map(Number));
       const xs = nums.filter((_, k) => k % 2 === 0), ys = nums.filter((_, k) => k % 2 === 1);
@@ -86,5 +86,38 @@ describe('specimen', () => {
     const sxy = xs.reduce((a, x, k) => a + (x - mx) * (ys[k] - my), 0);
     const sxx = xs.reduce((a, x) => a + (x - mx) ** 2, 0), syy = ys.reduce((a, y) => a + (y - my) ** 2, 0);
     expect(Math.abs(sxy / Math.sqrt(sxx * syy))).toBeLessThan(0.8);
+  });
+});
+
+// The diatom valve (Pl. VIII, Darkfield) is opt-in: seeds never pick it at random, so
+// adding it changed no existing drawing on the site.
+describe('valve', () => {
+  it('is never picked at random', () => {
+    expect(SPECIES).not.toContain('valve');
+    expect(ALL_SPECIES).toContain('valve');
+    for (let i = 0; i < 300; i++) expect(specimen('rand-' + i).species).not.toBe('valve');
+  });
+  it('is a round valve: every point inside the circle, with closed rims', () => {
+    for (let i = 0; i < 10; i++) {
+      const sp = specimen('valve-' + i, { species: 'valve', detail: 0.7 });
+      const [, , w, h] = sp.viewBox;
+      const R = Math.min(w, h) / 2;
+      for (const p of sp.paths) {
+        const nums = p.d.replace(/[MLZ]/g, ' ').trim().split(/\s+/).map(Number);
+        for (let k = 0; k < nums.length; k += 2) expect(Math.hypot(nums[k] - w / 2, nums[k + 1] - h / 2)).toBeLessThanOrEqual(R + 0.5);
+      }
+      expect(sp.paths.filter((p) => p.d.endsWith('Z')).length).toBeGreaterThanOrEqual(3);
+      expect(sp.paths.length).toBeGreaterThan(150); // rows of areolae, not a sketch
+    }
+  });
+  it('picks out one row of areolae with the accent pen', () => {
+    const sp = specimen('valve-accent', { species: 'valve', detail: 0.7 });
+    const n = sp.paths.filter((p) => p.pen === 'accent').length;
+    expect(n).toBeGreaterThanOrEqual(8);
+    expect(n).toBeLessThan(sp.paths.length / 20);
+  });
+  it('stays within the size budget at full detail', () => {
+    const sp = specimen('valve-budget', { species: 'valve', detail: 1 });
+    expect(sp.paths.reduce((s, p) => s + p.d.length, 0)).toBeLessThan(40_000);
   });
 });

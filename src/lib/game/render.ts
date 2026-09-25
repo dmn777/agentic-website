@@ -6,11 +6,12 @@
 // become plain on/off states.
 import { R, SPECIES, type Game, type GameEvent, type Species } from './sim';
 import type { Vec } from './geometry';
+import { mulberry32 } from '../random';
 
 // Drawn art, not interface: these are the slide's own colours (DESIGN.md allows raw
 // values in generated art).
 export const COLORS = {
-  slide: '#04070b', lit: '#10202f', rim: 'rgba(150, 195, 215, 0.22)', reticle: 'rgba(150, 200, 225, 0.13)',
+  slide: '#04070b', lit: '#10202f', reticle: 'rgba(150, 200, 225, 0.13)',
   glass: '#d4eef4', glow: 'rgba(110, 215, 255, 0.55)', ink: '#ff6a48',
   hazard: '#ffb347', hazardGlow: 'rgba(255, 170, 60, 0.6)', label: 'rgba(212, 238, 244, 0.55)',
 };
@@ -50,9 +51,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
   let hatch: CanvasPattern | null = null;
   /** World units for n CSS pixels: keeps strokes and small marks legible on a phone. */
   const px = (n: number) => n / scale;
-  /** Drawn radius of a species: 1.7× its world (capture) radius, and never under 8 CSS px.
+  /** Drawn radius of a species: 1.7–2× its world (capture) radius, never under 8 CSS px.
    *  Capture is by centre, so a larger drawing changes nothing in the rules. */
-  const drawnR = (kind: Species) => Math.max(SPECIES[kind].r * 1.7, px(8));
+  const GROW: Record<Species, number> = { disc: 1.7, boat: 2, triangle: 1.9, star: 1.8 };
+  const drawnR = (kind: Species) => Math.max(SPECIES[kind].r * GROW[kind], px(8));
+  let bg: HTMLCanvasElement | null = null;
 
   function buildSprites() {
     sprites.clear();
@@ -94,6 +97,66 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     canvas.style.width = canvas.style.height = `${css}px`;
     scale = css / (2 * R + 40);
     buildSprites();
+    buildBackground();
+  }
+
+  /** The still layers, drawn once per size: the lit field, out-of-focus diatoms and dust
+   *  below the focal plane (depth), the eyepiece reticle and the scale bar. */
+  function buildBackground() {
+    const W = canvas.width, s = scale * dpr;
+    bg = document.createElement('canvas');
+    bg.width = bg.height = W;
+    const b = bg.getContext('2d')!;
+    b.fillStyle = COLORS.slide; b.fillRect(0, 0, W, W);
+    b.setTransform(s, 0, 0, s, W / 2, W / 2);
+    // The field stop: a lit disc with a crisp edge, falling off towards it.
+    const lit = b.createRadialGradient(0, 0, 0, 0, 0, R);
+    lit.addColorStop(0, COLORS.lit); lit.addColorStop(0.7, '#0a1621'); lit.addColorStop(1, '#070e16');
+    b.fillStyle = lit;
+    b.beginPath(); b.arc(0, 0, R, 0, Math.PI * 2); b.fill();
+    b.save();
+    b.beginPath(); b.arc(0, 0, R, 0, Math.PI * 2); b.clip();
+    const rnd = mulberry32(8);
+    // Out-of-focus diatoms: large, soft and faint.
+    const kinds = Object.keys(SPECIES) as Species[];
+    for (let k = 0; k < 7; k++) {
+      const sp = sprites.get(kinds[k % 3])!;
+      const a = rnd() * Math.PI * 2, r = R * Math.sqrt(rnd()) * 0.9, z = 1.8 + rnd() * 1.4;
+      b.save();
+      b.filter = `blur(${(3 + rnd() * 4) * dpr}px)`;
+      b.globalAlpha = 0.06 + rnd() * 0.05;
+      b.translate(r * Math.cos(a), r * Math.sin(a)); b.rotate(rnd() * Math.PI);
+      b.drawImage(sp, (-sp.width / 2 / s) * z, (-sp.height / 2 / s) * z, (sp.width / s) * z, (sp.height / s) * z);
+      b.restore();
+    }
+    // Dust: faint specks, a few of them soft.
+    for (let k = 0; k < 90; k++) {
+      const a = rnd() * Math.PI * 2, r = R * Math.sqrt(rnd());
+      b.globalAlpha = 0.08 + rnd() * 0.22;
+      b.fillStyle = COLORS.glass;
+      b.beginPath(); b.arc(r * Math.cos(a), r * Math.sin(a), px(0.6 + rnd() * 1.4), 0, Math.PI * 2); b.fill();
+    }
+    b.restore();
+    b.globalAlpha = 1;
+    // The eyepiece reticle: a faint crosshair and an ocular micrometer along the horizontal,
+    // a long tick every 50 u and a short one every 10 u.
+    b.strokeStyle = COLORS.reticle; b.lineWidth = px(1);
+    b.beginPath();
+    b.moveTo(-R, 0); b.lineTo(R, 0); b.moveTo(0, -R * 0.06); b.lineTo(0, R * 0.06);
+    b.moveTo(0, -R); b.lineTo(0, -R * 0.62); b.moveTo(0, R * 0.62); b.lineTo(0, R);
+    for (let u = -300; u <= 300; u += 10) {
+      const h = u % 50 === 0 ? (u % 100 === 0 ? 16 : 11) : 5;
+      b.moveTo(u, 0); b.lineTo(u, -h);
+    }
+    b.stroke();
+    // Scale bar (100 µm, by the fiction's convention), inside the disc, bottom right.
+    b.strokeStyle = COLORS.label; b.fillStyle = COLORS.label; b.lineWidth = px(1);
+    const bx = R * 0.2, by = R * 0.8, tick = px(4);
+    b.beginPath(); b.moveTo(bx, by); b.lineTo(bx + 100, by);
+    b.moveTo(bx, by - tick); b.lineTo(bx, by + tick); b.moveTo(bx + 100, by - tick); b.lineTo(bx + 100, by + tick);
+    b.stroke();
+    b.font = `${px(10)}px ${MONO}`; b.textAlign = 'center'; b.textBaseline = 'alphabetic';
+    b.fillText('100 µm', bx + 50, by - px(7));
   }
 
   const toWorld = (sx: number, sy: number): Vec => ({ x: (sx - size / 2) / scale, y: (sy - size / 2) / scale });
@@ -129,27 +192,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     const s = scale * dpr;
     let ox = W / 2, oy = W / 2;
     if (now < shakeUntil && !still) { ox += (Math.random() - 0.5) * 10 * dpr; oy += (Math.random() - 0.5) * 10 * dpr; }
+    if (bg) ctx.drawImage(bg, ox - W / 2, oy - W / 2);
     ctx.setTransform(s, 0, 0, s, ox, oy);
-
-    // The lit field: brightest in the middle, falling off to the field stop, where a faint
-    // edge marks the rim the pen bounces off.
-    const lit = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
-    lit.addColorStop(0, COLORS.lit); lit.addColorStop(0.72, '#08111a'); lit.addColorStop(1, COLORS.slide);
-    ctx.fillStyle = lit;
-    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = COLORS.rim; ctx.lineWidth = px(1.25);
-    ctx.beginPath(); ctx.arc(0, 0, R - px(1), 0, Math.PI * 2); ctx.stroke();
-    // The eyepiece reticle: a faint crosshair and an ocular micrometer along the horizontal,
-    // a long tick every 50 u and a short one every 10 u.
-    ctx.strokeStyle = COLORS.reticle; ctx.lineWidth = px(1);
-    ctx.beginPath();
-    ctx.moveTo(-R, 0); ctx.lineTo(R, 0); ctx.moveTo(0, -R * 0.06); ctx.lineTo(0, R * 0.06);
-    ctx.moveTo(0, -R); ctx.lineTo(0, -R * 0.62); ctx.moveTo(0, R * 0.62); ctx.lineTo(0, R);
-    for (let u = -300; u <= 300; u += 10) {
-      const h = u % 50 === 0 ? (u % 100 === 0 ? 16 : 11) : 5;
-      ctx.moveTo(u, 0); ctx.lineTo(u, -h);
-    }
-    ctx.stroke();
 
     // The game-over blot sits under everything that still moves.
     if (g.mode === 'over') {
@@ -158,17 +202,6 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       drawBlot(ctx, blot.x, blot.y, px(46) * grow, blot.lobes);
     }
 
-    // Scale bar (100 µm, by the fiction's convention), inside the disc, bottom right.
-    ctx.save();
-    ctx.strokeStyle = COLORS.label; ctx.fillStyle = COLORS.label; ctx.lineWidth = px(1);
-    const bx = R * 0.2, by = R * 0.8, tick = px(4);
-    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + 100, by);
-    ctx.moveTo(bx, by - tick); ctx.lineTo(bx, by + tick); ctx.moveTo(bx + 100, by - tick); ctx.lineTo(bx + 100, by + tick);
-    ctx.stroke();
-    ctx.font = `${px(10)}px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText('100 µm', bx + 50, by - px(7));
-    ctx.restore();
-
     // Diatoms (sprites) and contaminants (drawn: they pulse).
     for (const d of g.diatoms) {
       const sp = sprites.get(d.kind);
@@ -176,11 +209,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       const ttl = SPECIES[d.kind].ttl;
       ctx.save();
       if (ttl) ctx.globalAlpha = Math.max(0.2, Math.min(1, (ttl - d.age) / 1.5));
+      ctx.globalCompositeOperation = 'lighter'; // glass lit on black: light adds up
       ctx.translate(d.x, d.y); ctx.rotate(d.rot);
       ctx.drawImage(sp, -sp.width / 2 / s, -sp.height / 2 / s, sp.width / s, sp.height / s);
       ctx.restore();
     }
-    for (const h of g.hazards) drawHazard(ctx, h.x, h.y, Math.max(h.r, px(6)), still ? 0 : h.phase, px(2), dpr);
+    for (const h of g.hazards) drawHazard(ctx, h.x, h.y, Math.max(h.r * 1.5, px(9)), still ? 0 : h.phase, px(2), dpr);
 
     // Effects under the ink.
     effects = effects.filter((e) => now - e.born < LIFE[e.kind] + (e.kind === 'catch' ? e.delay : 0));
@@ -265,8 +299,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       const x = e.x + (corner.x - e.x) * fly, y = e.y + (corner.y - e.y) * fly;
       ctx.save();
       ctx.translate(x, y);
-      if (age < 0.3) {
-        ctx.globalAlpha = 1 - age / 0.3;
+      if (age < 0.35) {
+        ctx.globalAlpha = 1 - age / 0.35;
         ctx.strokeStyle = '#ffffff'; ctx.lineWidth = px(2);
         ctx.beginPath(); ctx.arc(0, 0, drawnR(e.sp) * (1 + age * 3), 0, Math.PI * 2); ctx.stroke();
       }

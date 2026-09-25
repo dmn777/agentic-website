@@ -5,8 +5,12 @@
 import { rngFrom, hashString, type Rng } from '../random';
 import { noise2D } from './noise';
 
+/** The species a seed may pick at random. Changing this list redraws every unforced specimen. */
 export const SPECIES = ['flow', 'contour', 'radial', 'ridge', 'orbit'] as const;
-export type Species = (typeof SPECIES)[number];
+/** Species a page must ask for by name (never picked at random), e.g. Darkfield's diatom valve. */
+export const OPT_IN = ['valve'] as const;
+export const ALL_SPECIES = [...SPECIES, ...OPT_IN] as const;
+export type Species = (typeof ALL_SPECIES)[number];
 export type Pen = 'ink' | 'accent';
 export interface Stroke { d: string; pen: Pen }
 export interface Specimen {
@@ -133,6 +137,50 @@ const DRAW: Record<Species, (c: Ctx) => Drawn> = {
     }
     const core: Pt[] = Array.from({ length: 48 }, (_, k) => [cx + Math.cos((k / 48) * TAU) * r0 * 0.85, cy + Math.sin((k / 48) * TAU) * r0 * 0.85]);
     return [...accent(out, rng, 2), { pts: core, close: true }];
+  },
+
+  // A centric diatom valve, the way Coscinodiscus looks under the lens: a double rim, a
+  // small central area with a rosette, and radial rows of areolae (drawn as short dashes
+  // across each row) that fan out, with new rows starting between old ones as they widen.
+  valve({ rng, noise, W, H, detail }) {
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 1;
+    const ring = (r: number, wob = 0): { pts: Pt[]; close: boolean } => ({
+      pts: Array.from({ length: 96 }, (_, k) => {
+        const a = (k / 96) * TAU, rr = r * (1 + wob * noise(Math.cos(a) * 2 + 5, Math.sin(a) * 2 + 5));
+        return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr] as Pt;
+      }),
+      close: true,
+    });
+    const out: Drawn = [ring(R * 0.985, 0.006), ring(R * 0.93, 0.004)];
+    const core = R * rng.range(0.1, 0.15);
+    out.push(ring(core));
+    const petals = rng.int(5, 7);
+    for (let k = 0; k < petals; k++) {
+      const a = (k / petals) * TAU, pr = core * 0.28, px = cx + Math.cos(a) * core * 0.55, py = cy + Math.sin(a) * core * 0.55;
+      out.push({ pts: Array.from({ length: 13 }, (_, j) => [px + Math.cos((j / 12) * TAU) * pr, py + Math.sin((j / 12) * TAU) * pr] as Pt), close: true });
+    }
+    // Areolae: spacing along a row is d; a row starts where the gap to its neighbours has
+    // grown to about d, so the texture stays even from the centre to the rim.
+    const d = (R * rng.range(0.042, 0.052)) / Math.sqrt(Math.max(0.35, detail));
+    const twist = rng.range(-0.35, 0.35);
+    const rows0 = rng.int(14, 20), levels = 3, rows = rows0 * 2 ** levels;
+    const rows_: Drawn = [];
+    // One primary row is drawn with the accent pen, the way a plotter picks out a feature.
+    const accentRow = rng.int(0, rows0 - 1) * (rows / rows0);
+    for (let i = 0; i < rows; i++) {
+      let level = 0;
+      while (level < levels && i % (rows / (rows0 * 2 ** level)) !== 0) level++;
+      const nAt = rows0 * 2 ** level;
+      const rStart = Math.max(core * 1.35, (nAt * d) / TAU);
+      const a0 = (i / rows) * TAU;
+      for (let r = rStart; r < R * 0.9; r += d) {
+        const a = a0 + twist * (r / R) ** 2;
+        const half = Math.min(d * 0.32, (Math.PI * r) / nAt * 0.45);
+        const tx = -Math.sin(a), ty = Math.cos(a), x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+        rows_.push({ pts: [[x - tx * half, y - ty * half], [x + tx * half, y + ty * half]], pen: i === accentRow ? 'accent' : 'ink' });
+      }
+    }
+    return [...out, ...rows_];
   },
 
   // A ridgeline plot with hidden-line removal (front lines occlude the ones behind).

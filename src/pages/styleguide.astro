@@ -13,7 +13,7 @@ import CodeBlock from '../components/CodeBlock.astro';
 import Prose from '../components/Prose.astro';
 import PlotPlayground from '../components/islands/PlotPlayground.svelte';
 import Sample from '../components/styleguide/Sample.md';
-import { SPECIES } from '../lib/plot/specimen';
+import { ALL_SPECIES } from '../lib/plot/specimen';
 import type { LabEntry } from '../data/lab';
 
 const colours = [
@@ -80,9 +80,9 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
       <p class="margin label">§3 · Specimens</p>
       <div>
         <h2 id="sg-plots">The signature motif</h2>
-        <p class="muted sg-note">Five plotter species. A seed (usually a page's slug) picks the species and its parameters. Drawn stroke by stroke when scrolled into view.</p>
+        <p class="muted sg-note">Six plotter species. A seed (usually a page's slug) picks one of the first five and its parameters; the sixth, the diatom valve, is drawn only where a page asks for it (Pl. VIII). Drawn stroke by stroke when scrolled into view.</p>
         <div class="species">
-          {SPECIES.map((s, i) => (
+          {ALL_SPECIES.map((s, i) => (
             <Figure n={`3.${i + 1}`} caption={`${s}, seed “sg-${s}”`}>
               <Plot seed={`sg-${s}`} species={s} detail={0.8} draw label={`A ${s} plotter specimen`} />
             </Figure>
