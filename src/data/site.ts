@@ -15,8 +15,8 @@ export const site = {
   repo: 'https://github.com/dmn777/agentic-website',
   frictionLog: 'https://github.com/dmn777/agentic-website/blob/main/FRICTION_LOG.md',
   v1: '/v1/',
-  /** Hosted Sanity Studio, once T15 has deployed it. */
-  studio: null as string | null,
+  /** Hosted Sanity Studio for the Notes (editors sign in; it redirects to Sanity's dashboard). */
+  studio: 'https://agentic-website.sanity.studio/' as string | null,
 };
 
 /** Main navigation. Notes appears once the Notes section is live. */

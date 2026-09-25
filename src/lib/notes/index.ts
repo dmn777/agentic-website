@@ -1,6 +1,6 @@
 // Notes adapter. Returns one view model whatever the source:
 // - local seeds (content/notes-seed/NN-slug.md), converted with markdownToPortableText;
-// - Sanity, once sanityConfig.projectId is set (wired in T16).
+// - Sanity, once sanityConfig.source is 'sanity' (wired in T16).
 import { parseSeed, toPlainText, type PTBlock } from './markdown-to-pt';
 import { sanityConfig } from './sanity.config';
 
@@ -32,7 +32,7 @@ let cache: Promise<Note[]> | null = null;
 /** All notes, newest first. */
 export function allNotes(): Promise<Note[]> {
   cache ??= (async () => {
-    if (sanityConfig.projectId) throw new Error('Sanity source is wired in T16');
+    if (sanityConfig.source === 'sanity') throw new Error('Sanity source is wired in T16');
     return fromSeeds().sort((a, b) => b.date.localeCompare(a.date) || b.number - a.number);
   })();
   return cache;

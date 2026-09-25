@@ -16,7 +16,8 @@
     "qa:links": "node scripts/qa/links.mjs",
     "qa:redirects": "node scripts/qa/redirects.mjs",
     "qa:sheet": "node scripts/qa/sheet.mjs",
-    "qa:claims": "node scripts/qa/claims.mjs"
+    "qa:claims": "node scripts/qa/claims.mjs",
+    "sanity:smoke": "node scripts/sanity/smoke.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
@@ -25,6 +26,7 @@
     "@fontsource-variable/imbue": "^5.3.0",
     "@fontsource-variable/martian-mono": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
+    "@sanity/client": "^8.7.0",
     "astro": "^7.3.3",
     "astro-portabletext": "^1.0.1",
     "mdast-util-from-markdown": "^2.0.3",
