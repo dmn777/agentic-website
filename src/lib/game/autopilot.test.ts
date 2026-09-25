@@ -25,6 +25,16 @@ describe('autopilot', () => {
     expect(g.stats.bestLoop.n).toBeGreaterThanOrEqual(2);
     expect(g.stats.rimHits).toBeLessThanOrEqual(6);
   });
+  it('prefers a cluster it can be seen looping (outside the title card)', () => {
+    const g = createGame('pilot-avoid', { spawn: false });
+    start(g);
+    g.noHazards = true;
+    const pair = (id: number, x: number, y: number) => [0, 1].map((k) => ({ id: id + k, kind: 'disc' as const, x: x + k * 20, y, vx: 0, vy: 0, rot: 0, spin: 0, r: 14, age: 0 }));
+    g.diatoms = [...pair(10, -10, 60), ...pair(20, -10, -290)]; // under the card / in view
+    const pilot = createAutopilot({ avoid: (c) => c.y > -170 });
+    for (let i = 0; i < 60 * 12 && g.stats.captured === 0; i++) step(g, pilot(g));
+    expect(g.diatoms.map((d) => d.id).sort()).toEqual([10, 11]);
+  });
   it('is deterministic', () => {
     const run = () => {
       const g = createGame('pilot-det'); start(g); Object.assign(g, { ink: Infinity, noHazards: true });

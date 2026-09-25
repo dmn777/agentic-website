@@ -74,8 +74,10 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
     starts a fresh line.
   - The four newest segments are never tested, so a line can't cross itself at the pen.
 - **Diatoms.** They spawn at random points at least 180 u from the pen, drift at
-  10–30 u/s with a slow spin, and bounce off the rim. (They were 15–45 until playtest 1:
-  at that speed, clusters broke up during a 4–5 s lap.) Four species:
+  10–30 u/s with a slow spin, and bounce 45 u inside the rim, so a loop can always get
+  round them. (They were 15–45 until playtest 1: at that speed, clusters broke up during
+  a 4–5 s lap. The 45 u margin came in polish 2, after the aim clamp had made rim
+  diatoms uncatchable.) Four species:
   | Species | Look | Points | Speed | Share |
   | --- | --- | --- | --- | --- |
   | *Coscinodiscus* (disc) | radial, round | 10 | slow | 55 % |
@@ -90,7 +92,7 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
   - A contaminant *inside* a closed loop is removed for 25 points. It is risky but
     allowed.
 - **Ink.** A run starts with 100, and catches can overfill the well to **120**. It
-  drains all the time, at 2.2 → 5.5 per second as the difficulty rises. **A loop
+  drains all the time, at 2.2 → 4.5 per second as the difficulty rises. **A loop
   refills the way it scores: (the sum of its catches' ink) × n.** A diatom is worth 14
   ink and the star 25, so one disc refills 14, two refill 56, and three fill the well.
   Greed pays in ink as well as points. **At 0 ink the run ends.** A passive pen runs dry
@@ -107,10 +109,10 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
 | Parameter | d = 0 | d = 1 |
 | --- | --- | --- |
 | pen speed | 170 u/s | 250 u/s |
-| ink drain | 2.2 /s | 5.5 /s |
+| ink drain | 2.2 /s | 4.5 /s |
 | diatoms on the field (target) | 9 | 5 |
 | diatom respawn delay | 0.8 s | 1.8 s |
-| contaminants (target) | 1 (from t = 12 s) | 6 (+1 at d = 0.3, 0.5, 0.65, 0.8, 0.9) |
+| contaminants (target) | 1 (from t = 12 s) | 6 (+1 at d = 0.4, 0.6, 0.75, 0.85, 0.93) |
 | contaminant speed | 45 u/s | 115 u/s |
 | contaminant homing | 0.1 rad/s | 0.6 rad/s |
 
@@ -145,6 +147,18 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
   percentile 215 s, best 240 s, median score 1,010). The naive "point at the nearest
   diatom" bot went from 42 s to 79 s. That puts a new player at 1–2 minutes and a
   practised player towards the intended 4–6.
+- **T13, playtest 2 retune (polish 2, the last).** The re-playtest confirmed the gains:
+  the skilled bot lasted a median 157 s, and a hand-steered run lasted 2:46. It found a
+  death spiral once the third contaminant arrived (d = 0.5, 139 s): snaps went from 3 to
+  11 per minute, mostly behind the nib where nobody is looking. Practised runs ended at
+  2.5–3 minutes instead of 4–6, and greed didn't change survival. The changes:
+  - contaminant steps at d = 0.4, 0.6, 0.75, 0.85, 0.93;
+  - drain 2.2 → 4.5;
+  - diatoms bounce 45 u inside the rim.
+  On a bundle of the real sim, over 40 seeds: the skilled bot's median went from 157 s
+  to 220 s (90th percentile 289 s, best 380 s, median score 1,580), and the naive bot's
+  from 80 s to 116 s. Its catches per loop rose from 1.41 to 1.55. That puts a new
+  player at about 2 minutes and a practised one at 4–6.
 
 ## Juice (feedback)
 
@@ -166,6 +180,11 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
 - **Attract mode:** behind the title card, an autopilot pen (`autopilot.ts`, tested)
   flies a field of its own and closes loops around clusters, washes and all. It shows
   the verb before the rules ask for it, and stands still under reduced motion.
+  - The title card docks low and the pilot prefers the upper field, so the demo stays in
+    view.
+  - On phones only Start sits on the field, and the rules are a caption under the
+    controls, which therefore never move when a run starts.
+- **Low ink:** below 20, the whole ink ring and a ring round the nib pulse.
 - **Reduced motion** (`prefers-reduced-motion`): no shake, no particles, no flying
   diatoms, and fades become instant state changes. The game itself still moves (it is a
   game), but nothing moves that isn't gameplay.

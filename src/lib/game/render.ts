@@ -31,7 +31,7 @@ export interface Renderer {
   /** Screen (CSS px, relative to the canvas) → world units. */
   toWorld(px: number, py: number): Vec;
   events(evts: GameEvent[], now: number): void;
-  /** A new slide (every 1,000 points): a banner across the field. */
+  /** A new slide (every SLIDE_POINTS): a banner across the field. */
   milestone(slide: number, now: number): void;
   /** Clear effects and the game-over blot (a new run or a new seed). */
   reset(): void;
@@ -318,6 +318,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       const low = g.ink < 20 && g.mode === 'play';
       ctx.globalAlpha = low && !still ? 0.55 + 0.45 * Math.sin(now / 90) : low ? 1 : 0.2 + 0.25 * (1 - f);
       if (f > 0) { ctx.beginPath(); ctx.arc(0, 0, rr, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.stroke(); }
+      // Running low: the whole ring and a ring round the nib pulse, where the eyes are.
+      if (low) {
+        const pulse = still ? 1 : 0.5 + 0.5 * Math.sin(now / 90);
+        ctx.globalAlpha = 0.35 * pulse;
+        ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 0.9 * pulse; ctx.lineWidth = px(2);
+        ctx.beginPath(); ctx.arc(g.pen.x, g.pen.y, px(11 + (still ? 0 : 3 * pulse)), 0, Math.PI * 2); ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -354,7 +362,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
         ctx.font = `600 ${px(15)}px ${MONO}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = px(4); ctx.strokeStyle = COLORS.slide; ctx.lineJoin = 'round';
-        const y = c.y - (still ? 0 : age * px(28));
+        const y = c.y - px(22) - (still ? 0 : age * px(28)); // above the catches, not on them
         ctx.strokeText(e.text, c.x, y);
         ctx.fillStyle = COLORS.glass; ctx.fillText(e.text, c.x, y);
         ctx.restore();

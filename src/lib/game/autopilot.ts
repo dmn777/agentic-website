@@ -5,9 +5,12 @@
 import { R, TURN, type Game, type Input } from './sim';
 import type { Vec } from './geometry';
 
-const REPLAN = 7; // s on one target before giving up
+const REPLAN = 7;   // s on one target before giving up
+const REACH = 380;  // u: a cluster centred further out can't be looped whole
 
-export function createAutopilot(): (g: Game) => Input {
+/** `avoid` marks cluster centres the pilot should rather not use (where the title card
+ *  would hide the demo). */
+export function createAutopilot(opts: { avoid?: (c: Vec) => boolean } = {}): (g: Game) => Input {
   let ids: number[] = [];
   let since = 0;
   let loops = -1;
@@ -17,7 +20,9 @@ export function createAutopilot(): (g: Game) => Input {
     ids = [];
     for (const d of g.diatoms) {
       const near = g.diatoms.filter((e) => Math.hypot(e.x - d.x, e.y - d.y) < 90);
-      const score = near.length * 300 - Math.hypot(d.x - g.pen.x, d.y - g.pen.y);
+      const c = { x: near.reduce((s, e) => s + e.x, 0) / near.length, y: near.reduce((s, e) => s + e.y, 0) / near.length };
+      const score = near.length * 300 - Math.hypot(d.x - g.pen.x, d.y - g.pen.y)
+        - (Math.hypot(c.x, c.y) > REACH ? 900 : 0) - (opts.avoid?.(c) ? 700 : 0);
       if (score > best) { best = score; ids = near.map((e) => e.id); }
     }
     since = g.t;

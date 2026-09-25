@@ -11,6 +11,7 @@ export const TURN = 3.4;         // rad/s
 export const MAX_TRAIL = 1500;   // u of wet ink
 export const MIN_LOOP_AREA = 1500;
 export const PEN_R = 5;
+export const SLIDE_POINTS = 500; // a "slide" milestone every this many points
 export const MAX_INK = 120;      // a run starts at 100; catches can overfill to this
 const SKIP_NEWEST = 4;           // segments next to the nib are never tested for crossings
 const RIM_COST = 3, SNAP_COST = 6;
@@ -18,6 +19,7 @@ const RIM_COOLDOWN = 0.5;        // s: the rim charges at most this often
 const AIM_REACH = 0.85 * 500;    // an aim point outside this radius is pulled in to it
 export const HAZARD_GRACE = 12;  // s before the first contaminant
 const HAZARD_POINTS = 25;
+const RIM_CLEAR = 45;            // u diatoms keep from the rim, so a loop can get round them
 
 export type Mode = 'title' | 'play' | 'paused' | 'over';
 export type Species = 'disc' | 'boat' | 'triangle' | 'star';
@@ -95,7 +97,7 @@ function spawnDiatom(g: Game): void {
   const r = g.rng;
   let x = 0, y = 0;
   for (let tries = 0; tries < 30; tries++) {
-    const a = r.range(0, Math.PI * 2), rad = (R - 50) * Math.sqrt(r.next());
+    const a = r.range(0, Math.PI * 2), rad = (R - 70) * Math.sqrt(r.next());
     x = rad * Math.cos(a); y = rad * Math.sin(a);
     if (Math.hypot(x - g.pen.x, y - g.pen.y) >= 180) break;
   }
@@ -196,7 +198,7 @@ export function step(g: Game, input: Input): void {
   // Diatoms drift, spin, bounce, and the star leaves after its time.
   for (const dm of g.diatoms) {
     dm.x += dm.vx * DT; dm.y += dm.vy * DT; dm.rot += dm.spin * DT; dm.age += DT;
-    bounce(dm, dm.r);
+    bounce(dm, dm.r + RIM_CLEAR);
   }
   g.diatoms = g.diatoms.filter((dm) => !(SPECIES[dm.kind].ttl && dm.age > SPECIES[dm.kind].ttl!));
 
@@ -265,7 +267,7 @@ function closeLoop(g: Game, poly: Vec[]): void {
 export function snapshot(g: Game) {
   return {
     seed: g.seed, mode: g.mode, tick: g.tick, t: +g.t.toFixed(3), d: +g.d.toFixed(4), params: g.params,
-    score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason, hazardGrace: HAZARD_GRACE,
+    score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason, hazardGrace: HAZARD_GRACE, slidePoints: SLIDE_POINTS,
     pen: { x: +g.pen.x.toFixed(2), y: +g.pen.y.toFixed(2), heading: +g.pen.heading.toFixed(4) },
     trailLen: +g.trailLen.toFixed(2), trailPoints: g.trail.length,
     diatoms: g.diatoms.length, hazards: g.hazards.length, stats: { ...g.stats, bestLoop: { ...g.stats.bestLoop } },

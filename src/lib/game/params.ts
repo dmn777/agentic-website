@@ -12,7 +12,7 @@ export interface Params {
 }
 
 const TAU = 200; // s
-const HAZARD_STEPS = [0.3, 0.5, 0.65, 0.8, 0.9];
+const HAZARD_STEPS = [0.4, 0.6, 0.75, 0.85, 0.93];
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /** d(t) = 1 − e^(−t/200): 0 at the start, ½ after ~139 s, ~0.78 after 5 min. */
@@ -21,7 +21,7 @@ export const difficulty = (t: number) => 1 - Math.exp(-Math.max(0, t) / TAU);
 export function paramsAt(d: number): Params {
   return {
     penSpeed: lerp(170, 250, d),
-    drain: lerp(2.2, 5.5, d),
+    drain: lerp(2.2, 4.5, d),
     diatomTarget: Math.round(lerp(9, 5, d)),
     respawnDelay: lerp(0.8, 1.8, d),
     hazardTarget: 1 + HAZARD_STEPS.filter((s) => d >= s).length,

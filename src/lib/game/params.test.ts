@@ -18,10 +18,10 @@ describe('difficulty', () => {
 describe('paramsAt', () => {
   it('matches the table at both ends', () => {
     expect(paramsAt(0)).toMatchObject({ penSpeed: 170, drain: 2.2, diatomTarget: 9, respawnDelay: 0.8, hazardTarget: 1, hazardSpeed: 45, homing: 0.1 });
-    expect(paramsAt(1)).toMatchObject({ penSpeed: 250, drain: 5.5, diatomTarget: 5, respawnDelay: 1.8, hazardTarget: 6, hazardSpeed: 115, homing: 0.6 });
+    expect(paramsAt(1)).toMatchObject({ penSpeed: 250, drain: 4.5, diatomTarget: 5, respawnDelay: 1.8, hazardTarget: 6, hazardSpeed: 115, homing: 0.6 });
   });
   it('adds a contaminant at each threshold', () => {
-    expect([0.2, 0.3, 0.45, 0.5, 0.65, 0.79, 0.8, 0.9].map((d) => paramsAt(d).hazardTarget)).toEqual([1, 2, 2, 3, 4, 4, 5, 6]);
+    expect([0.3, 0.4, 0.55, 0.6, 0.75, 0.84, 0.85, 0.93].map((d) => paramsAt(d).hazardTarget)).toEqual([1, 2, 2, 3, 4, 4, 5, 6]);
   });
   it('gets harder in every parameter as d rises (monotone)', () => {
     let p = paramsAt(0);

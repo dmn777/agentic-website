@@ -4,7 +4,7 @@
   // sound and the screens. With ?test=1 the real-time loop is off and window.__game drives
   // it (contract: GAME_DESIGN.md §Test hook; harness: scripts/qa/game.mjs).
   import { onMount } from 'svelte';
-  import { createGame, start, step, togglePause, snapshot, DT, MAX_INK, type Game, type Input } from '../../lib/game/sim';
+  import { createGame, start, step, togglePause, snapshot, DT, MAX_INK, SLIDE_POINTS as SLIDE, type Game, type Input } from '../../lib/game/sim';
   import { createRenderer, type Renderer } from '../../lib/game/render';
   import { createSound, type Sound } from '../../lib/game/audio';
   import { createAutopilot } from '../../lib/game/autopilot';
@@ -12,7 +12,6 @@
   import { prefersReducedMotion } from '../../scripts/theme';
 
   const BEST_KEY = 'darkfield.best';
-  const SLIDE = 500;
   let wRaw = $state(640);
   const size = $derived(Math.min(680, usable(wRaw, 640, 240)));
 
@@ -23,7 +22,8 @@
   // pen shows the verb (loops, catches). It never touches the real game, and it stands
   // still under reduced motion.
   let demo: Game | null = null;
-  const pilot = createAutopilot();
+  // The title card docks low, so the pilot works the upper field where it can be seen.
+  const pilot = createAutopilot({ avoid: (c) => c.y > -170 });
   let inkHit = $state(false);
   let inkHitTimer = 0;
   let renderer: Renderer | null = null;
@@ -251,7 +251,6 @@
           <li>When your line crosses itself, the loop closes and catches every diatom inside. Catch several at once and they multiply, in points and in ink.</li>
           <li>Your ink drains all the time, and the rim costs a little. Keep your pen and your line clear of the amber contaminants.</li>
         </ol>
-        <p class="card__rules--short">Loop your ink around diatoms to catch them: the more in one loop, the more points and ink. Avoid the amber contaminants. Hold a finger where the pen should go, or use ◀ ▶.</p>
         <button class="btn btn--primary" type="button" data-action="start" onclick={begin}>Start</button>
       </div>
     {:else if mode === 'paused'}
@@ -274,6 +273,10 @@
     {/if}
   </div>
 
+  {#if mode === 'title'}
+    <!-- Phones: the rules sit under the field, so the demo above the Start button stays in view. -->
+    <p class="title-caption">Loop your ink around diatoms to catch them: the more in one loop, the more points and ink. Avoid the amber contaminants. Hold a finger where the pen should go, or use ◀ ▶.</p>
+  {/if}
   <div class="thumbs" aria-label="Steering buttons">
     <button class="thumb" type="button" data-touch="left" aria-label="Steer left"
       onpointerdown={(e) => thumb('left', true, e)} onpointerup={() => thumb('left', false)}
@@ -324,7 +327,8 @@
   .card__title { font-family: var(--font-display); font-size: var(--step-3); line-height: 1; margin: 0 0 var(--space-3xs); }
   .card__score { font-size: var(--step-4); display: flex; align-items: baseline; gap: 0.6rem; }
   .card__unit { color: var(--ink-3); }
-  .card__rules--short { display: none; margin: 0 0 var(--space-xs); }
+  .card--title { top: 62%; }
+  .title-caption { display: none; margin: 0; max-width: 34rem; font-size: var(--step-0); line-height: 1.4; color: var(--ink-2); }
   .card__rules { margin: 0 0 var(--space-xs); padding-left: 1.2em; font-size: var(--step-0); line-height: 1.35; display: grid; gap: 0.4em; }
   .card__best { margin: 0; font-size: var(--step--1); color: var(--ink-2); }
   .card__stats { display: flex; gap: var(--space-s); margin: 0 0 var(--space-xs); font-family: var(--font-mono); flex-wrap: wrap; }
@@ -343,7 +347,8 @@
   @media (pointer: coarse), (max-width: 40rem) {
     .darkfield {
       grid-template-columns: auto minmax(0, 1fr) auto;
-      grid-template-areas: "stats stats stats" "stage stage stage" "left mid right";
+      /* The caption goes below the controls, so they don't jump when it leaves at Start. */
+      grid-template-areas: "stats stats stats" "stage stage stage" "left mid right" "caption caption caption";
       row-gap: var(--space-2xs);
     }
     .hud, .thumbs { display: contents; }
@@ -353,13 +358,14 @@
     [data-touch="left"] { grid-area: left; }
     [data-touch="right"] { grid-area: right; }
   }
-  /* Phones: the cards must fit inside the disc, so the title card trades its list for two
-     sentences (the full rules are in §2 just below), and body text stays at 16 px. */
+  /* Phones: the cards must fit inside the disc. The title card keeps only Start, low on the
+     field, and the rules move to a caption under it; body text stays at 16 px. */
   @media (max-width: 40rem) {
     .card { padding: var(--space-s); gap: var(--space-3xs); }
     .card__rules--full { display: none; }
     .card--over { top: calc(50% + var(--away, 0) * 4%); }
-    .card__rules--short { display: block; font-size: var(--step-0); line-height: 1.35; }
+    .card--title { top: auto; bottom: 9%; transform: translateX(-50%); width: auto; padding: var(--space-2xs); }
+    .title-caption { display: block; grid-area: caption; }
     .card__best { font-size: var(--step-0); }
     .card__score { font-size: var(--step-3); gap: 0.5rem; }
     .card__stats { gap: var(--space-2xs) var(--space-s); margin-bottom: var(--space-3xs); }

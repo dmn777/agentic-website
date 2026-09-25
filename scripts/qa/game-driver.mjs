@@ -123,7 +123,8 @@ export function qaLib() {
     if (b.stats.snaps > a.stats.snaps) out.push({ type: 'snap', ...at, ink: b.ink });
     if (b.stats.rimHits > a.stats.rimHits) out.push({ type: 'rim', ...at, ink: b.ink });
     if (a.ink >= 20 && b.ink < 20 && b.mode === 'play') out.push({ type: 'lowInk', ...at });
-    if (Math.floor(b.score / 1000) > Math.floor(a.score / 1000)) out.push({ type: 'slide', ...at, slide: Math.floor(b.score / 1000) + 1 });
+    const per = b.slidePoints ?? 500; // the game's own slide size, from its state
+    if (Math.floor(b.score / per) > Math.floor(a.score / per)) out.push({ type: 'slide', ...at, slide: Math.floor(b.score / per) + 1 });
     if (b.mode === 'over' && a.mode !== 'over') out.push({ type: 'over', ...at, reason: b.overReason, score: b.score, best: b.best });
     return out;
   }

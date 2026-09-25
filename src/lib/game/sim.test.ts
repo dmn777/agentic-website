@@ -281,6 +281,15 @@ describe('the ink economy and difficulty', () => {
 });
 
 describe('species', () => {
+  it('keep 45 u clear of the rim, so a loop can always get round them', () => {
+    const g = createGame('rim-clear');
+    start(g);
+    Object.assign(g, { ink: 1e9, noHazards: true });
+    for (let i = 0; i < 60 * 60; i++) {
+      step(g, idle);
+      for (const d of g.diatoms) expect(Math.hypot(d.x, d.y)).toBeLessThanOrEqual(R - d.r - 45 + 1e-6);
+    }
+  });
   it('drift slowly enough (10–30 u/s) that a cluster survives a lap', () => {
     for (const k of Object.keys(SPECIES) as (keyof typeof SPECIES)[]) {
       expect(SPECIES[k].speed[0]).toBeGreaterThanOrEqual(10);
@@ -327,6 +336,7 @@ describe('snapshot', () => {
     expect(s.diatomList[0]).toEqual({ x: +g.diatoms[0].x.toFixed(1), y: +g.diatoms[0].y.toFixed(1), kind: g.diatoms[0].kind });
     expect(s.hazardList).toEqual([{ x: 12.3, y: -6.8 }]);
     expect(s.hazardGrace).toBe(12);
+    expect(s.slidePoints).toBe(500);
     expect(JSON.parse(JSON.stringify(s))).toEqual(s);
   });
 });
