@@ -1,40 +1,44 @@
 // Notes adapter. Returns one view model whatever the source:
-// - local seeds (content/notes-seed/NN-slug.md), converted with markdownToPortableText;
-// - Sanity, once sanityConfig.source is 'sanity' (wired in T16).
-import { parseSeed, toPlainText, type PTBlock } from './markdown-to-pt';
+// - Sanity (the source of truth since T16): published posts, fetched once per build with
+//   the anonymous client (public dataset, no token, no CDN cache);
+// - the local seeds (content/notes-seed/NN-slug.md), converted with markdownToPortableText.
+//   Used when sanityConfig.source is 'seeds', or with NOTES_SOURCE=seeds for offline work.
+// A failed Sanity fetch fails the build: shipping stale seeds would silently undo edits.
+import { createClient } from '@sanity/client';
+import { parseSeed } from './markdown-to-pt';
+import { finishNotes, type Note, type NoteSummary } from './note';
+import { NOTES_QUERY, postsToNotes, type FetchedPost } from './sanity';
 import { sanityConfig } from './sanity.config';
 
-export interface Note {
-  slug: string; title: string; date: string; excerpt: string; tags: string[]; model: string;
-  body: PTBlock[];
-  /** Position in the journal, 1 = first entry. */
-  number: number;
-  words: number;
-  minutes: number;
-}
-/** What the Home slot and listings need. */
-export type NoteSummary = Pick<Note, 'slug' | 'title' | 'date' | 'excerpt' | 'tags' | 'model' | 'number' | 'minutes'>;
+export type { Note, NoteSummary };
 
 const seedFiles = import.meta.glob('/content/notes-seed/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 function fromSeeds(): Note[] {
-  return Object.entries(seedFiles)
+  const chronological = Object.entries(seedFiles)
     .filter(([p]) => /\/\d\d-[^/]+\.md$/.test(p))
-    .map(([p, src]) => {
-      const seed = parseSeed(src);
-      const number = Number(p.match(/\/(\d\d)-/)![1]);
-      const words = toPlainText(seed.body).split(/\s+/).filter(Boolean).length;
-      return { ...seed, number, words, minutes: Math.max(1, Math.round(words / 220)) };
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, src]) => {
+      const { date, ...seed } = parseSeed(src);
+      return { ...seed, date: date.slice(0, 10), images: [] };
     });
+  return finishNotes(chronological);
 }
+
+async function fromSanity(): Promise<Note[]> {
+  const { projectId, dataset, apiVersion } = sanityConfig;
+  const client = createClient({ projectId, dataset, apiVersion, useCdn: false, perspective: 'published' });
+  const posts = await client.fetch<FetchedPost[]>(NOTES_QUERY);
+  return postsToNotes(posts);
+}
+
+export const notesSource = (): 'seeds' | 'sanity' =>
+  process.env.NOTES_SOURCE === 'seeds' || process.env.NOTES_SOURCE === 'sanity' ? process.env.NOTES_SOURCE : sanityConfig.source;
 
 let cache: Promise<Note[]> | null = null;
 /** All notes, newest first. */
 export function allNotes(): Promise<Note[]> {
-  cache ??= (async () => {
-    if (sanityConfig.source === 'sanity') throw new Error('Sanity source is wired in T16');
-    return fromSeeds().sort((a, b) => b.date.localeCompare(a.date) || b.number - a.number);
-  })();
+  cache ??= notesSource() === 'sanity' ? fromSanity() : Promise.resolve(fromSeeds());
   return cache;
 }
 

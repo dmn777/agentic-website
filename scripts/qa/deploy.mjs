@@ -1,14 +1,16 @@
 // qa:deploy — deploy verification after a push (TESTING.md §Deploy verification).
 //
 //   npm run qa:deploy [-- --sha <sha>] [--routes /,/lab/] [--label T5] [--after <ISO time>]
-//                     [--timeout 600] [--no-shots]
+//                     [--timeout 600] [--no-shots] [--expect <text>]
 //
 // 1. Polls the GitHub Actions runs for the commit (default: HEAD) until the newest one
 //    completes, and requires conclusion=success. --after ignores runs created earlier
 //    (useful for re-runs triggered by workflow_dispatch on the same commit).
 // 2. Fetches every route on the live site (cache-busted) and requires 200. When a page
 //    carries <meta name="build-sha">, it must match the commit; the check retries for up
-//    to 3 minutes while the Pages CDN catches up.
+//    to 3 minutes while the Pages CDN catches up. A <meta name="build-run"> must equal the
+//    run's id, which tells apart rebuilds of the same commit. --expect requires each
+//    route's HTML to contain the given text (for content changes made outside git).
 // 3. Takes a desktop-light screenshot of each route.
 // The GitHub token is read from the private _secrets file and is never printed.
 import fs from 'node:fs';
@@ -61,22 +63,27 @@ async function waitForRun(sha, { after, timeoutS }) {
   throw new Error(`Timed out after ${timeoutS}s waiting for the Actions run of ${sha.slice(0, 7)}`);
 }
 
-async function checkRoute(route, sha) {
+async function checkRoute(route, sha, runId, expect) {
   const t0 = Date.now();
-  let status = 0, buildSha = null;
+  let status = 0, buildSha = null, buildRun = null, found = !expect;
+  const fresh = () => status === 200 && (!buildSha || buildSha === sha) && (!buildRun || buildRun === String(runId)) && found;
   while (Date.now() - t0 < 180_000) {
     const u = `${LIVE}${route}${route.includes('?') ? '&' : '?'}qa=${sha.slice(0, 7)}-${Date.now()}`;
     const res = await fetch(u, { redirect: 'manual', headers: { 'cache-control': 'no-cache' } });
     status = res.status;
     const html = status === 200 ? await res.text() : '';
     buildSha = html.match(/<meta[^>]+name=["']build-sha["'][^>]+content=["']([0-9a-f]+)["']/i)?.[1] ?? null;
-    if (status === 200 && (!buildSha || buildSha === sha)) break;
+    buildRun = html.match(/<meta[^>]+name=["']build-run["'][^>]+content=["'](\d+)["']/i)?.[1] ?? null;
+    found = !expect || html.includes(expect);
+    if (fresh()) break;
     await sleep(15_000);
   }
   const problems = [];
   if (status !== 200) problems.push(`status ${status}`);
   if (buildSha && buildSha !== sha) problems.push(`build-sha ${buildSha.slice(0, 7)} ≠ ${sha.slice(0, 7)} after 3 min`);
-  return { route, status, buildSha, shaChecked: !!buildSha, problems, ok: problems.length === 0 };
+  if (buildRun && buildRun !== String(runId)) problems.push(`build-run ${buildRun} ≠ run ${runId} after 3 min`);
+  if (!found) problems.push(`text not found after 3 min: ${JSON.stringify(expect)}`);
+  return { route, status, buildSha, buildRun, shaChecked: !!buildSha, runChecked: !!buildRun, expectFound: expect ? found : undefined, problems, ok: problems.length === 0 };
 }
 
 async function main() {
@@ -90,7 +97,7 @@ async function main() {
   const run = await waitForRun(sha, { after: args.after, timeoutS: Number(args.timeout ?? 600) });
   const summary = {
     sha, label, when: new Date().toISOString(),
-    run: { url: run.html_url, name: run.name, number: run.run_number, event: run.event, conclusion: run.conclusion },
+    run: { id: run.id, url: run.html_url, name: run.name, number: run.run_number, event: run.event, conclusion: run.conclusion },
     routes: [], ok: false,
   };
   console.log(`  ${run.html_url}`);
@@ -105,7 +112,8 @@ async function main() {
     ? String(args.routes).split(',').map((r) => r.trim()).filter(Boolean)
     : discoverRoutes().map((r) => r.route);
   console.log(`Checking ${routes.length} live route(s)…`);
-  summary.routes = await Promise.all(routes.map((r) => checkRoute(r, sha)));
+  const expect = typeof args.expect === 'string' ? args.expect : undefined;
+  summary.routes = await Promise.all(routes.map((r) => checkRoute(r, sha, run.id, expect)));
 
   if (!args['no-shots']) {
     const browser = await chromium.launch();
@@ -124,7 +132,7 @@ async function main() {
   summary.ok = summary.routes.every((r) => r.ok);
   fs.writeFileSync(path.join(outDir, 'summary.json'), JSON.stringify(summary, null, 2));
   for (const r of summary.routes)
-    console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${r.route} ${r.status}${r.shaChecked ? ' sha✓' : ''}${r.problems.length ? '  ' + r.problems.join('; ') : ''}`);
+    console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${r.route} ${r.status}${r.shaChecked ? ' sha✓' : ''}${r.runChecked ? ' run✓' : ''}${r.expectFound ? ' text✓' : ''}${r.problems.length ? '  ' + r.problems.join('; ') : ''}`);
   const unchecked = summary.routes.filter((r) => r.ok && !r.shaChecked).length;
   if (unchecked) console.log(`  note: ${unchecked} route(s) carry no build-sha meta, so only the status was checked`);
   console.log(`\n${summary.ok ? 'DEPLOY OK' : 'DEPLOY FAILED'} → ${path.relative(SITE, outDir)}/summary.json`);

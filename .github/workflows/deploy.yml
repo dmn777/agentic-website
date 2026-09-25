@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # A Sanity publish can rebuild the site through this event (see SANITY.md §Publishing loop).
+  repository_dispatch:
+    types: [sanity-publish]
 
 permissions:
   contents: read

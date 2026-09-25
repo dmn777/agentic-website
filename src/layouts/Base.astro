@@ -20,7 +20,9 @@ interface Props {
 const { title, description = siteDescription, noindex = false, sheet } = Astro.props;
 const fullTitle = title === site.title ? `${site.title}: ${site.tagline}` : `${title} · ${site.title}`;
 // In CI, GITHUB_SHA identifies the commit being built; qa:deploy compares it with HEAD.
+// GITHUB_RUN_ID tells apart rebuilds of the same commit (deploy:trigger, Sanity publishes).
 const buildSha = process.env.GITHUB_SHA;
+const buildRun = process.env.GITHUB_RUN_ID;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 <!doctype html>
@@ -36,6 +38,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="color-scheme" content="light dark" />
     {noindex && <meta name="robots" content="noindex" />}
     {buildSha && <meta name="build-sha" content={buildSha} />}
+    {buildRun && <meta name="build-run" content={buildRun} />}
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <script is:inline>

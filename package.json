@@ -17,7 +17,9 @@
     "qa:redirects": "node scripts/qa/redirects.mjs",
     "qa:sheet": "node scripts/qa/sheet.mjs",
     "qa:claims": "node scripts/qa/claims.mjs",
-    "sanity:smoke": "node scripts/sanity/smoke.mjs"
+    "sanity:smoke": "node scripts/sanity/smoke.mjs",
+    "notes:push": "node scripts/sanity/push.mjs",
+    "deploy:trigger": "node scripts/deploy-trigger.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
