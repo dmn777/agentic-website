@@ -201,6 +201,12 @@ the *live* view the atlas was drawn from.
   - `seed(s)` makes a new game on the title screen.
   - `cheat({ ink?, hazards?: 'on' | 'frozen' | 'off' })`: harness-only switches for a
     bottomless ink well and for contaminants.
+  - Gotchas: `start` resets the cheats, so call `cheat` *after* `input('start')`.
+    `input('start')` restarts even mid-run, although the UI only offers it on the title
+    and game-over cards. Effects age by wall-clock time, so shot scripts
+    (`game-driver.mjs`, `states/darkfield.mjs`) swap in a virtual 60 fps clock. Chromium
+    delivers `pointermove` on animation frames, so after a pointer event wait two frames
+    before `step()`.
 - **DOM contract** (for the harness and the QA states): `.darkfield` is the root, and
   `.stage` (focusable) holds `canvas[data-qa-canvas]`. The cards are
   `[data-screen="title" | "paused" | "over"]`. Buttons: `[data-action="start"]` (Start /

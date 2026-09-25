@@ -72,8 +72,11 @@
     sync();
     root?.focus({ preventScroll: true });
   }
-  function pause() { if (game) { togglePause(game); sync(); } }
-  function toggleSound() { muted = !muted; sound?.setMuted(muted); }
+  // Keys are heard on the whole island, but a card button that unmounts drops focus to
+  // <body>. So whatever leaves a run in play hands focus back to the field.
+  const refocus = () => { if (game?.mode === 'play') root?.focus({ preventScroll: true }); };
+  function pause() { if (game) { togglePause(game); sync(); refocus(); } }
+  function toggleSound() { muted = !muted; sound?.setMuted(muted); refocus(); }
 
   function onKey(e: KeyboardEvent, down: boolean) {
     if (!game) return;
@@ -168,7 +171,10 @@
   const minutes = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 </script>
 
-<div class="darkfield" bind:clientWidth={wRaw}>
+<!-- Keys bubble here from the field and from every button in the island (the harness
+     caught steering dying after a click on Pause or Sound). -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="darkfield" bind:clientWidth={wRaw} onkeydown={(e) => onKey(e, true)} onkeyup={(e) => onKey(e, false)}>
   <div class="hud">
     <dl class="hud__stats">
       <div><dt>Score</dt><dd data-score>{score}</dd></div>
@@ -187,7 +193,7 @@
     </div>
   </div>
 
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
     class="stage"
     style:width="{size}px"
@@ -196,8 +202,6 @@
     role="application"
     aria-label="Darkfield game. Arrow keys or A and D steer; P pauses; M turns the sound on or off."
     bind:this={root}
-    onkeydown={(e) => onKey(e, true)}
-    onkeyup={(e) => onKey(e, false)}
   >
     <canvas
       bind:this={canvas}
