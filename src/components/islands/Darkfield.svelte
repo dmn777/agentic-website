@@ -297,8 +297,20 @@
   }
   .thumb:active { background: var(--paper-sunk); }
   .thumb:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  /* Touch and narrow screens: the thumb buttons sit under the field, with Sound and Pause
+     between them, so the HUD above stays on one line. */
   @media (pointer: coarse), (max-width: 40rem) {
-    .thumbs { display: flex; }
+    .darkfield {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: "stats stats stats" "stage stage stage" "left mid right";
+      row-gap: var(--space-2xs);
+    }
+    .hud, .thumbs { display: contents; }
+    .hud__stats { grid-area: stats; justify-self: start; }
+    .stage { grid-area: stage; }
+    .hud__buttons { grid-area: mid; justify-self: center; align-self: center; }
+    [data-touch="left"] { grid-area: left; }
+    [data-touch="right"] { grid-area: right; }
   }
   @media (max-width: 30rem) {
     .card { padding: var(--space-s); width: 92%; }

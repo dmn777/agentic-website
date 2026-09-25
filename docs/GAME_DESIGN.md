@@ -133,8 +133,11 @@ One continuous value, **d(t) = 1 − e^(−t / 140 s)**. It is monotone: 0 at th
 - **Ink:** the pen's line is brightest at the nib and dims along the trail. The ink gauge
   pulses and ticks when it drops below 20.
 - **Snap:** the trail shatters into fragments (particles), with a dry crack sound.
-- **Game over:** a 250 ms screen shake and an ink-blot bloom from the pen, then the
-  result card.
+- **Game over:** an ink-blot bloom from the pen, then the result card, which shows the
+  score, time, catches and best loop. A contaminant hit adds a 250 ms screen shake; running
+  dry doesn't, because nothing hit anything.
+- **Slides:** every 1,000 points a "Slide II" banner crosses the field, and the HUD
+  counts slides.
 - **Reduced motion** (`prefers-reduced-motion`): no shake, no particles, no flying
   diatoms, and fades become instant state changes. The game itself still moves (it is a
   game), but nothing moves that isn't gameplay.
@@ -160,8 +163,8 @@ the *live* view the atlas was drawn from.
 - A near-black blue slide (`#04070b` → `#0b1420` vignette) inside a circular field of
   light, with a faint reticle and a scale bar ("100 µm"), in both site themes. The page
   around it follows the theme.
-- Diatoms are pale cyan-white line drawings with a soft glow, generated from seeds the
-  way the site's plotter specimens are, and pre-rendered to sprites.
+- Diatoms are pale cyan-white line drawings with a soft glow, one drawing per species,
+  pre-rendered to sprites at the current canvas size.
 - The ink is the site's vermilion (`#ff6a48`, the dark-theme accent), the one link back
   to the plates. Contaminants are amber (`#ffb347`), the only warm colour besides the
   ink, so danger reads at a glance.
