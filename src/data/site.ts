@@ -16,9 +16,18 @@ export const site = {
   studio: null as string | null,
 };
 
-/** Main navigation. Until the v2 launch (T5) this points at the old pages that still exist. */
+/** Main navigation. Notes joins once the Notes section exists (T14). */
 export const nav: NavItem[] = [
-  { label: 'Workflow', href: '/workflow/' },
-  { label: 'How it works', href: '/how-it-works/' },
-  { label: 'Authors', href: '/authors/', match: '/authors/' },
+  { label: 'Lab', href: '/lab/', match: '/lab/' },
+  { label: 'About', href: '/about/' },
 ];
+
+/** Old (Cowork-era) URLs and their frozen twins under /v1/. Each gets a redirect stub. */
+export const legacyRedirects: Record<string, string> = {
+  'workflow': '/v1/workflow/',
+  'how-it-works': '/v1/how-it-works/',
+  'authors': '/v1/authors/',
+  'authors/claude-opus': '/v1/authors/claude-opus/',
+  'authors/claude-sonnet': '/v1/authors/claude-sonnet/',
+  'authors/david': '/v1/authors/david/',
+};

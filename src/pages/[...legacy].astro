@@ -1,0 +1,27 @@
+---
+// Redirect stubs for the first edition's URLs (they now live under /v1/). A meta refresh
+// works without JS; the inline script also carries the #fragment across. noindex +
+// canonical point search engines at the frozen copy.
+import { legacyRedirects } from '../data/site';
+import { url } from '../lib/url';
+
+export function getStaticPaths() {
+  return Object.entries(legacyRedirects).map(([legacy, to]) => ({ params: { legacy }, props: { to } }));
+}
+const target = url(Astro.props.to);
+const canonical = new URL(target, Astro.site).href;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Moved to the Cowork version</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={canonical} />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <script is:inline define:vars={{ target }}>location.replace(target + location.hash);</script>
+  </head>
+  <body>
+    <p>This page is part of the site's first edition, which now lives at <a href={target}>{target}</a>.</p>
+  </body>
+</html>

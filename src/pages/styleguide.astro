@@ -117,7 +117,7 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
         <div>
           <h3 class="sg-h3">Cards</h3>
           <ul class="lab-grid" role="list">
-            {samples.map((e) => <li><LabCard entry={e} /></li>)}
+            {samples.map((e) => <li><LabCard entry={e} href="#sg-components" /></li>)}
           </ul>
           <div class="row" style="margin-top: var(--space-l)">
             <Card class="plain-card"><p class="label">A plain card</p><p>Cards are cut square with crop marks at the corners, like plates waiting to be trimmed.</p></Card>

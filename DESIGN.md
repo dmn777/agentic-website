@@ -137,6 +137,13 @@ species:
   `initial-value` must be in px: Chromium silently drops an `@property` rule whose initial
   value is in `rem`.
 
+## Numbering
+
+- **Roman numerals:** plates (Pl. I, Pl. II…) and a page's own numbered statements, such as
+  the rules on Home. This is the atlas convention.
+- **§ numbers:** in the notebook margin, for the sections of a long page (§1 · What).
+- **Arabic numerals:** ordinary ordered lists inside prose, and "Fig. n" labels.
+
 ## Components (`src/components/`)
 
 | Component | Use |

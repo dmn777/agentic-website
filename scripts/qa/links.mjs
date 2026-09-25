@@ -79,7 +79,8 @@ async function main() {
   const sources = pages.map((r) => ({ page: r.route, html: fs.readFileSync(r.file, 'utf8') }));
   // Built CSS: url(...) references (fonts, images) resolved relative to the CSS file.
   for (const f of walkCss(path.join(DIST, '_astro'))) {
-    const css = fs.readFileSync(f, 'utf8');
+    // Drop quoted data: URIs first: an inline SVG can contain url(#id) references of its own.
+    const css = fs.readFileSync(f, 'utf8').replace(/url\(\s*"data:[^"]*"\s*\)/g, '').replace(/url\(\s*'data:[^']*'\s*\)/g, '');
     const rel = '/' + path.relative(DIST, f).split(path.sep).join('/');
     for (const m of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g))
       if (!m[1].startsWith('data:')) sources.push({ page: rel, css: true, urls: [{ tag: 'css', url: m[1] }] });

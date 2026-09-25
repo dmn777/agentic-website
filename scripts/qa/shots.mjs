@@ -279,7 +279,10 @@ async function main() {
         problems.push({ kind: 'runner', text: String(e?.message ?? e).split('\n')[0] });
       }
       await ctx.close();
-      stateResults.push({ route: s.route, state: s.name, variant: v, source: s.source, file: name + '.png', problems, ok: problems.length === 0 });
+      // A state may expect specific console errors (e.g. the 404 of a deliberately missing page).
+      const allowed = (p) => p.kind === 'console' && (s.allowConsole ?? []).some((re) => re.test(p.text));
+      const kept = problems.filter((p) => !allowed(p));
+      stateResults.push({ route: s.route, state: s.name, variant: v, source: s.source, file: name + '.png', problems: kept, allowed: problems.length - kept.length, ok: kept.length === 0 });
     }
   }
 

@@ -4,7 +4,8 @@
 import { site } from '../data/site';
 import { url } from '../lib/url';
 
-const sheet = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '') || '/';
+interface Props { /** Override the sheet label (the 404 page fills in the requested path). */ sheet?: string }
+const sheet = Astro.props.sheet ?? (Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '') || '/');
 const date = new Date().toISOString().slice(0, 10);
 const sha = process.env.GITHUB_SHA?.slice(0, 7);
 ---
@@ -13,7 +14,7 @@ const sha = process.env.GITHUB_SHA?.slice(0, 7);
     <dl class="title-block">
       <div class="tb-title"><dt>Title</dt><dd><span class="tb-name">{site.title}</span> <span class="tb-tag">{site.tagline}</span></dd></div>
       <div class="tb-drawn"><dt>Drawn by</dt><dd>{site.builtBy}</dd></div>
-      <div class="tb-sheet"><dt>Sheet</dt><dd class="mono">{sheet}</dd></div>
+      <div class="tb-sheet"><dt>Sheet</dt><dd class="mono" data-sheet>{sheet}</dd></div>
       <div class="tb-checked"><dt>Checked by</dt><dd>— <span class="muted">(unattended)</span></dd></div>
       <div><dt>Date</dt><dd class="mono">{date}</dd></div>
       <div class="tb-rev"><dt>Rev</dt><dd class="mono">{sha ?? 'local'}</dd></div>

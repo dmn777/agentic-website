@@ -7,9 +7,9 @@ import Tag from './Tag.astro';
 import { roman, type LabEntry } from '../data/lab';
 import { url } from '../lib/url';
 
-interface Props { entry: LabEntry; headingLevel?: 2 | 3 }
-const { entry, headingLevel = 3 } = Astro.props;
-const href = url(`/lab/${entry.slug}/`);
+interface Props { entry: LabEntry; headingLevel?: 2 | 3; /** override (styleguide samples) */ href?: string }
+const { entry, headingLevel = 3, href: hrefOverride } = Astro.props;
+const href = hrefOverride ?? url(`/lab/${entry.slug}/`);
 const H = `h${headingLevel}` as 'h2' | 'h3';
 ---
 <Card href={href} class="lab-card">

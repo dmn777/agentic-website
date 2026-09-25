@@ -1,0 +1,61 @@
+---
+// The frontispiece specimen: drawn on load, and re-plotted from a new seed on request.
+// The client script reuses the same generator the build uses (no framework needed).
+import Plot from './Plot.astro';
+
+interface Props { base?: string; start?: number }
+const { base = 'unattended', start = 1 } = Astro.props;
+---
+<figure class="hero-plot" data-hero-plot data-base={base} data-n={start}>
+  <div class="hero-plot__sheet crop">
+    <Plot seed={`${base}/${start}`} detail={1.15} draw duration={3400} label="A plotted specimen, drawn stroke by stroke" />
+  </div>
+  <figcaption class="hero-plot__cap">
+    <span class="label hero-plot__n">Fig. 0 · Specimen no. <span data-hero-n>{start}</span></span>
+    <button type="button" class="hero-plot__again" data-hero-again>Draw another<span aria-hidden="true"> ↻</span></button>
+  </figcaption>
+  <p class="visually-hidden" aria-live="polite" data-hero-status></p>
+</figure>
+
+<script>
+  import { specimen } from '../lib/plot/specimen';
+  import { specimenInnerSVG, staggerFor } from '../lib/plot/svg';
+
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-hero-plot]')) {
+    const svg = fig.querySelector<SVGSVGElement>('svg.plot')!;
+    const nEl = fig.querySelector('[data-hero-n]')!;
+    const status = fig.querySelector('[data-hero-status]')!;
+    let n = Number(fig.dataset.n);
+    fig.querySelector('[data-hero-again]')!.addEventListener('click', () => {
+      n += 1;
+      const sp = specimen(`${fig.dataset.base}/${n}`, { detail: 1.15 });
+      svg.style.setProperty('--stagger', `${staggerFor(sp.paths.length, 3000)}ms`);
+      svg.dataset.species = sp.species;
+      svg.innerHTML = specimenInnerSVG(sp); // generator path data only (see svg.test.ts)
+      svg.setAttribute('data-in', '');
+      nEl.textContent = String(n);
+      status.textContent = `Specimen number ${n}, a ${sp.species} drawing.`;
+    });
+  }
+</script>
+
+<style>
+  .hero-plot { display: grid; gap: var(--space-s); }
+  .hero-plot__sheet {
+    aspect-ratio: 1;
+    background: var(--paper-raised);
+    border: var(--hair) solid var(--rule);
+    padding: clamp(0.75rem, 3vw, 2.25rem);
+    --plot-px: 1.15;
+  }
+  .hero-plot__sheet :global(svg) { width: 100%; height: 100%; }
+  .hero-plot__cap { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .hero-plot__n { color: var(--ink-3); }
+  .hero-plot__again {
+    font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps);
+    text-transform: uppercase; color: var(--ink);
+    background: none; border: 0; padding: 0.7rem 0; min-height: 2.75rem; cursor: pointer;
+    text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.35em;
+  }
+  .hero-plot__again:hover { color: var(--accent-ink); }
+</style>

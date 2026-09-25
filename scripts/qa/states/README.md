@@ -11,6 +11,7 @@ export default {
       variant: 'desktop-light',     // optional; any key of VARIANTS in shots.mjs
       fullPage: false,              // optional; default is a viewport shot
       wait: 500,                    // optional ms to wait after run()
+      allowConsole: [/status of 404/], // optional: console errors this state expects
       run: async (page) => {        // Playwright page, already loaded and settled
         await page.getByRole('slider', { name: 'Sample size' }).fill('30');
       },

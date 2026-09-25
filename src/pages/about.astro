@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro';
+import Plot from '../components/Plot.astro';
+import Callout from '../components/Callout.astro';
+import { site } from '../data/site';
+import { url } from '../lib/url';
+---
+<Base title="About" description="What Unattended is, how Claude built it without human review, and what checks stand in for a reviewer.">
+  <div class="wrap about">
+    <header class="plate-grid about__head">
+      <p class="margin label">Colophon</p>
+      <div>
+        <h1>About this atlas</h1>
+        <p class="lede">Unattended is a website that Claude designs, writes and builds by itself, with no person reviewing it before it goes live. It is an experiment in how far that can go, and a record of what it takes.</p>
+      </div>
+    </header>
+
+    <section class="plate-grid about__section" aria-labelledby="what">
+      <p class="margin label">§1 · What</p>
+      <div class="prose">
+        <h2 id="what">Two questions</h2>
+        <p>The site exists to answer two questions for a course on applied agentic AI.</p>
+        <ol>
+          <li><strong>How good a website can an AI agent build on its own?</strong> The aim is not a template with the text filled in, but a site with its own visual identity, and a Lab of pieces built one by one: interactive explainers, generative drawings, a story told through scrolling, and a playable game. The design, the topics and the words are all Claude's.</li>
+          <li><strong>How well does a content management system fit an agent's way of working?</strong> The build journal (Notes) will be managed in <a href="https://www.sanity.io/">Sanity</a>, a hosted CMS. The agent sets it up, writes to it with scripts, and reports what was easy and what wasn't.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="plate-grid about__section" aria-labelledby="how">
+      <p class="margin label">§2 · How</p>
+      <div class="prose">
+        <h2 id="how">How it was made</h2>
+        <p>Everything was built in <strong>Claude Code</strong>, Anthropic's agentic coding tool, by {site.builtBy.split(' · ')[0]}. The work was planned once and then carried out hands-free:</p>
+        <ul>
+          <li><strong>One planning session.</strong> David, the human behind the experiment, answered questions about scope, stack and rules. The answers were written into a plan with a pool of tasks, each with the checks that define "done".</li>
+          <li><strong>Unattended execution.</strong> Claude works through the tasks. Any decision the plan left open, it makes on its own, writes down, and flags for David to revisit later.</li>
+          <li><strong>Straight to production.</strong> Each finished task is committed and pushed to the live site as soon as its checks pass.</li>
+        </ul>
+        <p>David's hands-on part was small: creating the GitHub repository and an access token, and logging in to Sanity once. He did not write or edit any text on this site.</p>
+      </div>
+    </section>
+
+    <section class="plate-grid about__section" aria-labelledby="checks">
+      <p class="margin label">§3 · Checks</p>
+      <div class="prose">
+        <h2 id="checks">What stands in for a reviewer</h2>
+        <p>With no person checking pages before they go live, the checks have to do that job. Every page passes these before it ships:</p>
+        <ul>
+          <li><strong>Type checks, a production build and unit tests.</strong> Anything deterministic is written test-first: the statistics, the drawing generators, the game rules, even the colour contrast of the design tokens.</li>
+          <li><strong>A screenshot suite.</strong> Each page is opened in a real browser on desktop and phone, in light and dark themes. The suite fails on console errors, broken requests, content wider than a phone screen, or a canvas that stays blank.</li>
+          <li><strong>A reviewer model.</strong> A second Claude model gets the screenshots and a rubric, and is told to be adversarial. Its blockers are fixed before shipping.</li>
+          <li><strong>Fact-checks and number checks.</strong> Pages that make factual claims are checked claim by claim against sources. Pages that compute things have their numbers re-derived independently.</li>
+          <li><strong>Deploy verification.</strong> After each push, a script waits for the build, fetches the live pages, and confirms they carry the commit that was just pushed.</li>
+        </ul>
+        <Callout tone="warn" title="What that doesn't catch">Taste, mostly. The checks can prove that text is readable and that numbers are right. They can't prove that a page is worth reading. Judge that for yourself.</Callout>
+      </div>
+    </section>
+
+    <section class="plate-grid about__section" aria-labelledby="stack">
+      <p class="margin label">§4 · Stack</p>
+      <div class="prose">
+        <h2 id="stack">What it's made of</h2>
+        <ul>
+          <li><a href="https://astro.build/">Astro</a> builds static pages. Interactive parts are small <a href="https://svelte.dev/">Svelte</a> components that load only where needed.</li>
+          <li>GitHub Actions builds the site and publishes it to GitHub Pages on every push.</li>
+          <li>Every drawing is generated by code from a seed. There are no stock photos.</li>
+          <li>The typefaces are Imbue, Newsreader and Martian Mono, served from this site. There are no analytics, no cookies and no third-party scripts; your browser stores only your theme choice.</li>
+        </ul>
+        <p>The design direction and its reasons are in <a href={`${site.repo}/blob/main/DESIGN.md`}>DESIGN.md</a>. All of the code is on <a href={site.repo}>GitHub</a>.</p>
+      </div>
+    </section>
+
+    <section class="plate-grid about__section" aria-labelledby="earlier">
+      <p class="margin label">§5 · Before</p>
+      <div class="about__earlier">
+        <div class="prose">
+          <h2 id="earlier">The first edition</h2>
+          <p>An earlier version of this site was built in September 2026 with Claude Cowork, as a quick feasibility check with a human checking that it worked. It is kept exactly as it was, under <a href={url(site.v1)}>the Cowork version</a>. Its old addresses now redirect there.</p>
+          <p>Problems from both editions are listed in the <a href={site.frictionLog}>friction log</a>.</p>
+        </div>
+        <Plot seed="about/v1" species="contour" detail={0.5} class="about__plot" />
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .about { padding-block: var(--space-xl) 0; }
+  .about__head { padding-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
+  .about__head h1 { margin-bottom: var(--space-s); }
+  .about__head .lede { max-width: 40rem; }
+  .about__section { padding-block: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
+  .about__section:last-child { border-bottom: 0; }
+  .about__section h2 { margin-top: 0; }
+  .about__earlier { display: grid; grid-template-columns: minmax(0, var(--measure)) minmax(0, 12rem); gap: var(--space-l); align-items: center; }
+  .about :global(.about__plot) { width: 100%; max-width: 12rem; opacity: 0.9; }
+  @media (max-width: 44rem) { .about__earlier { grid-template-columns: minmax(0, 1fr); } .about :global(.about__plot) { max-width: 9rem; } }
+</style>

@@ -14,8 +14,10 @@ interface Props {
   description?: string;
   /** Keep the page out of search results (the styleguide). */
   noindex?: boolean;
+  /** Title-block sheet label override. */
+  sheet?: string;
 }
-const { title, description = site.description, noindex = false } = Astro.props;
+const { title, description = site.description, noindex = false, sheet } = Astro.props;
 const fullTitle = title === site.title ? `${site.title}: ${site.tagline}` : `${title} · ${site.title}`;
 // In CI, GITHUB_SHA identifies the commit being built; qa:deploy compares it with HEAD.
 const buildSha = process.env.GITHUB_SHA;
@@ -49,7 +51,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <main id="main">
       <slot />
     </main>
-    <TitleBlock />
+    <TitleBlock sheet={sheet} />
     <script>
       import '../scripts/page';
     </script>

@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+import LabCard from '../../components/LabCard.astro';
+import Plot from '../../components/Plot.astro';
+import { lab, roman } from '../../data/lab';
+
+const plates = [...lab].sort((a, b) => a.plate - b.plate);
+---
+<Base title="The Lab" description="The plates of Unattended: interactive explorables, generative drawings, a story, an agent-loop explainer and a game, all built by Claude.">
+  <div class="wrap lab">
+    <header class="plate-grid lab__head">
+      <p class="margin label">Index of plates</p>
+      <div>
+        <h1>The Lab</h1>
+        <p class="lede">Each plate is a small, self-contained piece: something to pull on, watch, read or play. Claude chose the subjects, designed each one and built it. Every plate was checked by tests and by a reviewer model, and by no person.</p>
+      </div>
+    </header>
+    {plates.length > 0 ? (
+      <>
+        <ol class="lab__toc" aria-label="Plates by number">
+          {plates.map((p) => (
+            <li><span class="label">Pl. {roman(p.plate)}</span> <span>{p.title}</span> <span class="lab__kind label">{p.kind}</span></li>
+          ))}
+        </ol>
+        <ul class="lab__grid" role="list">
+          {plates.map((entry) => <li><LabCard entry={entry} headingLevel={2} /></li>)}
+        </ul>
+      </>
+    ) : (
+      <div class="lab__empty">
+        <Plot seed="lab/empty" species="contour" detail={0.55} draw class="lab__empty-plot" />
+        <div>
+          <p class="lab__empty-title">No plates are finished yet.</p>
+          <p class="muted">Plates are added one at a time. Each appears here once its tests, screenshots and review pass, and not before.</p>
+        </div>
+      </div>
+    )}
+  </div>
+</Base>
+
+<style>
+  .lab { padding-block: var(--space-xl) 0; }
+  .lab__head { padding-bottom: var(--space-l); margin-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
+  .lab__head h1 { margin-bottom: var(--space-s); }
+  .lab__head .lede { max-width: 42rem; }
+  .lab__toc { list-style: none; padding: 0; margin: 0 0 var(--space-xl) calc(var(--margin-col) + var(--space-l)); max-width: 42rem; }
+  .lab__toc li { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr) auto; gap: var(--space-s); align-items: baseline; padding-block: 0.4rem; border-bottom: var(--hair) dashed var(--rule); }
+  .lab__toc li > .label:first-child { color: var(--accent-ink); }
+  .lab__kind { text-align: right; }
+  .lab__grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--space-l); }
+  .lab__grid > li { display: flex; }
+  .lab__grid > li > :global(*) { flex: 1; }
+  .lab__empty { margin-left: calc(var(--margin-col) + var(--space-l)); padding-bottom: var(--space-xl); display: grid; grid-template-columns: 11rem minmax(0, 32rem); gap: var(--space-l); align-items: center; }
+  .lab :global(.lab__empty-plot) { width: 100%; }
+  .lab__empty-title { font-family: var(--font-display); font-size: var(--step-2); line-height: 1.05; margin-bottom: var(--space-2xs); }
+  @media (max-width: 52rem) {
+    .lab__toc, .lab__empty { margin-left: 0; }
+    .lab__empty { grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-m); }
+  }
+</style>

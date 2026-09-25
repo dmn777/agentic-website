@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import Plot from '../components/Plot.astro';
+import Button from '../components/Button.astro';
+import { site } from '../data/site';
+import { url } from '../lib/url';
+---
+<Base title="Plate not found" description="This page isn't in the atlas." sheet="— (missing)">
+  <div class="wrap nf plate-grid">
+    <p class="margin label">Error 404</p>
+    <div class="nf__body">
+      <div class="nf__text">
+        <h1>Plate not found</h1>
+        <p class="lede">There's no sheet at this address. If you followed an old link, the site was rebuilt in September 2026, and the first edition's pages now live under <a href={url(site.v1)}>the Cowork version</a>.</p>
+        <div class="nf__actions">
+          <Button href={url('/')} arrow>Back to the frontispiece</Button>
+          <Button href={url('/lab/')} variant="secondary">The Lab</Button>
+        </div>
+      </div>
+      <Plot seed="404/missing" species="ridge" detail={0.6} draw class="nf__plot" label="A ridgeline drawing with one line picked out in vermilion" />
+    </div>
+  </div>
+</Base>
+<script>
+  // GitHub Pages serves this file for any missing path: name that path in the title block.
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const el = document.querySelector('[data-sheet]');
+  if (el && location.pathname !== `${base}/404.html`) el.textContent = `${location.pathname.replace(base, '') || '/'} (missing)`;
+</script>
+<style>
+  .nf { padding-block: var(--space-2xl); }
+  .nf__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); gap: var(--space-xl); align-items: center; }
+  .nf__text h1 { margin-bottom: var(--space-s); }
+  .nf__text .lede { max-width: 36rem; }
+  .nf__actions { display: flex; flex-wrap: wrap; gap: var(--space-s) var(--space-m); margin-top: var(--space-l); }
+  .nf :global(.nf__plot) { width: 100%; }
+  @media (max-width: 52rem) { .nf__body { grid-template-columns: minmax(0, 1fr); } .nf :global(.nf__plot) { max-width: 16rem; } }
+</style>
