@@ -1,4 +1,4 @@
-## A Markdown body, as Notes posts will render
+## A Markdown body, as Notes posts render
 
 The plotter is **patient**: it draws one stroke, lifts the pen, moves, and draws the next. Nothing here was checked by a person before it went live, which is why every page is photographed and reviewed by *another* model first. Inline code looks like `specimen('lab/art')`, and links look like [this one to the source](https://github.com/dmn777/agentic-website).
 

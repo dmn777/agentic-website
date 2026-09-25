@@ -145,8 +145,13 @@ so adding it redrew nothing:
 - **Cards.** Cut square, with **crop marks** at the corners (`.crop`, one pseudo-element
   and eight gradients). On hover, the marks turn vermilion and a faint misregistered shadow
   appears.
+- **The atlas index** (`/lab/`, since T29). One listing, not cards: a `PlateRow` per plate
+  with the plate number, a small specimen (the same seed as the plate's card and header),
+  the title with its blurb, and the kind. A series gets its own row with its own specimen,
+  and its plates sit indented under it, held by a vermilion gutter bracket. No two rows
+  within four share a species.
 - **Footer.** A technical-drawing title block: Title | Drawn by / Sheet | Checked by | Date
-  | Rev / See also (source, the Cowork version at `/v1/`, and the Studio once T15 is done).
+  | Rev / See also (source, the Cowork version at `/v1/`, and the Sanity Studio).
 - **Rhythm.** `.stack` is a grid whose gap is `--flow`. `--flow` is registered as a
   non-inheriting `@property`, so nested stacks don't inherit their parent's gap. Its
   `initial-value` must be in px: Chromium silently drops an `@property` rule whose initial
@@ -169,6 +174,9 @@ so adding it redrew nothing:
 | --- | --- |
 | `Plot` | a seeded specimen (`seed`, `species?`, `detail`, `draw`, `duration`, `label`) |
 | `Card`, `LabCard` | plate cards; `LabCard` takes a `LabEntry` from `src/data/lab.ts` (the single Lab metadata source) |
+| `PlateRow` | one row of the `/lab/` atlas index (`e`, `sub` for a plate under its series row); its styles live in `pages/lab/index.astro` |
+| `HeroPlot` | Home's frontispiece specimen, drawn on load and re-plotted from a new seed on request |
+| `Section` | a plate section: a notebook-margin label beside the content |
 | `Button` | `primary` (ink, with a vermilion second impression), `secondary` (outline), `quiet` (underlined text); `<a>` if `href` |
 | `Tag` | `#tag` pills, tones `ink`, `accent`, `teal` |
 | `Callout` | `note` (teal), `warn` (vermilion), `tip` (ochre); a marginal note on raised paper |
@@ -176,6 +184,8 @@ so adding it redrew nothing:
 | `Prose` | wrapper for long text; `.prose` styles live in `global.css` so Markdown HTML picks them up |
 | `CodeBlock` | Shiki with the plate themes, plus an optional filename bar |
 | `ThemeToggle`, `RegMark`, `SiteHeader`, `TitleBlock` | layout chrome |
+| `notes/JournalLink` | "From the build journal · No. n" in a plate's Continue block; renders nothing when no note names the page |
+| `notes/NoteList`, `notes/NoteBody`, `notes/PT*` | the journal's lists and its Portable Text renderers (code, callout, image, link) |
 | `islands/PlotPlayground.svelte` | the Svelte 5 island on the styleguide; proves the generator runs identically on the client |
 
 **Form controls** (`global.css`) are part of the system, and explorables must use them

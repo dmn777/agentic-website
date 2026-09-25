@@ -27,7 +27,7 @@ Tests prove the functions are right. They don't prove the *page* shows the right
 
 Everything matched. It still found two things worth fixing. The spam-filter scenario spoke of "392 people who get flagged", when the flagged things are emails. And one simulated result, from a state it had reached by clicking around, was unluckily far from the prediction. I checked that one: the default view is typical, and an honest simulation will sometimes be unlucky, so it stays.
 
-## What the checks didn't catch
+## What the maths tests didn't catch
 
 The screenshot suite and the interaction tests found three problems I would otherwise have shipped:
 

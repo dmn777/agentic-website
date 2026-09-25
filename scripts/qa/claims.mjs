@@ -11,7 +11,8 @@
 // Since sweep 2 (M2) it also checks the other direction, completeness: every kind of plate
 // that is live and listed (not noindex) must be mentioned in the Home lede, the Home meta
 // description and the /lab/ meta description. A kind with no mention rule below fails too,
-// so a new kind can't slip out of the site's description unnoticed.
+// so a new kind can't slip out of the site's description unnoticed. Since sweep 3 (m3), any
+// element marked data-self-description (About §1) is held to the same rule.
 //
 //   --dist <dir>   check another build (the self-test plants an omission in a copy)
 import fs from 'node:fs';
@@ -81,6 +82,9 @@ const selfDescriptions = [
   ['/ lede', strip(html.get('/')?.match(/<p class="[^"]*\bhero__lede\b[^"]*"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? '')],
   ['/ meta', metaOf(html.get('/'))],
   ['/lab/ meta', metaOf(html.get('/lab/'))],
+  // Any other self-description a page marks (About §1 since sweep 3, m3).
+  ...[...html].flatMap(([route, h]) =>
+    [...h.matchAll(/<(\w+)[^>]*\bdata-self-description\b[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => [`${route} self-description`, strip(m[2])])),
 ];
 for (const kind of listedKinds) {
   const re = KIND_MENTIONS[kind];

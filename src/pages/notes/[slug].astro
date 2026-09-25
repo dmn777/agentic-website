@@ -64,5 +64,10 @@ const fmtDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en
   .pager__link--next { text-align: right; margin-left: auto; }
   .pager__title { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.1; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
   .pager__link .label { color: var(--accent-ink); }
-  @media (max-width: 52rem) { .post__meta { display: flex; gap: 0.8rem; } .post__specimen { display: none; } }
+  @media (max-width: 52rem) {
+    .post__meta { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    /* One line on phones, so the parts need separators (sweep 3, m7). */
+    .post__meta > * + *::before { content: '·'; margin-inline-end: 0.5rem; color: var(--ink-3); }
+    .post__specimen { display: none; }
+  }
 </style>

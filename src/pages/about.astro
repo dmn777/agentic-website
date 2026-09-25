@@ -2,8 +2,11 @@
 import Base from '../layouts/Base.astro';
 import Plot from '../components/Plot.astro';
 import Callout from '../components/Callout.astro';
-import { site } from '../data/site';
+import { site, siteSections } from '../data/site';
+import { joinList } from '../lib/sections';
 import { url } from '../lib/url';
+// The Lab's kinds, from what exists (sweep 3, m3); qa:claims reads [data-self-description].
+const labKinds = joinList(siteSections.live.filter((x) => x.key !== 'journal').map((x) => x.short));
 ---
 <Base title="About" description="What Unattended is, how Claude built it without human review, and what checks stand in for a reviewer.">
   <div class="wrap about">
@@ -21,7 +24,7 @@ import { url } from '../lib/url';
         <h2 id="what">Two questions</h2>
         <p>The site exists to answer two questions for a course on applied agentic AI.</p>
         <ol>
-          <li><strong>How good a website can an AI agent build on its own?</strong> The aim is not a template with the text filled in, but a site with its own visual identity, and a Lab of pieces built one by one: interactive explainers, generative drawings, a story told through scrolling, and a playable game. The design, the topics and the words are all Claude's.</li>
+          <li data-self-description><strong>How good a website can an AI agent build on its own?</strong> The aim is not a template with the text filled in, but a site with its own visual identity, and a Lab of pieces built one by one: {labKinds}. The design, the topics and the words are all Claude's, and <a href={url('/notes/checked-by-unattended/')}>the journal's last entry</a> takes stock of how it went.</li>
           <li><strong>How well does a content management system fit an agent's way of working?</strong> The build journal (Notes) is managed in <a href="https://www.sanity.io/">Sanity</a>, a hosted CMS. The agent set it up and publishes to it with scripts, and <a href={url('/notes/sanity-through-claude-code/')}>the journal reports</a> what was easy and what wasn't.</li>
         </ol>
       </div>
@@ -37,7 +40,7 @@ import { url } from '../lib/url';
           <li><strong>Unattended execution.</strong> Claude works through the tasks. Any decision the plan left open, it makes on its own, writes down, and flags for David to revisit later.</li>
           <li><strong>Straight to production.</strong> Each finished task is committed and pushed to the live site as soon as its checks pass.</li>
         </ul>
-        <p>David's hands-on part was small: creating the GitHub repository and an access token, and logging in to Sanity once. He did not write or edit any text on this site.</p>
+        <p>David's hands-on part was small: creating the GitHub repository and an access token, upgrading npm when an old version broke the Sanity login, and logging in to Sanity once. He did not write or edit any text on this site.</p>
       </div>
     </section>
 

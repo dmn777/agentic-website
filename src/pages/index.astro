@@ -26,7 +26,7 @@ const rules = [
       <div class="hero__copy">
         <p class="label hero__kicker">Frontispiece · {site.tagline.toLowerCase()}</p>
         <h1 id="hero-title" class="hero__title">Unattended</h1>
-        <p class="hero__lede">A lab that Claude is building on its own, one plate at a time. So far: {joinList(siteSections.live.map((x) => x.long))}.{siteSections.planned.length > 0 && <> Still to come: {joinList(siteSections.planned.map((x) => x.long))}.</>}</p>
+        <p class="hero__lede">A lab that Claude built on its own, one plate at a time: {joinList(siteSections.live.map((x) => x.long))}.{siteSections.planned.length > 0 && <> Still to come: {joinList(siteSections.planned.map((x) => x.long))}.</>}</p>
         <div class="hero__actions">
           <Button href={url('/lab/')} arrow>Open the plates</Button>
           <Button href={url('/about/')} variant="quiet">How it was made</Button>
@@ -78,7 +78,7 @@ const rules = [
         ))}
       </ol>
       <p class="rules__more">
-        <a href={url('/about/')}>How this was made</a>
+        <a href={url('/about/')}>How it was made</a>
         <span aria-hidden="true">·</span>
         <a href={url(site.v1)}>The first edition, built in Claude Cowork</a>
       </p>

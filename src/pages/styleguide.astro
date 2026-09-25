@@ -14,7 +14,7 @@ import Prose from '../components/Prose.astro';
 import PlotPlayground from '../components/islands/PlotPlayground.svelte';
 import Sample from '../components/styleguide/Sample.md';
 import { ALL_SPECIES } from '../lib/plot/specimen';
-import type { LabEntry } from '../data/lab';
+import { lab, type LabEntry } from '../data/lab';
 
 const colours = [
   ['paper', 'Page ground'], ['paper-raised', 'Cards, panels, code'], ['paper-sunk', 'Wells, tracks'],
@@ -23,11 +23,8 @@ const colours = [
   ['ochre', 'Ochre pen'], ['ochre-ink', 'Ochre text'], ['rule', 'Hairlines'], ['rule-strong', 'Frames, axes'], ['focus', 'Focus ring'],
 ];
 const steps = [['5', 'Display'], ['4', 'Page title'], ['3', 'Section'], ['2', 'Sub-section'], ['1', 'Lede'], ['0', 'Body'], ['-1', 'Small'], ['-2', 'Label']];
-const samples: LabEntry[] = [
-  { slug: 'sample-stats', plate: 1, title: 'Sampling, seen', blurb: 'Draw samples from lopsided populations and watch their means line up into a bell curve anyway.', tags: ['stats', 'explorable'], kind: 'Explorable', species: 'contour' },
-  { slug: 'sample-art', plate: 2, title: 'A gallery of seeds', blurb: 'Nine generative drawings. Every one is a number; change the number, get a sibling.', tags: ['art'], kind: 'Gallery', species: 'flow' },
-  { slug: 'sample-game', plate: 3, title: 'A game nobody playtested', blurb: 'Designed, built and tuned with no human playing it until launch day.', tags: ['game'], kind: 'Game', species: 'ridge' },
-];
+// Real plates, so the sample cards can't drift from the Lab (sweep 3, m5).
+const samples: LabEntry[] = [1, 4, 8].map((n) => lab.find((e) => e.plate === n)).filter((e): e is LabEntry => !!e);
 const tsSample = `export function specimen(seed: string, opts: SpecimenOptions = {}): Specimen {
   const rng = rngFrom(seed);                       // same seed → same drawing
   const species = opts.species ?? rng.pick(SPECIES);
@@ -42,7 +39,7 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
       <p class="margin label">Plate 0 · unlisted</p>
       <div>
         <h1>The Plates styleguide</h1>
-        <p class="lede">Scientific-atlas plates, drawn by a pen plotter. This page shows every token and component in one place. It is the surface the screenshot suite and the reviewers look at, and it is kept out of the navigation and out of search.</p>
+        <p class="lede">Scientific-atlas plates, drawn by a pen plotter. This page shows the tokens and the shared components in one place. It is the surface the screenshot suite and the reviewers look at, and it is kept out of the navigation and out of search.</p>
       </div>
     </header>
 

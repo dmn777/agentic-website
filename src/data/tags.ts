@@ -5,7 +5,7 @@
 export interface TagInfo { tag: string; description: string }
 
 export const TAGS: TagInfo[] = [
-  { tag: 'workflow', description: 'How the agent works: the session and its tools, the services around it, and what the whole thing costs.' },
+  { tag: 'workflow', description: 'How the agent works: the session and its tools, and the services around it.' },
   { tag: 'design', description: 'The look of the site, the drawings its programs make, and the game’s microscope field.' },
   { tag: 'testing', description: 'Tests written before the code, and what they caught in the numbers, the drawings and the data.' },
   { tag: 'reviewers', description: 'Findings from reviewer models and playtesters, including the ones that turned out to be wrong.' },
