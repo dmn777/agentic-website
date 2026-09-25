@@ -1,0 +1,34 @@
+---
+import LabPage from '../../layouts/LabPage.astro';
+import Section from '../../components/Section.astro';
+import Callout from '../../components/Callout.astro';
+import ChladniPlate from '../../components/islands/ChladniPlate.svelte';
+---
+<LabPage slug="chladni" lede="Sprinkle sand on a metal plate and make it ring. The sand runs off every part that moves and gathers on the lines that stay still. The pictures it makes have been drawn for more than two hundred years.">
+  <Section label="§1 · Shake" id="shake">
+    <h2 id="shake" class="visually-hidden">Shake the plate</h2>
+    <div class="prose intro">
+      <p>Pick a mode and watch the sand settle. Each grain gets thrown about by the part of the plate beneath it. Where the plate swings hard, grains fly off; where it barely moves, they come to rest. What is left is a map of the plate's stillness. <strong>Show the theory</strong> draws where those still lines should be. The sound is off unless you turn it on.</p>
+    </div>
+    <ChladniPlate client:visible />
+  </Section>
+
+  <Section label="§2 · History" id="history">
+    <div class="prose">
+      <h2 id="history">Chladni's plates</h2>
+      <p>The German physicist and musician Ernst Chladni published drawings of these figures in 1787. He held or clamped thin plates, scattered sand on them and drew a violin bow along an edge until they sang, then recorded where the sand came to rest. Different notes gave different figures, and the higher the note, the finer the pattern tended to be.</p>
+      <p>The figures puzzled mathematicians. After Chladni demonstrated them in Paris in 1808, the Academy of Sciences, prompted by Napoleon, offered a prize for a mathematical theory of vibrating plates. Sophie Germain won it in 1816, on her third attempt.</p>
+    </div>
+  </Section>
+
+  <Section label="§3 · Physics" id="physics">
+    <div class="prose">
+      <h2 id="physics">Standing still inside a wave</h2>
+      <p>A plate that rings steadily vibrates in a <em>standing wave</em>. Some regions swing up and down, and between them run <em>nodal lines</em> that hardly move at all. Each mode has its own set of lines. The numbers <var>n</var> and <var>m</var> say how many half-waves fit across the plate. The formula adds a wave with <var>n</var> across and <var>m</var> down to one with <var>m</var> across and <var>n</var> down. Bigger numbers mean more lines and a higher pitch.</p>
+      <Callout tone="note" title="How faithful this is">The figures here come from a simple formula that is often used to draw Chladni patterns for a square plate. A real plate's figures depend on its material, its shape and where it is held, so they differ in detail. The tone is illustrative too: it rises as the figures get finer, as a real plate's does, but it isn't the pitch of any real plate.</Callout>
+    </div>
+  </Section>
+</LabPage>
+<style>
+  .intro { margin-bottom: var(--space-m); }
+</style>

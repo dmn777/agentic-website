@@ -59,6 +59,12 @@ export const lab: LabEntry[] = [
     blurb: 'Replay a real task from the session that built this site: every model turn, tool call and result, and the context growing as it goes.',
     tags: ['agents', 'Claude Code'],
   },
+  {
+    slug: 'chladni', plate: 7, kind: 'Simulation', species: 'contour',
+    title: 'The shape of a sound',
+    blurb: 'Sand on a ringing plate runs off everything that moves and gathers on the lines that stay still. Pick a mode, shake the plate, and listen if you like.',
+    tags: ['physics', 'sound'],
+  },
 ];
 
 export const seriesById = (id: string | undefined): Series | undefined => series.find((x) => x.id === id);

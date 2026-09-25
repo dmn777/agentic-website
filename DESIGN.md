@@ -279,4 +279,18 @@ Topic choices for pages whose subject Claude picks are recorded here as they are
     - Server-rendered on the full-record view, so the page reads without JS. Instant
       under reduced motion.
     - Data and provenance: `src/data/keeling/`.
-- **Wildcard page (T10):** *not yet chosen.*
+- **Wildcard page (T10): Chladni figures** (`/lab/chladni/`, Pl. VII "The shape of a
+  sound").
+  - *Techniques no other page uses:* a particle physics simulation (9,000 sand grains
+    hopping in proportion to the plate's motion and drifting down its slope) and
+    **WebAudio** (a sine tone at an illustrative pitch, opt-in and muted by default, only
+    sounding while the plate shakes).
+  - *Why this topic.* It is literally a *plate*, the site's own metaphor. Its figures
+    are line drawings that a plotter could have made. It is physics you can hear. And the
+    theory overlay reuses the gallery's marching squares to draw the exact nodal lines
+    over the simulated sand.
+  - *Honesty.* The page says the mode shapes are a common textbook approximation for a
+    square plate, not a full solution, and that the tone is illustrative, not a real
+    plate's pitch.
+  - Under reduced motion the sand settles instantly. The simulation pauses when the
+    plate is off-screen.

@@ -35,6 +35,10 @@
   background: transparent; color: var(--ink-3); border-style: dashed; border-color: var(--rule-strong);
   cursor: not-allowed; transform: none; box-shadow: none;
 }
+/* A toggle button that is on reads as pressed: filled ink, like a checked segment. */
+.btn--secondary[aria-pressed='true'] { background: var(--ink); color: var(--paper); box-shadow: 2px 2px 0 0 var(--accent); }
+.btn--secondary[aria-pressed='true']:hover { background: var(--ink); color: var(--paper); }
+
 /* Compact size for control panels: same touch height, less padding and shadow. */
 .btn--sm { --shift: 3px; padding: 0.5em 0.85em 0.46em; letter-spacing: 0.04em; }
 .btn-row { display: flex; flex-wrap: wrap; gap: var(--space-2xs); align-items: center; }
