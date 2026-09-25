@@ -1,0 +1,61 @@
+---
+import LabPage from '../../layouts/LabPage.astro';
+import Section from '../../components/Section.astro';
+import KeelingStory from '../../components/islands/KeelingStory.svelte';
+import { parseCO2, parseAnnual, seasonalCycle, decadeGrowth } from '../../lib/keeling/co2';
+import monthlyCsv from '../../data/keeling/co2_mm_mlo.csv?raw';
+import annualCsv from '../../data/keeling/co2_annmean_mlo.csv?raw';
+import growthCsv from '../../data/keeling/co2_gr_mlo.csv?raw';
+import { site } from '../../data/site';
+
+// Everything shown is computed here, at build time, from the committed NOAA files.
+const monthly = parseCO2(monthlyCsv);
+const annual = new Map(parseAnnual(annualCsv).map((a) => [a.year, a.value]));
+const growth = parseAnnual(growthCsv);
+const cycle = seasonalCycle(monthly);
+const full = decadeGrowth(growth);
+const recent = growth.filter((g) => g.year >= 2020);
+const decades = [
+  ...full.map((d) => ({ label: `${String(d.decade).slice(2)}s`, value: d.value })),
+  { label: `20–${String(recent.at(-1)!.year).slice(2)}`, value: recent.reduce((a, g) => a + g.value, 0) / recent.length, partial: true },
+];
+const g = (d: number) => full.find((x) => x.decade === d)!.value;
+const peakMonth = monthly.reduce((a, m) => (m.ppm > a.ppm ? m : a));
+const last = monthly.at(-1)!;
+const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const amp = Math.max(...cycle) - Math.min(...cycle);
+const y1959 = annual.get(1959)!, y2025 = annual.get(2025)!;
+const n = (v: number, d = 2) => `<span class="num">${v.toFixed(d)}</span>`;
+
+const steps = [
+  { id: 'first', view: 'first' as const, html: `<p><strong>March 1958.</strong> Charles David Keeling, a scientist at the Scripps Institution of Oceanography, began measuring carbon dioxide in the air at an observatory high on Mauna Loa, a volcano on the island of Hawaiʻi. The average for that first month was ${n(monthly[0].ppm)} parts per million (ppm): of every million molecules of dry air, about 316 were CO₂.</p>` },
+  { id: 'years', view: 'years' as const, html: `<p>Within two years the line had a rhythm. Each spring the level climbs to a peak in May. Through the summer it falls to a low in September or October. Then it climbs again.</p>` },
+  { id: 'cycle', view: 'cycle' as const, html: `<p>That rhythm is the northern hemisphere breathing. There is far more land, and more plant life, north of the equator than south of it. While the plants are in leaf, they take CO₂ out of the air. In autumn and winter, decay and respiration release it again. Averaged over the whole record, the swing at Mauna Loa is about ${n(amp, 1)} ppm from the May peak to the autumn low.</p>` },
+  { id: 'record', view: 'record' as const, html: `<p>But each year’s wave sits higher than the one before. This is every month from March 1958 to ${MONTH[last.month - 1]} ${last.year}. The smooth vermilion line takes the seasonal cycle out and leaves the trend.</p>` },
+  { id: 'decades', view: 'decades' as const, html: `<p>The climb is also getting steeper. In the 1960s the level rose by ${n(g(1960), 1)} ppm a year on average. In the 2010s it rose by ${n(g(2010), 1)} ppm a year, almost three times as fast, and so far in the 2020s by ${n(decades.at(-1)!.value, 1)}. Only one decade, the 1990s, grew a little more slowly than the one before it.</p>` },
+  { id: 'now', view: 'now' as const, html: `<p>The 1959 average was ${n(y1959)} ppm. The 2025 average was ${n(y2025)} ppm, ${Math.round((y2025 / y1959 - 1) * 100)}% higher. The highest monthly value so far is ${n(peakMonth.ppm)} ppm, in ${MONTH[peakMonth.month - 1]} ${peakMonth.year}. Air trapped in an Antarctic ice core shows that before industrialisation the level was about ${n(280, 0)} ppm.</p>` },
+  { id: 'gap', view: 'gap' as const, html: `<p>One last detail. When Mauna Loa erupted in late November 2022, measurements at the observatory were suspended. From December 2022 until July 2023 they were made at the Maunakea Observatories, about 21 miles to the north, and the monthly record has no gap.</p>` },
+];
+---
+<LabPage slug="keeling" lede="In 1958 a scientist started measuring the air high on a Hawaiian volcano, and the record he began is still running. Scroll to watch the line he started.">
+  <Section label="§1 · Scroll" id="story">
+    <h2 id="story" class="visually-hidden">The story</h2>
+    <KeelingStory client:visible steps={steps} t={monthly.map((m) => m.t)} ppm={monthly.map((m) => m.ppm)} trend={monthly.map((m) => m.deseason)}
+      cycle={cycle} decades={decades} facts={{ first: monthly[0].ppm, y1959, y2025, peak: peakMonth.ppm, peakT: peakMonth.t, peakLabel: `${MONTH[peakMonth.month - 1].slice(0, 3)} ${peakMonth.year}` }} />
+  </Section>
+  <Section label="§2 · Sources" id="sources">
+    <div class="prose">
+      <h2 id="sources">Sources and method</h2>
+      <p>All data come from files published by the NOAA Global Monitoring Laboratory. Data from March 1958 to April 1974 were collected by C. David Keeling of the Scripps Institution of Oceanography. The three files used here were downloaded on 25 September 2026 and are committed unchanged, with a provenance note, in the <a href={`${site.repo}/blob/main/src/data/keeling/PROVENANCE.md`}>site’s repository</a>.</p>
+      <ul>
+        <li>Monthly means: <a href="https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_mm_mlo.csv">co2_mm_mlo.csv</a>. NOAA interpolates the few months with missing measurements. The vermilion trend line is NOAA’s own deseasonalised series.</li>
+        <li>Annual means: <a href="https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.csv">co2_annmean_mlo.csv</a>.</li>
+        <li>Annual growth: <a href="https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_gr_mlo.csv">co2_gr_mlo.csv</a>. The decade bars average these published values.</li>
+        <li>Background: NOAA GML, <a href="https://gml.noaa.gov/ccgg/trends/">Trends in Atmospheric Carbon Dioxide</a>, and the Scripps CO₂ Program, <a href="https://keelingcurve.ucsd.edu/">The Keeling Curve</a>.</li>
+        <li>The seasonal cycle and why it peaks in May: Scripps, <a href="https://keelingcurve.ucsd.edu/2013/06/04/why-does-atmospheric-co2-peak-in-may/">Why does atmospheric CO₂ peak in May?</a>, and NOAA Climate.gov, <a href="https://www.climate.gov/news-features/understanding-climate/climate-change-atmospheric-carbon-dioxide">Climate Change: Atmospheric Carbon Dioxide</a>.</li>
+        <li>About 280 ppm before industrialisation, from Law Dome ice cores: NOAA GML, <a href="https://gml.noaa.gov/ccgg/trends/weekly.html">Weekly CO₂ at Mauna Loa</a>.</li>
+      </ul>
+      <p>The average seasonal cycle is computed here from the monthly file, as each month’s average departure from the deseasonalised series. As a check, annual means computed from the monthly file reproduce NOAA’s published annual means to within 0.01 ppm, year by year.</p>
+    </div>
+  </Section>
+</LabPage>

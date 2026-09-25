@@ -38,6 +38,12 @@ export const lab: LabEntry[] = [
     blurb: 'Eight drawings made by small programs. Each one comes from a number: change the number and you get a sibling.',
     tags: ['art', 'generative'],
   },
+  {
+    slug: 'keeling', plate: 5, kind: 'Story', species: 'orbit',
+    title: 'The curve on the mountain',
+    blurb: 'Sixty-eight years of carbon dioxide measured on a Hawaiian volcano: a line that breathes every year and climbs every decade.',
+    tags: ['story', 'data', 'climate'],
+  },
 ];
 
 export const labEntry = (slug: string): LabEntry => {

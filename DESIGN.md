@@ -236,5 +236,21 @@ Established by the three statistics plates, and to be followed by later ones:
 
 Topic choices for pages whose subject Claude picks are recorded here as they are made.
 
-- **Scrollytelling story (T8):** *not yet chosen.*
+- **Scrollytelling story (T8): the Keeling curve** (`/lab/keeling/`, Pl. V "The curve on
+  the mountain").
+  - *Why this topic.*
+    - A real, long, public-domain measurement series (NOAA GML, Mauna Loa, since
+      March 1958) whose story unfolds in steps: a first reading, a yearly rhythm, a rise,
+      an acceleration, a present level, and an eruption that interrupted the record.
+    - Visually it is one line plotted for 68 years, which suits a plotter atlas.
+    - Every number can be traced to a committed file and cross-checked against NOAA's own
+      published figures (`co2.test.ts`).
+    - It overlaps neither the stats plates (inference) nor the agent-loop page.
+  - *How it works.*
+    - A sticky SVG chart morphs between seven views (tweened domains, cross-faded
+      layers) as text steps pass a reading zone. The zone is mid-viewport on desktop, and
+      on phones it is just below the sticky chart.
+    - Server-rendered on the full-record view, so the page reads without JS. Instant
+      under reduced motion.
+    - Data and provenance: `src/data/keeling/`.
 - **Wildcard page (T10):** *not yet chosen.*
