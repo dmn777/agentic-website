@@ -84,6 +84,12 @@ describe('parseSeed', () => {
   it('rejects a seed with missing required fields', () => {
     expect(() => parseSeed('---\ntitle: x\n---\nbody')).toThrow(/slug/);
   });
+  it('reads an optional labPage (the plate a post is about), and checks its form', () => {
+    const fm = (extra: string) => `---\ntitle: A\nslug: a\ndate: 2026-09-25\nexcerpt: E.\nmodel: M\n${extra}---\nBody.\n`;
+    expect(parseSeed(fm('labPage: /lab/chladni/\n')).labPage).toBe('/lab/chladni/');
+    expect(parseSeed(fm('')).labPage).toBeUndefined();
+    expect(() => parseSeed(fm('labPage: /notes/x/\n'))).toThrow(/labPage/);
+  });
 });
 
 describe('the real seed posts', () => {

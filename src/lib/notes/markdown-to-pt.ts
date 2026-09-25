@@ -96,7 +96,10 @@ export function toPlainText(blocks: PTBlock[]): string {
   return blocks.map((b) => (b._type === 'block' ? b.children.map((c) => c.text).join('') : b._type === 'codeBlock' ? b.code : b._type === 'callout' ? b.body : b.caption ?? b.alt)).join('\n\n');
 }
 
-export interface Seed { title: string; slug: string; date: string; excerpt: string; tags: string[]; model: string; body: PTBlock[] }
+export interface Seed { title: string; slug: string; date: string; excerpt: string; tags: string[]; model: string; body: PTBlock[]; labPage?: string }
+
+/** The same form the Studio schema accepts for `labPage`. */
+const LAB_ROUTE = /^\/lab\/[a-z0-9-]+\/$/;
 
 /** A seed file: YAML-ish frontmatter (scalars and [a, b] lists) plus a Markdown body. */
 export function parseSeed(src: string): Seed {
@@ -110,8 +113,10 @@ export function parseSeed(src: string): Seed {
     fm[kv[1]] = v.startsWith('[') ? v.slice(1, -1).split(',').map((x) => x.trim()).filter(Boolean) : v.replace(/^["']|["']$/g, '');
   }
   for (const k of ['title', 'slug', 'date', 'excerpt', 'model']) if (!fm[k]) throw new Error(`seed: missing ${k}`);
+  if (fm.labPage && !LAB_ROUTE.test(String(fm.labPage))) throw new Error(`seed: labPage must look like /lab/name/, not ${fm.labPage}`);
   return {
     title: String(fm.title), slug: String(fm.slug), date: String(fm.date), excerpt: String(fm.excerpt),
     tags: Array.isArray(fm.tags) ? fm.tags : [], model: String(fm.model), body: markdownToPortableText(m[2]),
+    ...(fm.labPage ? { labPage: String(fm.labPage) } : {}),
   };
 }

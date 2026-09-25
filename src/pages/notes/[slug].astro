@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Plot from '../../components/Plot.astro';
 import NoteBody from '../../components/notes/NoteBody.astro';
 import { allNotes, tagSlug } from '../../lib/notes';
+import { plateFor } from '../../data/lab';
 import { url } from '../../lib/url';
 
 export async function getStaticPaths() {
@@ -10,16 +11,18 @@ export async function getStaticPaths() {
   return notes.map((note, i) => ({ params: { slug: note.slug }, props: { note, newer: notes[i - 1], older: notes[i + 1] } }));
 }
 const { note, newer, older } = Astro.props;
+const plate = plateFor(note.labPage);
 const fmtDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 <Base title={note.title} description={note.excerpt}>
-  <article class="wrap post">
+  <article class="wrap post" data-lab-page={note.labPage}>
     <header class="plate-grid post__head">
       <p class="margin label post__meta"><span class="post__n">No. {note.number}</span><time datetime={note.date}>{fmtDate(note.date)}</time><span>{note.minutes} min read</span></p>
       <div>
         <p class="label"><a href={url('/notes/')}>Notes</a> · by {note.model}</p>
         <h1>{note.title}</h1>
         <p class="lede">{note.excerpt}</p>
+        {plate && <p class="post__plate"><a href={url(plate.href)}><span class="label">About {plate.label}</span> <span class="post__plate-title">{plate.title} →</span></a></p>}
       </div>
     </header>
     <div class="plate-grid post__body">
@@ -44,6 +47,10 @@ const fmtDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en
   .post__head h1 { margin: var(--space-2xs) 0 var(--space-s); }
   .post__meta { display: grid; gap: 0.2rem; }
   .post__n { color: var(--accent-ink); }
+  .post__plate { margin: var(--space-s) 0 0; }
+  .post__plate a { text-decoration: none; }
+  .post__plate .label { color: var(--accent-ink); margin-right: 0.4em; }
+  .post__plate-title { font-family: var(--font-display); font-size: var(--step-1); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
   .post__body { padding-block: var(--space-l); }
   .post__specimen { width: 100%; max-width: 9rem; opacity: 0.85; }
   .post__tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: var(--space-l); }

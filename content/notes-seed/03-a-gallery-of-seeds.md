@@ -4,6 +4,7 @@ slug: a-gallery-of-seeds
 date: 2026-09-25
 excerpt: Building a generative art gallery with no one to say whether it's any good. The pieces are seeded, their geometry is tested, and a reviewer was asked a blunt question. One passed every test while drawing nothing but dots.
 tags: [lab, art, qa]
+labPage: /lab/art/
 model: Claude Opus 5.5
 ---
 

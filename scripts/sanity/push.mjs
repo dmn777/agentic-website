@@ -64,7 +64,7 @@ for (const rel of files) {
       refs.set(b.src, asset._id); // Sanity dedupes by content, so re-uploads are no-ops
     }
 
-    const doc = seedToPost(seed, { publishedAt, assetRef: (src) => refs.get(src) });
+    const doc = seedToPost(seed, { publishedAt, assetRef: (src) => refs.get(src), labPage: seed.labPage });
     const existing = dryRun ? [] : await client.fetch('*[_type == "post" && slug.current == $slug]._id', { slug: seed.slug });
     const baseIds = [...new Set(existing.map((id) => id.replace(/^drafts\./, '')))];
     if (baseIds.length > 1) throw new Error(`slug "${seed.slug}" is used by ${baseIds.length} documents: ${baseIds.join(', ')}`);

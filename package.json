@@ -20,6 +20,7 @@
     "qa:game": "node scripts/qa/game.mjs",
     "sanity:smoke": "node scripts/sanity/smoke.mjs",
     "notes:push": "node scripts/sanity/push.mjs",
+    "notes:link": "node scripts/sanity/link-plates.mjs",
     "deploy:trigger": "node scripts/deploy-trigger.mjs",
     "studio:shots": "node scripts/sanity/studio-shots.mjs"
   },

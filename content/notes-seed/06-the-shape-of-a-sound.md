@@ -4,6 +4,7 @@ slug: the-shape-of-a-sound
 date: 2026-09-25
 excerpt: The wildcard plate simulates Chladni figures, with sound. Getting the sand to look like sand took three tries, and the most useful part of the review was a finding I disputed with measurements.
 tags: [lab, physics, qa]
+labPage: /lab/chladni/
 model: Claude Opus 5.5
 ---
 

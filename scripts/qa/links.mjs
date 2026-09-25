@@ -9,15 +9,19 @@
 // (#id) must exist in the target page. --stay-under additionally flags internal links
 // that leave the given prefix (used to prove the /v1/ snapshot is self-contained).
 // Also fails on orphans: indexable pages that no other page links to.
+// And (T27, sweep 2 M1) on a broken journal pairing: a note that names a Lab page
+// (data-lab-page) must link to it, and that page must link back to the note.
+//   --dist <dir>   crawl another build (for self-tests with planted faults)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { start, BASE, DIST } from './serve.mjs';
+import { start, BASE, DIST as BUILT } from './serve.mjs';
 import { discoverRoutes, today, parseArgs } from './routes.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SITE = path.resolve(here, '../..');
 const args = parseArgs();
+const DIST = typeof args.dist === 'string' ? path.resolve(args.dist) : BUILT;
 
 const decode = (s) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x2F;/gi, '/');
 
@@ -54,8 +58,8 @@ async function main() {
   const scope = args.scope ?? '/';
   const stayUnder = args['stay-under'];
   const checkFragments = !args['no-fragments'];
-  const server = await start();
-  const pages = discoverRoutes({ includeV1: true }).filter((r) => r.route.startsWith(scope));
+  const server = await start(DIST);
+  const pages = discoverRoutes({ dist: DIST, includeV1: true }).filter((r) => r.route.startsWith(scope));
 
   const cache = new Map(); // url (no hash) -> { status, finalUrl, html? }
   async function resolve(u) {
@@ -127,12 +131,23 @@ async function main() {
     if (!from.length) broken.push({ page: r.route, tag: 'orphan', url: r.route, resolved: r.route, why: 'orphan: no inbound link from any other page' });
   }
 
+  // Journal pairs: each note about a Lab page links to it, and the page links back.
+  let pairs = 0;
+  for (const r of pages) {
+    const lab = fs.readFileSync(r.file, 'utf8').match(/data-lab-page="([^"]+)"/)?.[1];
+    if (!lab || !r.route.startsWith('/notes/')) continue;
+    pairs++;
+    const linked = (from, to) => (inbound.get(to) ?? new Set()).has(from);
+    if (!linked(r.route, lab)) broken.push({ page: r.route, tag: 'journal', url: lab, resolved: lab, why: `the note is about ${lab} but doesn't link to it` });
+    if (!linked(lab, r.route)) broken.push({ page: lab, tag: 'journal', url: r.route, resolved: r.route, why: `no link back to its journal note ${r.route}` });
+  }
+
   const outDir = path.resolve(SITE, args.out ?? path.join('..', 'qa', today(), args.label ?? 'links'));
   fs.mkdirSync(outDir, { recursive: true });
   const summary = { scope, stayUnder: stayUnder ?? null, pages: pages.length, checked, broken, ok: broken.length === 0 };
   fs.writeFileSync(path.join(outDir, 'links.json'), JSON.stringify(summary, null, 2));
   for (const b of broken) console.log(`BROKEN ${b.page} → ${b.url} (${b.why})`);
-  console.log(`${pages.length} page(s), ${checked} internal URL(s) checked, ${broken.length} broken → ${path.relative(SITE, outDir)}/links.json`);
+  console.log(`${pages.length} page(s), ${checked} internal URL(s) checked, ${pairs} journal pair(s), ${broken.length} broken → ${path.relative(SITE, outDir)}/links.json`);
   process.exitCode = summary.ok ? 0 : 1;
 }
 

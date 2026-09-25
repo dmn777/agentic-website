@@ -3,7 +3,8 @@
 // the page body, and a pager to the neighbouring plates. Metadata comes from src/data/lab.ts.
 import Base from './Base.astro';
 import Plot from '../components/Plot.astro';
-import { lab, labEntry, roman, seriesById, platesIn } from '../data/lab';
+import JournalLink from '../components/notes/JournalLink.astro';
+import { lab, labEntry, roman, seriesById, platesIn, journalRoutes } from '../data/lab';
 import { url } from '../lib/url';
 
 interface Props { slug: string; lede: string; description?: string }
@@ -36,9 +37,12 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
     </div>
     <nav class="labpage__pager plate-grid" aria-label="Other plates">
       <p class="margin label">Continue</p>
+      <div class="labpage__continue">
+      <JournalLink routes={journalRoutes(entry)} />
       <div class="pager">
         {prev ? <a class="pager__link" href={url(`/lab/${prev.slug}/`)}><span class="label">← Pl. {roman(prev.plate)}</span><span class="pager__title">{prev.title}</span></a> : <span />}
         {next ? <a class="pager__link pager__link--next" href={url(`/lab/${next.slug}/`)}><span class="label">Pl. {roman(next.plate)} →</span><span class="pager__title">{next.title}</span></a> : <a class="pager__link pager__link--next" href={url('/lab/')}><span class="label">Index →</span><span class="pager__title">All plates</span></a>}
+      </div>
       </div>
     </nav>
   </article>
@@ -69,6 +73,7 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
   .labpage__specimen { grid-area: spec; width: 100%; max-width: 13rem; justify-self: end; }
   .labpage__body { padding-block: var(--space-l); }
   .labpage__pager { padding-block: var(--space-l); border-top: var(--hair) solid var(--rule); }
+  .labpage__continue { display: grid; gap: var(--space-m); }
   .pager { display: flex; justify-content: space-between; gap: var(--space-m); flex-wrap: wrap; }
   .pager__link { display: grid; gap: 0.2rem; text-decoration: none; max-width: 22rem; }
   .pager__link--next { text-align: right; margin-left: auto; }

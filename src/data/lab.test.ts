@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lab, labEntry, plates } from './lab';
+import { lab, labEntry, plates, plateFor, journalRoutes } from './lab';
 
 // A draft plate has a page (so it can ship and be tested live) but no listing: Home,
 // /lab/, the pager of its neighbours and the site description all read `lab`, which
@@ -17,3 +17,18 @@ describe('draft plates', () => {
     for (const e of plates) expect(labEntry(e.slug)).toBe(e);
   });
 });
+
+// Sweep 2 (M1): notes and plates link to each other through a note's labPage route.
+describe('plateFor', () => {
+  it('names a plate, or a series by its range', () => {
+    expect(plateFor('/lab/chladni/')).toEqual({ label: 'Pl. VII', title: 'The shape of a sound', href: '/lab/chladni/' });
+    expect(plateFor('/lab/stats/')).toEqual({ label: 'Pl. I–III', title: 'Statistics, seen', href: '/lab/stats/' });
+    expect(plateFor('/lab/nope/')).toBeUndefined();
+    expect(plateFor(undefined)).toBeUndefined();
+  });
+  it('lists the labPage routes a note can use to belong to a plate: its own, and its series hub', () => {
+    expect(journalRoutes(labEntry('chladni'))).toEqual(['/lab/chladni/']);
+    expect(journalRoutes(labEntry('stats/sampling'))).toEqual(['/lab/stats/sampling/', '/lab/stats/']);
+  });
+});
+

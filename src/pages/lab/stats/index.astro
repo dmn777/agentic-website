@@ -2,6 +2,7 @@
 // A series hub, generated from the series registry in src/data/lab.ts.
 import Base from '../../../layouts/Base.astro';
 import LabCard from '../../../components/LabCard.astro';
+import JournalLink from '../../../components/notes/JournalLink.astro';
 import { seriesById, platesIn, plateRange } from '../../../data/lab';
 
 const ser = seriesById('stats')!;
@@ -19,9 +20,11 @@ const plates = platesIn(ser.id);
     <ul class="card-grid" role="list">
       {plates.map((e) => <li><LabCard entry={e} headingLevel={2} /></li>)}
     </ul>
+    <div class="plate-grid series__journal"><p class="margin label">Continue</p><JournalLink routes={[ser.href]} /></div>
   </div>
 </Base>
 <style>
+  .series__journal { padding-block: var(--space-l); border-top: var(--hair) solid var(--rule); margin-top: var(--space-l); }
   .series { padding-block: var(--space-xl) var(--space-l); }
   .series__head { padding-bottom: var(--space-l); margin-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
   .series__head h1 { margin-bottom: var(--space-s); }

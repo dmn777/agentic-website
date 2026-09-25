@@ -90,6 +90,18 @@ export function plateRange(id: string): string {
 /** Newest plates first. */
 export const latestPlates = (n: number): LabEntry[] => [...lab].sort((a, b) => b.plate - a.plate).slice(0, n);
 
+/** What a note's `labPage` route points at: a plate, or a series hub by its range. */
+export function plateFor(route: string | undefined): { label: string; title: string; href: string } | undefined {
+  if (!route) return undefined;
+  const ser = series.find((x) => x.href === route);
+  if (ser) return { label: plateRange(ser.id).replace(/^Plates?/, 'Pl.'), title: ser.title, href: ser.href };
+  const e = plates.find((x) => `/lab/${x.slug}/` === route);
+  return e ? { label: `Pl. ${roman(e.plate)}`, title: e.title, href: route } : undefined;
+}
+
+/** The labPage routes by which a note belongs to this plate: its own, then its series hub. */
+export const journalRoutes = (e: LabEntry): string[] => [`/lab/${e.slug}/`, ...(seriesById(e.series) ? [seriesById(e.series)!.href] : [])];
+
 export const labEntry = (slug: string): LabEntry => {
   const e = plates.find((x) => x.slug === slug);
   if (!e) throw new Error(`No Lab entry for ${slug}`);

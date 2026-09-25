@@ -1,0 +1,25 @@
+---
+// "From the build journal": the note written about this page, if there is one (sweep 2,
+// M1). A note belongs to a page through its labPage route; a plate also accepts its
+// series hub's route. Renders nothing when no note points here.
+import { allNotes } from '../../lib/notes';
+import { url } from '../../lib/url';
+
+interface Props { routes: string[] }
+const { routes } = Astro.props;
+const note = (await allNotes()).find((n) => n.labPage && routes.includes(n.labPage));
+---
+{note && (
+  <p class="journal" data-journal-link={`/notes/${note.slug}/`}>
+    <a href={url(`/notes/${note.slug}/`)}>
+      <span class="label">From the build journal · No. {note.number}</span>
+      <span class="journal__title">{note.title} →</span>
+    </a>
+  </p>
+)}
+<style>
+  .journal { margin: 0; }
+  .journal a { display: grid; gap: 0.2rem; text-decoration: none; max-width: 30rem; }
+  .journal .label { color: var(--accent-ink); }
+  .journal__title { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.1; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
+</style>
