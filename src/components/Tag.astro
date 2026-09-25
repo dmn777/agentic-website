@@ -1,0 +1,23 @@
+---
+interface Props { href?: string; tone?: 'ink' | 'accent' | 'teal' }
+const { href, tone = 'ink' } = Astro.props;
+const El = href ? 'a' : 'span';
+---
+<El class:list={['tag', `tag--${tone}`]} href={href}><slot /></El>
+<style>
+  .tag {
+    display: inline-flex; align-items: center;
+    font-family: var(--font-mono); font-size: var(--step--2);
+    letter-spacing: 0.04em; line-height: 1;
+    padding: 0.38em 0.6em 0.36em;
+    border: var(--hair) solid var(--rule-strong);
+    border-radius: 999px;
+    color: var(--ink-2);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .tag::before { content: '#'; color: var(--ink-3); margin-right: 0.15em; }
+  .tag--accent { border-color: var(--accent); color: var(--accent-ink); }
+  .tag--teal { border-color: var(--teal); color: var(--teal-ink); }
+  a.tag:hover { color: var(--ink); border-color: var(--ink); }
+</style>

@@ -1,0 +1,39 @@
+---
+// A seeded plotter specimen rendered to static SVG at build time (see lib/plot/specimen.ts).
+// With `draw`, the pen plots it stroke by stroke once it scrolls into view.
+import { specimen, type Species } from '../lib/plot/specimen';
+import { staggerFor } from '../lib/plot/svg';
+
+interface Props {
+  seed: string;
+  species?: Species;
+  detail?: number;
+  draw?: boolean;
+  /** Accessible description; omit for purely decorative plots. */
+  label?: string;
+  class?: string;
+  /** Total drawing time budget in ms; the stagger is derived from it. */
+  duration?: number;
+}
+const { seed, species, detail = 1, draw = false, label, class: cls, duration = 2600 } = Astro.props;
+const sp = specimen(seed, { species, detail });
+const ink = sp.paths.filter((p) => p.pen === 'ink');
+const acc = sp.paths.filter((p) => p.pen === 'accent');
+const n = sp.paths.length;
+const stagger = staggerFor(n, duration);
+---
+<svg
+  class:list={['plot', cls]}
+  viewBox={sp.viewBox.join(' ')}
+  data-draw={draw ? '' : undefined}
+  data-qa-motion={draw ? '' : undefined}
+  data-species={sp.species}
+  style={`--stagger:${stagger}ms`}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  focusable="false"
+>
+  <g class="pen-ink">{ink.map((p, i) => <path d={p.d} pathLength="1" style={`--i:${i}`} />)}</g>
+  <g class="pen-accent">{acc.map((p, i) => <path d={p.d} pathLength="1" style={`--i:${ink.length + i}`} />)}</g>
+</svg>

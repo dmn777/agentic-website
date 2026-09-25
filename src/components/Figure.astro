@@ -1,0 +1,24 @@
+---
+// A numbered plate figure: framed body, mono "FIG. n" label and an italic caption.
+interface Props { n?: number | string; caption?: string; frame?: boolean; class?: string }
+const { n, caption, frame = true, class: cls } = Astro.props;
+---
+<figure class:list={['figure', { 'figure--frame': frame }, cls]}>
+  <div class="figure__body"><slot /></div>
+  {(caption || n !== undefined || Astro.slots.has('caption')) && (
+    <figcaption>
+      {n !== undefined && <span class="figure__n">Fig. {n}</span>}
+      <span class="figure__cap">{caption}<slot name="caption" /></span>
+    </figcaption>
+  )}
+</figure>
+<style>
+  .figure { display: grid; gap: var(--space-xs); }
+  .figure--frame .figure__body { border: var(--hair) solid var(--rule); background: var(--paper-raised); padding: var(--space-s); }
+  figcaption { display: flex; gap: 0.8em; align-items: baseline; font-size: var(--step--1); line-height: 1.45; color: var(--ink-2); max-width: var(--measure); }
+  .figure__n {
+    flex: none; font-family: var(--font-mono); font-size: var(--step--2);
+    letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--accent-ink);
+  }
+  .figure__cap { font-style: italic; }
+</style>

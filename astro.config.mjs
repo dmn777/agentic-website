@@ -1,6 +1,8 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
+import svelte from '@astrojs/svelte';
+import { plateLight, plateDark } from './src/styles/shiki-themes.ts';
 
 // The site is served from https://dmn777.github.io/agentic-website/
 // so every internal URL needs the "/agentic-website" prefix.
@@ -33,9 +35,12 @@ export default defineConfig({
   site: 'https://dmn777.github.io',
   base: BASE,
   trailingSlash: 'always',
+  integrations: [svelte()],
   markdown: {
     // Astro 7's default Markdown processor (Sätteri) has no rehype plugin API,
     // so we use the unified processor for our link-rewriting plugin.
     processor: unified({ rehypePlugins: [rehypeBaseLinks] }),
+    // Custom Plates themes (contrast-tested); both emitted as CSS variables.
+    shikiConfig: { themes: { light: plateLight, dark: plateDark }, defaultColor: false },
   },
 });

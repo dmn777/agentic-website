@@ -9,7 +9,9 @@
 // overflow at 390 px, and blank canvases on pages that declare data-qa-canvas.
 // Pages that declare data-qa-motion also get a reduced-motion shot.
 // Interaction states live in scripts/qa/states/*.mjs (see README there).
-// Output: ../qa/<date>/<label>/*.png, thumbs/*.jpg (half-size, for reviewers), summary.json.
+// Output: ../qa/<date>/<label>/*.png, thumbs/*.jpg (half-size), tiles/*-<k>.jpg (desktop
+// shots cut into readable 1000 px-wide sections; mobile shots as side-by-side strips — give
+// reviewers these), summary.json.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -71,7 +73,10 @@ export async function settle(page) {
     scrollTo(0, 0);
   });
   await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(400);
+  // Let finite animations (plotter drawings, reveals) finish so shots show final states.
+  await page.waitForFunction(() => document.getAnimations().every((a) =>
+    a.playState !== 'running' || a.effect?.getComputedTiming().iterations === Infinity), null, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(300);
 }
 
 /** Elements sticking out past the right edge (for overflow diagnostics). Compares with the
@@ -129,6 +134,61 @@ async function thumb(browser, pngPath, jpgPath, scale = 0.5) {
   await page.close();
 }
 
+/** Cut a tall desktop shot into ~1400 px-high tiles scaled to 1000 px wide (JPEG), so a
+ *  reviewer can read a long page at legible size, section by section. */
+async function tiles(browser, pngPath, outPrefix, tileH = 1400, width = 1000) {
+  const page = await browser.newPage();
+  const b64 = fs.readFileSync(pngPath).toString('base64');
+  const parts = await page.evaluate(async ({ b64, tileH, width }) => {
+    const img = new Image();
+    img.src = 'data:image/png;base64,' + b64;
+    await img.decode();
+    const k = width / img.width, out = [];
+    for (let y = 0; y < img.height; y += tileH) {
+      const h = Math.min(tileH, img.height - y);
+      const c = document.createElement('canvas');
+      c.width = width; c.height = Math.round(h * k);
+      const g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(img, 0, y, img.width, h, 0, 0, c.width, c.height);
+      out.push(c.toDataURL('image/jpeg', 0.82).split(',')[1]);
+    }
+    return out;
+  }, { b64, tileH, width });
+  parts.forEach((d, i) => fs.writeFileSync(`${outPrefix}-${i + 1}.jpg`, Buffer.from(d, 'base64')));
+  await page.close();
+  return parts.length;
+}
+
+/** Mobile shots are narrow and very tall: lay 1600 px slices side by side, three per image
+ *  (≈1210×1600 JPEG), so a reviewer reads a whole phone page in a few images. */
+async function strips(browser, pngPath, outPrefix, sliceH = 1600, perImage = 3, gap = 20) {
+  const page = await browser.newPage();
+  const b64 = fs.readFileSync(pngPath).toString('base64');
+  const parts = await page.evaluate(async ({ b64, sliceH, perImage, gap }) => {
+    const img = new Image();
+    img.src = 'data:image/png;base64,' + b64;
+    await img.decode();
+    const slices = Math.ceil(img.height / sliceH), out = [];
+    for (let s0 = 0; s0 < slices; s0 += perImage) {
+      const n = Math.min(perImage, slices - s0);
+      const c = document.createElement('canvas');
+      c.width = n * img.width + (n - 1) * gap; c.height = sliceH;
+      const g = c.getContext('2d');
+      g.fillStyle = '#808080'; g.fillRect(0, 0, c.width, c.height);
+      for (let k = 0; k < n; k++) {
+        const y = (s0 + k) * sliceH, h = Math.min(sliceH, img.height - y);
+        g.drawImage(img, 0, y, img.width, h, k * (img.width + gap), 0, img.width, h);
+      }
+      out.push(c.toDataURL('image/jpeg', 0.82).split(',')[1]);
+    }
+    return out;
+  }, { b64, sliceH, perImage, gap });
+  parts.forEach((d, i) => fs.writeFileSync(`${outPrefix}-${i + 1}.jpg`, Buffer.from(d, 'base64')));
+  await page.close();
+  return parts.length;
+}
+
 async function pool(items, n, fn) {
   const out = [];
   let i = 0;
@@ -150,6 +210,7 @@ async function main() {
   const label = args.label ?? 'adhoc';
   const outDir = path.resolve(SITE, args.out ?? path.join('..', 'qa', today(), label));
   fs.mkdirSync(path.join(outDir, 'thumbs'), { recursive: true });
+  fs.mkdirSync(path.join(outDir, 'tiles'), { recursive: true });
 
   let routes = discoverRoutes({ includeV1: !!args['include-v1'] });
   if (args.routes) {
@@ -187,6 +248,8 @@ async function main() {
       const file = path.join(outDir, name + '.png');
       await page.screenshot({ path: file, fullPage: true });
       await thumb(browser, file, path.join(outDir, 'thumbs', name + '.jpg'), spec.mobile ? 1 : 0.5);
+      if (!spec.mobile) await tiles(browser, file, path.join(outDir, 'tiles', name));
+      else await strips(browser, file, path.join(outDir, 'tiles', name));
     } catch (e) {
       problems.push({ kind: 'runner', text: String(e?.message ?? e).split('\n')[0] });
     }

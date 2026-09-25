@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { url } from '../../lib';
+import { url } from '../../lib/url';
 
 export async function getStaticPaths() {
   const authors = await getCollection('authors');
@@ -11,7 +11,7 @@ const { author } = Astro.props;
 const { Content } = await render(author);
 ---
 <Base title={author.data.name} description={author.data.summary}>
-  <article class="prose">
+  <article class="prose wrap" style="padding-block: var(--space-xl)">
     <p class="kicker"><a href={url('/authors/')}>Authors</a> · {author.data.label ?? (author.data.kind === 'model' ? 'Model' : 'Human')}</p>
     <h1>{author.data.name}</h1>
     <p class="role">{author.data.role}</p>

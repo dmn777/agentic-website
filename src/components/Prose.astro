@@ -1,0 +1,7 @@
+---
+// Long-form text (Markdown bodies, articles). Styles live in global.css (.prose) so that
+// Markdown-rendered HTML picks them up without scoping.
+interface Props { class?: string; as?: 'div' | 'article' | 'section' }
+const { class: cls, as: El = 'div' } = Astro.props;
+---
+<El class:list={['prose', cls]}><slot /></El>

@@ -1,0 +1,200 @@
+---
+// Unlisted QA surface for the Plates design system: not in the nav, noindex. Every token
+// and component appears here so screenshot review can catch regressions in one place.
+import Base from '../layouts/Base.astro';
+import Plot from '../components/Plot.astro';
+import Button from '../components/Button.astro';
+import Tag from '../components/Tag.astro';
+import Callout from '../components/Callout.astro';
+import Figure from '../components/Figure.astro';
+import Card from '../components/Card.astro';
+import LabCard from '../components/LabCard.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import Prose from '../components/Prose.astro';
+import PlotPlayground from '../components/islands/PlotPlayground.svelte';
+import Sample from '../components/styleguide/Sample.md';
+import { SPECIES } from '../lib/plot/specimen';
+import type { LabEntry } from '../data/lab';
+
+const colours = [
+  ['paper', 'Page ground'], ['paper-raised', 'Cards, panels, code'], ['paper-sunk', 'Wells, tracks'],
+  ['ink', 'Text, strokes'], ['ink-2', 'Secondary text'], ['ink-3', 'Captions, meta'],
+  ['accent', 'Vermilion pen'], ['accent-ink', 'Vermilion text'], ['teal', 'Teal pen'], ['teal-ink', 'Teal text'],
+  ['ochre', 'Ochre pen'], ['ochre-ink', 'Ochre text'], ['rule', 'Hairlines'], ['rule-strong', 'Frames, axes'], ['focus', 'Focus ring'],
+];
+const steps = [['5', 'Display'], ['4', 'Page title'], ['3', 'Section'], ['2', 'Sub-section'], ['1', 'Lede'], ['0', 'Body'], ['-1', 'Small'], ['-2', 'Label']];
+const samples: LabEntry[] = [
+  { slug: 'sample-stats', plate: 1, title: 'Sampling, seen', blurb: 'Draw samples from lopsided populations and watch their means line up into a bell curve anyway.', tags: ['stats', 'explorable'], kind: 'Explorable', species: 'contour' },
+  { slug: 'sample-art', plate: 2, title: 'A gallery of seeds', blurb: 'Nine generative drawings. Every one is a number; change the number, get a sibling.', tags: ['art'], kind: 'Gallery', species: 'flow' },
+  { slug: 'sample-game', plate: 3, title: 'A game nobody playtested', blurb: 'Designed, built and tuned with no human playing it until launch day.', tags: ['game'], kind: 'Game', species: 'ridge' },
+];
+const tsSample = `export function specimen(seed: string, opts: SpecimenOptions = {}): Specimen {
+  const rng = rngFrom(seed);                       // same seed → same drawing
+  const species = opts.species ?? rng.pick(SPECIES);
+  return { seed, species, viewBox: [0, 0, 400, 400], paths: DRAW[species](ctx) };
+}`;
+const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --label T4
+# → ../qa/2026-09-25/T4/summary.json  (fails on console errors, 404s, overflow)`;
+---
+<Base title="Styleguide" description="The Plates design system: tokens, type and components." noindex>
+  <div class="wrap sg">
+    <header class="sg-head plate-grid">
+      <p class="margin label">Plate 0 · unlisted</p>
+      <div>
+        <h1>The Plates styleguide</h1>
+        <p class="lede">Scientific-atlas plates, drawn by a pen plotter. This page shows every token and component in one place. It is the surface the screenshot suite and the reviewers look at, and it is kept out of the navigation and out of search.</p>
+      </div>
+    </header>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-colour">
+      <p class="margin label">§1 · Colour</p>
+      <div>
+        <h2 id="sg-colour">Inks and papers</h2>
+        <p class="muted sg-note">Each token is one <code>light-dark()</code> pair. The toggle in the header flips <code>color-scheme</code>, and these swatches follow.</p>
+        <ul class="swatches">
+          {colours.map(([t, role]) => (
+            <li><span class="swatch" style={`background: var(--${t})`}></span><span class="mono sw-name">--{t}</span><span class="sw-role">{role}</span></li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-type">
+      <p class="margin label">§2 · Type</p>
+      <div>
+        <h2 id="sg-type">Imbue, Newsreader, Martian Mono</h2>
+        <ol class="scale">
+          {steps.map(([s, name]) => (
+            <li>
+              <span class="label">step {s} · {name}</span>
+              <span class={Number(s) >= 2 ? 'display' : Number(s) <= -2 ? 'mono' : ''} style={`font-size: var(--step-${s})`}>{Number(s) >= 2 ? 'Plotted, not tweened' : Number(s) <= -2 ? 'PL. IV · FIG. 2 · 1440×900' : 'The pen lifts, travels, and lands again.'}</span>
+            </li>
+          ))}
+        </ol>
+        <p class="lede">A lede paragraph sets up a page in a sentence or two, in a lighter weight and a larger size.</p>
+        <p>Body text is Newsreader at its text optical size, with old-style figures such as 1984 and 2026, <em>an italic for emphasis</em>, and <strong>a firmer weight</strong> for the rare strong claim.</p>
+      </div>
+    </section>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-plots">
+      <p class="margin label">§3 · Specimens</p>
+      <div>
+        <h2 id="sg-plots">The signature motif</h2>
+        <p class="muted sg-note">Five plotter species. A seed (usually a page's slug) picks the species and its parameters. Drawn stroke by stroke when scrolled into view.</p>
+        <div class="species">
+          {SPECIES.map((s, i) => (
+            <Figure n={`3.${i + 1}`} caption={`${s}, seed “sg-${s}”`}>
+              <Plot seed={`sg-${s}`} species={s} detail={0.8} draw label={`A ${s} plotter specimen`} />
+            </Figure>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-components">
+      <p class="margin label">§4 · Components</p>
+      <div class="stack" style="--flow: var(--space-l)">
+        <h2 id="sg-components">Parts</h2>
+        <div>
+          <h3 class="sg-h3">Buttons</h3>
+          <div class="row">
+            <Button arrow>Open the lab</Button>
+            <Button variant="secondary">Replot</Button>
+            <Button variant="quiet" arrow>Read the notes</Button>
+            <Button disabled>Disabled</Button>
+          </div>
+        </div>
+        <div>
+          <h3 class="sg-h3">Tags</h3>
+          <div class="row"><Tag>stats</Tag><Tag>generative</Tag><Tag tone="accent">new</Tag><Tag tone="teal">explorable</Tag></div>
+        </div>
+        <div class="stack">
+          <h3 class="sg-h3">Callouts</h3>
+          <Callout tone="note" title="Seeds">Every drawing on this site can be regenerated exactly from its seed.</Callout>
+          <Callout tone="warn">Nobody reviewed this before it went live. Screenshots and a second model did.</Callout>
+          <Callout tone="tip">Press the theme button in the header: every colour here is one token.</Callout>
+        </div>
+        <div>
+          <h3 class="sg-h3">Cards</h3>
+          <ul class="lab-grid" role="list">
+            {samples.map((e) => <li><LabCard entry={e} /></li>)}
+          </ul>
+          <div class="row" style="margin-top: var(--space-l)">
+            <Card class="plain-card"><p class="label">A plain card</p><p>Cards are cut square with crop marks at the corners, like plates waiting to be trimmed.</p></Card>
+          </div>
+        </div>
+        <div class="stack">
+          <h3 class="sg-h3">Code</h3>
+          <CodeBlock code={tsSample} lang="ts" filename="src/lib/plot/specimen.ts" />
+          <CodeBlock code={shSample} lang="bash" />
+        </div>
+      </div>
+    </section>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-controls">
+      <p class="margin label">§5 · Controls</p>
+      <div class="stack" style="--flow: var(--space-m)">
+        <h2 id="sg-controls">Instruments</h2>
+        <p class="muted sg-note">Explorables use these; no browser-default controls. The live island below re-plots a specimen with the same generator the server uses.</p>
+        <form class="controls-demo" onsubmit="return false">
+          <label class="control"><span class="control__head"><span class="label">Sample size n</span><span class="control__value">30</span></span><input type="range" min="1" max="100" value="30" /></label>
+          <label class="control"><span class="control__head"><span class="label">Population</span></span>
+            <select><option>Skewed (exponential)</option><option>Bimodal</option><option>Uniform</option></select></label>
+          <fieldset class="control"><legend class="label">Overlay</legend>
+            <label class="check"><input type="checkbox" checked /> Normal curve</label>
+            <label class="check"><input type="checkbox" /> Sample points</label></fieldset>
+          <fieldset class="control"><legend class="label">Speed</legend>
+            <label class="check"><input type="radio" name="speed" checked /> Slow</label>
+            <label class="check"><input type="radio" name="speed" /> Fast</label></fieldset>
+        </form>
+        <PlotPlayground client:visible />
+      </div>
+    </section>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-prose">
+      <p class="margin label">§6 · Prose</p>
+      <div>
+        <h2 id="sg-prose" class="visually-hidden">Prose</h2>
+        <Prose><Sample /></Prose>
+      </div>
+    </section>
+
+    <section class="plate-grid sg-section" aria-labelledby="sg-motion">
+      <p class="margin label">§7 · Motion</p>
+      <Prose>
+        <h2 id="sg-motion">Plotted, not tweened</h2>
+        <p>Things arrive the way a plotter makes them: stroke after stroke, at pen speed, in order. There is no bouncing and nothing flies in. Interface feedback is quick (160 ms) and small: the misregistered vermilion shadow on a button shifts by a pixel or two. With <code>prefers-reduced-motion</code>, every drawing appears finished and nothing moves.</p>
+      </Prose>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .sg { padding-block: var(--space-xl) 0; }
+  .sg-head { padding-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
+  .sg-head h1 { margin-bottom: var(--space-s); }
+  .sg-section { padding-block: var(--space-xl); border-bottom: var(--hair) solid var(--rule); }
+  .sg-section h2 { margin-bottom: var(--space-s); }
+  .sg-h3 { font-size: var(--step-1); margin-bottom: var(--space-s); }
+  .sg-note { max-width: var(--measure); margin-bottom: var(--space-m); }
+  .swatches { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: var(--space-s); }
+  .swatches li { display: grid; gap: 0.25rem; }
+  .swatch { height: 4.5rem; border: var(--hair) solid var(--rule-strong); }
+  .sw-name { font-size: var(--step--2); }
+  .sw-role { font-size: var(--step--1); color: var(--ink-3); }
+  .scale { list-style: none; padding: 0; margin-bottom: var(--space-l); }
+  .scale li { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr); gap: var(--space-s); align-items: baseline; padding-block: var(--space-2xs); border-bottom: var(--hair) dashed var(--rule); }
+  .scale li > span:last-child { line-height: 1.1; overflow-wrap: anywhere; }
+  .species { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--space-m); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-s); align-items: center; }
+  .lab-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-l); }
+  .lab-grid > li { display: flex; }
+  .lab-grid > li > :global(*) { flex: 1; }
+  .plain-card { max-width: 26rem; }
+  .controls-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: var(--space-m); max-width: 56rem; align-items: start; }
+  fieldset.control { border: 0; padding: 0; display: grid; gap: 0.4rem; }
+  .check { display: flex; align-items: center; gap: 0.55rem; font-size: var(--step--1); cursor: pointer; }
+  @media (max-width: 40rem) {
+    .scale li { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+  }
+</style>

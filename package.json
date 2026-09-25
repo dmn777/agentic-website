@@ -17,7 +17,12 @@
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
-    "astro": "^7.3.3"
+    "@astrojs/svelte": "^9.0.1",
+    "@fontsource-variable/imbue": "^5.3.0",
+    "@fontsource-variable/martian-mono": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
+    "astro": "^7.3.3",
+    "svelte": "^5.57.1"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

@@ -1,74 +1,285 @@
-:root {
-  --bg: #fbfaf7;
-  --fg: #1d1f23;
-  --muted: #5d6470;
-  --accent: #1f3a5f;
-  --accent-2: #b7791f;
-  --line: #e4e0d8;
-  --card: #ffffff;
-  --code-bg: #f1eee8;
-  --measure: 42rem;
-  color-scheme: light dark;
+/* Plates: base styles. Tokens live in tokens.css; component styles live next to their
+   components. This file is the reset, the typography, prose, code, form controls and the
+   plotter-drawing animation shared by every page. */
+@import './tokens.css';
+@import './crop.css';
+
+/* ── Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; hanging-punctuation: first last; }
+body { min-height: 100svh; }
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; color: inherit; }
+p, h1, h2, h3, h4, li, figcaption, blockquote { overflow-wrap: break-word; }
+h1, h2, h3, h4 { text-wrap: balance; }
+p, li, figcaption { text-wrap: pretty; }
+[hidden] { display: none !important; }
+
+/* ── Page ──────────────────────────────────────────────────────────── */
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: var(--leading-body);
+  font-optical-sizing: auto;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14161a;
-    --fg: #e8e6e1;
-    --muted: #a0a6b0;
-    --accent: #9cc2ff;
-    --accent-2: #f2b84b;
-    --line: #2b2f36;
-    --card: #1b1e23;
-    --code-bg: #20242b;
+main { flex: 1; }
+
+/* Paper grain: a tiled noise image blended into the page colour (multiply on paper, screen
+   on the night plate). Part of the body background, so it scrolls with the sheet and never
+   sits on top of content. */
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .47 0 0 0 0 .42 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-blend-mode: var(--grain-blend);
+}
+
+::selection { background: var(--accent); color: #fff; }
+
+/* ── Type ──────────────────────────────────────────────────────────── */
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: var(--leading-snug);
+  letter-spacing: -0.005em;
+  font-variant-numeric: lining-nums;
+}
+h1 { font-size: var(--step-4); line-height: var(--leading-tight); font-weight: 450; }
+h2 { font-size: var(--step-3); line-height: 1.02; }
+h3 { font-size: var(--step-2); line-height: 1.08; }
+h4 { font-family: var(--font-text); font-size: var(--step-1); font-weight: 600; line-height: var(--leading-snug); }
+
+:not(pre) > code { font-size: 0.84em; }
+.mono, code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+/* Instrument labels: plate numbers, fig. labels, meta lines, nav. */
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 450;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-2); font-weight: 380; }
+.muted { color: var(--ink-3); }
+
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+  transition: color var(--dur-ui) var(--ease-out), text-decoration-color var(--dur-ui);
+}
+a:hover { color: var(--accent-ink); text-decoration-thickness: 2px; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+.skip {
+  position: absolute; left: var(--gutter); top: -4rem; z-index: 200;
+  background: var(--ink); color: var(--paper); padding: var(--space-2xs) var(--space-s);
+  font-family: var(--font-mono); font-size: var(--step--1); text-decoration: none;
+}
+.skip:focus { top: var(--space-2xs); }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ── Layout helpers ────────────────────────────────────────────────── */
+.wrap { width: min(100% - 2 * var(--gutter), var(--page-max)); margin-inline: auto; }
+/* Vertical rhythm. --flow is registered as non-inheriting, so a nested .stack falls back to
+   the default gap instead of inheriting its parent's. (initial-value must be computationally
+   independent: 1rem makes Chromium silently drop the whole @property rule.) */
+@property --flow { syntax: '<length>'; inherits: false; initial-value: 16px; }
+.stack { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: var(--flow); }
+.rule { border: 0; border-top: var(--hair) solid var(--rule); }
+
+/* A "plate" layout: a narrow notebook margin (labels) beside the main column. */
+.plate-grid {
+  display: grid;
+  grid-template-columns: var(--margin-col) minmax(0, 1fr);
+  column-gap: var(--space-l);
+}
+.plate-grid > .margin { padding-top: 0.45em; }
+@media (max-width: 52rem) {
+  .plate-grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2xs); }
+}
+
+/* ── Prose (Markdown bodies) ───────────────────────────────────────── */
+.prose { max-width: var(--measure); }
+.prose > * + * { margin-top: 1em; }
+.prose h2 { font-size: var(--step-2); margin-top: 1.9em; }
+.prose h3 { font-size: var(--step-1); margin-top: 1.6em; }
+.prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose li + li { margin-top: 0.35em; }
+.prose li::marker { color: var(--accent); font-family: var(--font-mono); font-size: 0.85em; }
+.prose strong { font-weight: 640; }
+.prose blockquote {
+  border-left: var(--stroke) solid var(--accent);
+  padding: 0.1em 0 0.1em 1.1em;
+  font-style: italic;
+  color: var(--ink-2);
+}
+.prose hr { border: 0; border-top: var(--hair) solid var(--rule); margin-block: 2em; }
+.prose img { border: var(--hair) solid var(--rule); }
+.prose :not(pre) > code {
+  font-size: 0.8em;
+  background: var(--paper-sunk);
+  padding: 0.12em 0.36em;
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums lining-nums;
+  display: block;
+  overflow-x: auto;
+}
+.prose th {
+  font-family: var(--font-mono); font-size: var(--step--2); font-weight: 500;
+  text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--ink-3);
+  text-align: left; border-bottom: var(--stroke) solid var(--ink); padding: 0.5em 0.9em 0.5em 0;
+}
+.prose td { border-bottom: var(--hair) solid var(--rule); padding: 0.6em 0.9em 0.6em 0; vertical-align: top; }
+
+/* ── Code blocks (Shiki, dual custom theme) ────────────────────────── */
+pre.astro-code, .code-block pre {
+  background-color: var(--code-bg) !important;
+  border: var(--hair) solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: var(--space-s) var(--space-m);
+  overflow-x: auto;
+  font-size: var(--step--1);
+  line-height: 1.65;
+  tab-size: 2;
+}
+/* defaultColor:false → each token carries --shiki-light / --shiki-dark; pick by scheme. */
+.astro-code, .astro-code span {
+  color: light-dark(var(--shiki-light), var(--shiki-dark));
+  /* both custom themes use identical font styles, so the light variables serve both */
+  font-style: var(--shiki-light-font-style, inherit);
+  font-weight: var(--shiki-light-font-weight, inherit);
+}
+.astro-code code { font-family: var(--font-mono); font-size: inherit; }
+
+/* ── Form controls (explorables use these; never browser defaults) ── */
+input[type='range'] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 28px; background: transparent; cursor: pointer;
+  --fill: 50%;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(to right, var(--ink) var(--fill), var(--rule) var(--fill));
+}
+input[type='range']::-moz-range-track { height: 2px; background: var(--rule); }
+input[type='range']::-moz-range-progress { height: 2px; background: var(--ink); }
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; margin-top: -8px;
+  background: var(--paper-raised); border: 2px solid var(--ink); border-radius: 50%;
+  box-shadow: 3px 3px 0 -1px var(--accent);
+  transition: transform var(--dur-ui) var(--ease-out);
+}
+input[type='range']::-moz-range-thumb {
+  width: 14px; height: 14px; background: var(--paper-raised);
+  border: 2px solid var(--ink); border-radius: 50%; box-shadow: 3px 3px 0 -1px var(--accent);
+}
+input[type='range']:active::-webkit-slider-thumb { transform: scale(1.15); }
+input[type='range']:focus-visible { outline-offset: 2px; }
+
+input[type='text'], input[type='number'], input[type='search'], select, textarea {
+  background: var(--paper-raised);
+  border: var(--hair) solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 0.45em 0.7em;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  min-height: 2.5rem;
+}
+select {
+  -webkit-appearance: none; appearance: none;
+  padding-right: 2.2em;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 1.1em) 55%, calc(100% - 0.75em) 55%;
+  background-size: 0.35em 0.35em;
+  background-repeat: no-repeat;
+}
+input[type='checkbox'], input[type='radio'] {
+  -webkit-appearance: none; appearance: none;
+  width: 1.1rem; height: 1.1rem; flex: none;
+  border: 1.5px solid var(--ink); background: var(--paper-raised);
+  display: inline-grid; place-content: center; vertical-align: -0.15em; cursor: pointer;
+}
+input[type='radio'] { border-radius: 50%; }
+input[type='checkbox']::before, input[type='radio']::before {
+  content: ''; width: 0.55rem; height: 0.55rem; transform: scale(0);
+  background: var(--accent); transition: transform var(--dur-ui) var(--ease-out);
+}
+input[type='radio']::before { border-radius: 50%; }
+input[type='checkbox']:checked::before, input[type='radio']:checked::before { transform: scale(1); }
+
+/* A labelled control row used by explorables: LABEL ……… value */
+.control { display: grid; gap: 0.2rem; }
+.control__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.control__value { font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ── The plotter: stroke-by-stroke drawing ─────────────────────────── */
+/* Stroke widths are set in viewBox units, scaled so the line is --plot-px on screen.
+   Deliberately NOT vector-effect: non-scaling-stroke: Chromium then applies
+   pathLength-normalised dashes in screen space, so any plot drawn larger than its viewBox
+   stops short of its end. */
+.plot { overflow: visible; }
+/* --plot-scale (viewBox units per CSS px) is kept current by scripts/page.ts, so the pen is
+   --plot-px wide on screen at any size. Without JS the scale is 1: a 400 px plot. */
+.plot path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: calc(var(--plot-px) * var(--plot-scale, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.plot .pen-accent path { stroke: var(--accent); stroke-width: calc(var(--plot-px) * 1.6 * var(--plot-scale, 1)); }
+.plot .pen-ink { opacity: 0.88; }
+
+/* Without JS every plot is simply drawn. With JS (html.js), plots marked data-draw wait
+   until they are in view (data-in, set by an IntersectionObserver), then the pen plots
+   each stroke in order. pathLength="1" on every path makes the dash maths size-free. */
+html.js .plot[data-draw] path { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+html.js .plot[data-draw][data-in] path {
+  animation: plot-draw var(--dur-stroke) var(--ease-pen) forwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+@keyframes plot-draw { to { stroke-dashoffset: 0; } }
+@keyframes plot-redraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* ── Reduced motion: final states, no travel ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 1.0625rem/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
-a { color: var(--accent); text-underline-offset: 0.15em; }
-a:hover { text-decoration-thickness: 2px; }
-.skip { position: absolute; left: -999px; }
-.skip:focus { left: 1rem; top: 1rem; background: var(--card); padding: .5rem 1rem; z-index: 10; }
-
-.site-header {
-  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
-  gap: .5rem 2rem; padding: 1.25rem clamp(1rem, 4vw, 3rem);
-  border-bottom: 1px solid var(--line);
-}
-.brand { font-weight: 700; color: var(--fg); text-decoration: none; letter-spacing: -.01em; }
-.brand .mark { color: var(--accent-2); }
-.site-header ul { list-style: none; display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin: 0; padding: 0; }
-.site-header nav a { color: var(--muted); text-decoration: none; }
-.site-header nav a:hover, .site-header nav a[aria-current="page"] { color: var(--fg); }
-.site-header nav a[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--accent-2); }
-
-main { padding: 2.5rem clamp(1rem, 4vw, 3rem) 4rem; }
-.prose { max-width: var(--measure); margin: 0 auto; }
-.prose h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); line-height: 1.15; letter-spacing: -.02em; margin: 0 0 1rem; }
-.prose h2 { font-size: 1.4rem; margin: 2.5rem 0 .75rem; letter-spacing: -.01em; }
-.prose h3 { font-size: 1.1rem; margin: 1.75rem 0 .5rem; }
-.prose img { max-width: 100%; height: auto; }
-.prose blockquote { margin: 1.5rem 0; padding: .25rem 1rem; border-left: 3px solid var(--accent-2); color: var(--muted); }
-.prose table { width: 100%; border-collapse: collapse; font-size: .95rem; margin: 1.5rem 0; display: block; overflow-x: auto; }
-.prose th, .prose td { text-align: left; padding: .5rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
-.prose code { white-space: nowrap; font: .9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--code-bg); padding: .1em .35em; border-radius: 4px; }
-.prose pre { padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: .88rem; line-height: 1.5; }
-.prose pre code { background: none; padding: 0; white-space: inherit; }
-.prose hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
-.lead, .prose > p:first-of-type { font-size: 1.15rem; color: var(--muted); }
-.meta, .kicker { font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 .5rem; }
-.kicker a { color: inherit; }
-.role { color: var(--muted); font-style: italic; margin-top: -.5rem; }
-
-.cards { list-style: none; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); margin: 2rem 0; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.2rem; }
-.card h3 { margin: 0 0 .25rem; }
-.card .role { margin: 0 0 .5rem; font-size: .95rem; }
-.card p:last-child { margin-bottom: 0; }
-
-.site-footer { border-top: 1px solid var(--line); padding: 1.5rem clamp(1rem, 4vw, 3rem); color: var(--muted); font-size: .85rem; }

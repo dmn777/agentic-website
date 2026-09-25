@@ -1,0 +1,21 @@
+/* Corner crop marks around a plate: eight hairline arms drawn by one pseudo-element that
+   sits a few px outside the box. Add .crop to any positioned block. */
+.crop { position: relative; }
+.crop::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--crop-gap, 7px));
+  pointer-events: none;
+  --c: var(--crop-color, var(--rule-strong));
+  --l: var(--mark);
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) top left / 1px var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 1px var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 1px var(--l) no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / var(--l) 1px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 1px var(--l) no-repeat;
+  transition: inset var(--dur-ui) var(--ease-out);
+}

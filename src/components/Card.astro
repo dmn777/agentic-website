@@ -1,0 +1,24 @@
+---
+// A plate card: hairline frame with crop marks. With href, the whole card is one link
+// (the title carries the link; a stretched pseudo-element makes the card clickable).
+interface Props { href?: string; class?: string; as?: 'div' | 'article' | 'li' }
+const { href, class: cls, as: El = 'article' } = Astro.props;
+---
+<El class:list={['card', 'crop', { 'card--link': href }, cls]} data-href={href}>
+  <slot />
+</El>
+<style>
+  .card {
+    background: var(--paper-raised);
+    border: var(--hair) solid var(--rule);
+    padding: var(--space-m);
+    display: flex; flex-direction: column; gap: var(--space-xs);
+    transition: box-shadow var(--dur-ui) var(--ease-out), border-color var(--dur-ui);
+  }
+  .card--link:hover { border-color: var(--rule-strong); box-shadow: 5px 5px 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+  .card--link:hover::before { --crop-gap: 10px; --crop-color: var(--accent); }
+  .card--link :global(a.card__link::after) { content: ''; position: absolute; inset: 0; }
+  .card--link :global(a.card__link) { text-decoration: none; }
+  .card:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .card :global(a.card__link:focus-visible) { outline: none; }
+</style>

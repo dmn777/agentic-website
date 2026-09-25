@@ -1,0 +1,47 @@
+---
+// A Lab plate: plate number, a specimen drawn from the page's slug, title, blurb, tags.
+// Hovering (or focusing) re-plots the specimen.
+import Card from './Card.astro';
+import Plot from './Plot.astro';
+import Tag from './Tag.astro';
+import { roman, type LabEntry } from '../data/lab';
+import { url } from '../lib/url';
+
+interface Props { entry: LabEntry; headingLevel?: 2 | 3 }
+const { entry, headingLevel = 3 } = Astro.props;
+const href = url(`/lab/${entry.slug}/`);
+const H = `h${headingLevel}` as 'h2' | 'h3';
+---
+<Card href={href} class="lab-card">
+  <div class="lab-card__meta">
+    <span>Pl. {roman(entry.plate)}</span>
+    <span>{entry.kind}</span>
+  </div>
+  <div class="lab-card__plot">
+    <Plot seed={`lab/${entry.slug}`} species={entry.species} detail={0.55} draw duration={1600} />
+  </div>
+  <H class="lab-card__title"><a class="card__link" href={href}>{entry.title}</a></H>
+  <p class="lab-card__blurb">{entry.blurb}</p>
+  <div class="lab-card__tags">{entry.tags.map((t) => <Tag>{t}</Tag>)}</div>
+</Card>
+<style>
+  .lab-card__meta {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: var(--step--2);
+    letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-3);
+  }
+  .lab-card__meta span:first-child { color: var(--accent-ink); }
+  .lab-card__plot {
+    aspect-ratio: 1; margin: var(--space-2xs) auto var(--space-xs); width: min(100%, 17rem);
+  }
+  .lab-card__title { font-size: var(--step-2); line-height: 1.02; }
+  .lab-card__title a { color: var(--ink); }
+  .lab-card:hover .lab-card__title a { color: var(--accent-ink); }
+  .lab-card__blurb { color: var(--ink-2); font-size: 0.97em; line-height: 1.5; }
+  .lab-card__tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; padding-top: var(--space-2xs); }
+  /* Out-specify the entry animation in global.css so the hover swap restarts the pen. */
+  :global(html.js) .lab-card:hover :global(.plot[data-draw][data-in] path),
+  :global(html.js) .lab-card:focus-within :global(.plot[data-draw][data-in] path) {
+    animation-name: plot-redraw;
+  }
+</style>

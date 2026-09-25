@@ -1,20 +1,25 @@
 ---
-import { getCollection } from 'astro:content';
-import { url } from '../lib';
+import '@fontsource-variable/imbue/opsz.css';
+import '@fontsource-variable/newsreader/opsz.css';
+import '@fontsource-variable/newsreader/opsz-italic.css';
+import '@fontsource-variable/martian-mono/standard.css';
 import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import TitleBlock from '../components/TitleBlock.astro';
+import { site } from '../data/site';
+import { url } from '../lib/url';
 
-interface Props { title: string; description: string; }
-const { title, description } = Astro.props;
-
-const pages = (await getCollection('pages', ({ data }) => data.nav))
-  .sort((a, b) => a.data.order - b.data.order);
-const here = Astro.url.pathname;
-const href = (id: string) => url(id === 'index' ? '/' : `/${id}/`);
-const siteTitle = 'Agentic Website';
-const fullTitle = title === siteTitle ? title : `${title} · ${siteTitle}`;
-const built = new Date().toISOString().slice(0, 10);
+interface Props {
+  title: string;
+  description?: string;
+  /** Keep the page out of search results (the styleguide). */
+  noindex?: boolean;
+}
+const { title, description = site.description, noindex = false } = Astro.props;
+const fullTitle = title === site.title ? `${site.title}: ${site.tagline}` : `${title} · ${site.title}`;
 // In CI, GITHUB_SHA identifies the commit being built; qa:deploy compares it with HEAD.
 const buildSha = process.env.GITHUB_SHA;
+const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 <!doctype html>
 <html lang="en">
@@ -23,27 +28,30 @@ const buildSha = process.env.GITHUB_SHA;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <meta name="color-scheme" content="light dark" />
+    {noindex && <meta name="robots" content="noindex" />}
     {buildSha && <meta name="build-sha" content={buildSha} />}
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <script is:inline>
+      (() => {
+        const d = document.documentElement;
+        d.classList.add('js');
+        try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') d.dataset.theme = t; } catch {}
+      })();
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
-    <header class="site-header">
-      <a class="brand" href={url('/')}><span class="mark" aria-hidden="true">◆</span> {siteTitle}</a>
-      <nav aria-label="Main">
-        <ul>
-          {pages.map((p) => (
-            <li><a href={href(p.id)} aria-current={here === href(p.id) || (p.id !== 'index' && here.startsWith(href(p.id))) ? 'page' : undefined}>{p.data.navTitle ?? p.data.title}</a></li>
-          ))}
-        </ul>
-      </nav>
-    </header>
+    <SiteHeader />
     <main id="main">
       <slot />
     </main>
-    <footer class="site-footer">
-      <p>Built by Claude (Cowork) with a human in the loop · Astro + GitHub Pages · last build {built} ·
-        <a href="https://github.com/dmn777/agentic-website">source</a></p>
-    </footer>
+    <TitleBlock />
+    <script>
+      import '../scripts/page';
+    </script>
   </body>
 </html>

@@ -1,0 +1,26 @@
+---
+// Two-state theme switch; the choice persists (localStorage 'theme'). With no stored choice
+// the site follows prefers-color-scheme. Behaviour lives in scripts/page.ts.
+---
+<button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="8" class="tt-ring" />
+    <path class="tt-half" d="M12 4a8 8 0 0 1 0 16z" />
+    <path class="tt-hatch" d="M13.5 6.5l4 4M13.5 9.5l5 5M13.5 12.5l4.5 4.5M13.5 15.5l2.6 2.6" />
+  </svg>
+</button>
+<style>
+  .theme-toggle {
+    display: inline-grid; place-items: center;
+    width: 2.5rem; height: 2.5rem; padding: 0;
+    background: transparent; border: var(--hair) solid transparent; border-radius: 50%;
+    cursor: pointer; color: var(--ink);
+    transition: border-color var(--dur-ui), transform var(--dur-reveal) var(--ease-out);
+  }
+  .theme-toggle:hover { border-color: var(--rule-strong); }
+  .theme-toggle svg { fill: none; stroke: currentColor; stroke-width: 1.4; transition: transform var(--dur-reveal) var(--ease-out); }
+  .tt-half { fill: currentColor; stroke: none; }
+  .tt-hatch { stroke: var(--paper); stroke-width: 1; }
+  :global([data-theme='dark']) .theme-toggle svg { transform: rotate(180deg); }
+  @media (prefers-color-scheme: dark) { :global(:root:not([data-theme='light'])) .theme-toggle svg { transform: rotate(180deg); } }
+</style>

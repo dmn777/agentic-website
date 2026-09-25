@@ -1,0 +1,95 @@
+/* Design tokens: "Plates" (see DESIGN.md).
+   Every colour is ONE declaration, light-dark(<paper>, <night plate>), resolved by
+   color-scheme. The theme toggle only flips color-scheme on <html>, so swapping the whole
+   look is a matter of editing this file. The contrast contract lives in tokens.test.ts. */
+
+:root {
+  color-scheme: light dark;
+
+  /* ── Colour: surfaces ─────────────────────────────────────────────── */
+  --paper:        light-dark(#f2ede3, #0e151d);  /* page: warm plate paper / night plate */
+  --paper-raised: light-dark(#f8f5ee, #141e28);  /* cards, panels, inputs */
+  --paper-sunk:   light-dark(#e7e0d1, #0a1016);  /* wells, tracks, table stripes */
+  --code-bg:      light-dark(#f8f5ee, #141e28);
+
+  /* ── Colour: ink (text) ───────────────────────────────────────────── */
+  --ink:          light-dark(#191d28, #ece6d9);  /* body text, strokes */
+  --ink-2:        light-dark(#414654, #c3c5c9);  /* secondary text */
+  --ink-3:        light-dark(#5a5f6b, #9aa1aa);  /* captions, meta */
+
+  /* ── Colour: pens (graphics) and their text-safe variants ─────────── */
+  --accent:       light-dark(#e0442b, #ff6a48);  /* vermilion plotter pen */
+  --accent-ink:   light-dark(#a82e18, #ff8f74);  /* vermilion for text and links */
+  --teal:         light-dark(#1d7a80, #52c0c6);  /* second pen (data) */
+  --teal-ink:     light-dark(#17656a, #7fd3d7);
+  --ochre:        light-dark(#a8741a, #e0b155);  /* third pen (data) */
+  --ochre-ink:    light-dark(#7f5610, #e8c27a);
+  --accent-wash:  color-mix(in srgb, var(--accent) 12%, transparent);
+  --teal-wash:    color-mix(in srgb, var(--teal) 14%, transparent);
+
+  /* ── Colour: lines ────────────────────────────────────────────────── */
+  --rule:         light-dark(#cbc2b0, #2a3846);  /* hairlines, grid */
+  --rule-strong:  light-dark(#6f6a60, #6f7c8a);  /* frames, axes */
+  --focus:        light-dark(#1f56c9, #8fb3ff);  /* keyboard focus ring (blue pen) */
+
+  /* ── Type ─────────────────────────────────────────────────────────── */
+  --font-display: 'Imbue Variable', 'Bodoni 72', Didot, 'Times New Roman', serif;
+  --font-text:    'Newsreader Variable', 'Iowan Old Style', Georgia, serif;
+  --font-mono:    'Martian Mono Variable', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* fluid modular scale (min at 360 px, max at 1440 px) */
+  --step--2: clamp(0.70rem, 0.68rem + 0.10vw, 0.76rem);
+  --step--1: clamp(0.84rem, 0.81rem + 0.14vw, 0.92rem);
+  --step-0:  clamp(1.075rem, 1.03rem + 0.22vw, 1.22rem);
+  --step-1:  clamp(1.30rem, 1.20rem + 0.45vw, 1.62rem);
+  --step-2:  clamp(1.65rem, 1.45rem + 0.90vw, 2.35rem);
+  --step-3:  clamp(2.15rem, 1.75rem + 1.80vw, 3.55rem);
+  --step-4:  clamp(2.80rem, 2.05rem + 3.40vw, 5.50rem);
+  --step-5:  clamp(3.40rem, 2.10rem + 5.90vw, 8.25rem);
+
+  --leading-tight: 0.95;
+  --leading-snug: 1.2;
+  --leading-body: 1.58;
+  --tracking-mono: 0.02em;
+  --tracking-caps: 0.12em;
+  --measure: 64ch;
+
+  /* ── Space (8-pt-ish, fluid at the large end) ─────────────────────── */
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs:  0.75rem;
+  --space-s:   1rem;
+  --space-m:   1.5rem;
+  --space-l:   clamp(2rem, 1.6rem + 1.6vw, 3rem);
+  --space-xl:  clamp(3rem, 2.3rem + 3vw, 5rem);
+  --space-2xl: clamp(4rem, 2.8rem + 5.5vw, 8rem);
+
+  --page-max: 88rem;
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.75rem);
+  --margin-col: 11rem;         /* the notebook margin for plate numbers and fig. labels */
+
+  /* ── Lines and shapes ─────────────────────────────────────────────── */
+  --hair: 1px;
+  --stroke: 1.5px;
+  --radius: 2px;                /* plates are cut square; this only softens pixels */
+  --mark: 10px;                 /* crop-mark arm length */
+  --plot-px: 1.1;               /* plot pen width in CSS px (unitless; see .plot in global.css) */
+
+  /* ── Motion ───────────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-pen: cubic-bezier(0.45, 0.05, 0.35, 1); /* pen accelerates, then settles */
+  --dur-ui: 160ms;
+  --dur-reveal: 520ms;
+  --dur-stroke: 700ms;          /* one plotted stroke */
+  --stagger: 16ms;              /* delay between strokes */
+}
+
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark']  { color-scheme: dark; }
+
+/* Non-colour values can't use light-dark(); they switch on the same two conditions. */
+:root { --grain-blend: multiply; }
+:root[data-theme='dark'] { --grain-blend: screen; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { --grain-blend: screen; }
+}

@@ -11,7 +11,7 @@ const { page } = Astro.props;
 const { Content } = await render(page);
 ---
 <Base title={page.data.title} description={page.data.description}>
-  <article class="prose">
+  <article class="prose wrap" style="padding-block: var(--space-xl)">
     <h1>{page.data.title}</h1>
     {page.data.updated && <p class="meta">Last updated {page.data.updated.toISOString().slice(0, 10)}</p>}
     <Content />

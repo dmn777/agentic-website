@@ -6,7 +6,7 @@ if (!page) throw new Error('content/pages/index.md is missing');
 const { Content } = await render(page);
 ---
 <Base title={page.data.title} description={page.data.description}>
-  <article class="prose">
+  <article class="prose wrap" style="padding-block: var(--space-xl)">
     <h1>{page.data.title}</h1>
     <Content />
   </article>
