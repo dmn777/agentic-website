@@ -21,8 +21,8 @@ export const difficulty = (t: number) => 1 - Math.exp(-Math.max(0, t) / TAU);
 export function paramsAt(d: number): Params {
   return {
     penSpeed: lerp(170, 250, d),
-    drain: lerp(3.5, 9, d),
-    diatomTarget: Math.round(lerp(7, 4, d)),
+    drain: lerp(2.5, 7.5, d),
+    diatomTarget: Math.round(lerp(9, 5, d)),
     respawnDelay: lerp(0.8, 1.8, d),
     hazardTarget: 1 + HAZARD_STEPS.filter((s) => d >= s).length,
     hazardSpeed: lerp(45, 115, d),

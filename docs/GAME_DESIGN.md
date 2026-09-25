@@ -86,8 +86,8 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
     that costs 6 ink.
   - A contaminant *inside* a closed loop is removed for 25 points. It is risky but
     allowed.
-- **Ink.** A reservoir of 100. It drains all the time, at 3.5 → 9 per second as the
-  difficulty rises. Each captured diatom refills 7 (the star refills 20). **At 0 ink the
+- **Ink.** A reservoir of 100. It drains all the time, at 2.5 → 7.5 per second as the
+  difficulty rises. Each captured diatom refills 12 (the star refills 25). **At 0 ink the
   run ends.** A passive player runs dry in about 30 s, which bounds the random bot.
 - **Scoring.** A loop that captures n diatoms scores (sum of their points) × n. So one
   disc is 10, and five discs are 250. Every 1,000 points is a "slide", a milestone
@@ -101,8 +101,8 @@ One continuous value, **d(t) = 1 − e^(−t / 140 s)**. It is monotone: 0 at th
 | Parameter | d = 0 | d = 1 |
 | --- | --- | --- |
 | pen speed | 170 u/s | 250 u/s |
-| ink drain | 3.5 /s | 9 /s |
-| diatoms on the field (target) | 7 | 4 |
+| ink drain | 2.5 /s | 7.5 /s |
+| diatoms on the field (target) | 9 | 5 |
 | diatom respawn delay | 0.8 s | 1.8 s |
 | contaminants (target) | 1 | 6 (+1 at d = 0.15, 0.3, 0.45, 0.6, 0.75) |
 | contaminant speed | 45 u/s | 115 u/s |
@@ -114,6 +114,16 @@ One continuous value, **d(t) = 1 − e^(−t / 140 s)**. It is monotone: 0 at th
   greed game. After 4 minutes it is a scramble.
 - Expected sessions: a new player lasts 1–2 min per run, a practised one 4–6 min.
   With restarts, that is 2–10 minutes.
+
+### Tuning log
+
+- **T12, first retune.** The slice's economy (drain 3.5 → 9, refill 7, 7 → 4 diatoms)
+  barely rewarded play. A greedy bot that loops around the densest cluster and swerves
+  away from contaminants lasted a median 30 s over 30 seeds, against 21 s for a pen left
+  alone. A single catch didn't pay for the loop it took. With drain 2.5 → 7.5, refill 12
+  and 9 → 5 diatoms, the same bot lasts a median 47–51 s (max 69 s), and a passive pen
+  about 30 s. The bot catches about one diatom per loop; a player who makes multi-catches
+  should do much better. T13's playtest judges it.
 
 ## Juice (feedback)
 

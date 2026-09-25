@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, start, step, togglePause, snapshot, R, DT, TURN, MAX_TRAIL, type Game, type Input } from './sim';
+import { createGame, start, step, togglePause, snapshot, R, DT, TURN, MAX_TRAIL, SPECIES, type Game, type Input } from './sim';
 
 const idle: Input = { left: false, right: false, aim: null };
 const left: Input = { left: true, right: false, aim: null };
@@ -42,7 +42,7 @@ describe('state machine', () => {
     expect(g.mode).toBe('play');
     expect(g.ink).toBe(100);
     expect(g.score).toBe(0);
-    expect(g.diatoms.length).toBe(7);
+    expect(g.diatoms.length).toBe(9);
     expect(g.hazards.length).toBe(0);
   });
   it('does not advance while paused, and resumes', () => {
@@ -139,6 +139,7 @@ describe('loops', () => {
     const h = quiet();
     const c2 = teardrop(h);
     h.diatoms = [diatom(c2.x, c2.y)];
+    h.ink = 50; // below the cap, so the whole refill shows
     const turnTicks = Math.round((1.5 * Math.PI) / (TURN * DT));
     let jump = 0;
     for (let i = 0; i < 30 + turnTicks + 40 && h.stats.captured === 0; i++) {
@@ -146,7 +147,7 @@ describe('loops', () => {
       step(h, { left: i >= 30 && i < 30 + turnTicks, right: false, aim: null });
       jump = h.ink - before;
     }
-    expect(jump).toBeCloseTo(7 - h.params.drain * DT, 5);
+    expect(jump).toBeCloseTo(12 - h.params.drain * DT, 5);
     expect(h.trailLen).toBe(0); // the loop used up the whole wet line
   });
   it('multiplies: three diatoms in one loop score (10+10+10)×3', () => {
@@ -201,7 +202,7 @@ describe('contaminants', () => {
 });
 
 describe('the ink economy and difficulty', () => {
-  it('runs dry for a passive player within 40 s', () => {
+  it('runs dry for a passive player in about 30 s (between 25 and 40)', () => {
     const g = createGame('passive');
     start(g);
     g.hazards = []; g.frozenHazards = true; g.noHazards = true;
@@ -210,6 +211,7 @@ describe('the ink economy and difficulty', () => {
     expect(g.mode).toBe('over');
     expect(g.overReason).toBe('ink');
     expect(t / 60).toBeLessThan(40);
+    expect(t / 60).toBeGreaterThan(25);
   });
   it('raises difficulty and its parameters over a long run', () => {
     const g = quiet();
@@ -255,7 +257,8 @@ describe('species', () => {
     expect(counts.boat).toBeGreaterThan(counts.triangle);
     expect(counts.triangle).toBeGreaterThan(counts.star);
   });
-  it('lets the star colony leave after 8 s, and scores it 100 with a 20-ink refill', () => {
+  it('lets the star colony leave after 8 s, and scores it 100 with a 25-ink refill', () => {
+    expect(SPECIES.star.ink).toBe(25);
     const g = quiet();
     g.diatoms = [diatom(300, -300, 'star')];
     run(g, Math.round(7.9 / DT));

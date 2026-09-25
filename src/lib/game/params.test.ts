@@ -16,8 +16,8 @@ describe('difficulty', () => {
 
 describe('paramsAt', () => {
   it('matches the table at both ends', () => {
-    expect(paramsAt(0)).toMatchObject({ penSpeed: 170, drain: 3.5, diatomTarget: 7, respawnDelay: 0.8, hazardTarget: 1, hazardSpeed: 45 });
-    expect(paramsAt(1)).toMatchObject({ penSpeed: 250, drain: 9, diatomTarget: 4, respawnDelay: 1.8, hazardTarget: 6, hazardSpeed: 115 });
+    expect(paramsAt(0)).toMatchObject({ penSpeed: 170, drain: 2.5, diatomTarget: 9, respawnDelay: 0.8, hazardTarget: 1, hazardSpeed: 45 });
+    expect(paramsAt(1)).toMatchObject({ penSpeed: 250, drain: 7.5, diatomTarget: 5, respawnDelay: 1.8, hazardTarget: 6, hazardSpeed: 115 });
   });
   it('adds a contaminant at each threshold', () => {
     expect([0.1, 0.15, 0.3, 0.44, 0.45, 0.6, 0.75].map((d) => paramsAt(d).hazardTarget)).toEqual([1, 2, 3, 3, 4, 5, 6]);

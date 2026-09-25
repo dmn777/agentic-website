@@ -1,6 +1,7 @@
 ---
 import LabPage from '../../layouts/LabPage.astro';
 import Section from '../../components/Section.astro';
+import Callout from '../../components/Callout.astro';
 import Darkfield from '../../components/islands/Darkfield.svelte';
 ---
 <LabPage slug="darkfield" lede="A game for the pen of a plotter. Diatoms drift through a lit circle under the microscope. Loop your line around them to catalogue them, and keep your ink from running dry.">
@@ -14,6 +15,16 @@ import Darkfield from '../../components/islands/Darkfield.svelte';
       <h2 id="how">One line, drawn</h2>
       <p>The pen never stops. You only steer it, and it leaves wet ink behind. When the line crosses itself it closes a loop, and every diatom inside the loop is caught. A loop around several at once scores their points times their number, so five small diatoms beat one large one many times over. A bigger loop takes longer to close, though, and all that time your line is out in the open.</p>
       <p>Each catch refills your ink, and the ink drains all the time. Amber contaminants drift in and drift towards you. If one touches your line, the line snaps and you start again. If one touches the pen, the run is over. The field gets busier the longer you last.</p>
+    </div>
+  </Section>
+
+  <Section label="§3 · Specimens" id="specimens">
+    <div class="prose">
+      <h2 id="specimens">Glass in the water</h2>
+      <p>Diatoms are real, and there are a great many of them. They are single-celled algae that live in almost any water with light in it. Each one builds its cell wall from silica, the stuff of glass, in two halves that fit together like a box and its lid. By common estimates, diatoms do about a fifth of all the photosynthesis on Earth.</p>
+      <p>Their walls are patterned with rows of pores so fine and so regular that nineteenth-century microscopists used them to test lenses. A lens that could resolve the markings on <em>Pleurosigma angulatum</em> was a good one. The four in the game are real genera, drawn simply: <em>Coscinodiscus</em>, a round disc; <em>Navicula</em>, whose name means "little ship"; the three-cornered <em>Triceratium</em>; and <em>Asterionella</em>, whose cells join at one end to make a star.</p>
+      <p>Darkfield is one way to look at them. A stop in the light path blocks the direct beam, so only light the specimen scatters reaches the objective, and the glass walls shine against black. That is the look the game borrows.</p>
+      <Callout tone="note" title="How faithful this is">Real diatoms don't cruise about like these. Many drift with the water, and some glide slowly along surfaces. The contaminants, the ink and the scoring are invented, the drawings are simplified, and the scale bar belongs to the game rather than to any real specimen.</Callout>
     </div>
   </Section>
 </LabPage>

@@ -19,10 +19,10 @@ const HAZARD_POINTS = 25;
 export type Mode = 'title' | 'play' | 'paused' | 'over';
 export type Species = 'disc' | 'boat' | 'triangle' | 'star';
 export const SPECIES: Record<Species, { points: number; ink: number; speed: [number, number]; r: number; share: number; ttl?: number }> = {
-  disc: { points: 10, ink: 7, speed: [15, 25], r: 14, share: 0.55 },
-  boat: { points: 20, ink: 7, speed: [22, 34], r: 15, share: 0.28 },
-  triangle: { points: 40, ink: 7, speed: [30, 42], r: 14, share: 0.13 },
-  star: { points: 100, ink: 20, speed: [36, 45], r: 16, share: 0.04, ttl: 8 },
+  disc: { points: 10, ink: 12, speed: [15, 25], r: 14, share: 0.55 },
+  boat: { points: 20, ink: 12, speed: [22, 34], r: 15, share: 0.28 },
+  triangle: { points: 40, ink: 12, speed: [30, 42], r: 14, share: 0.13 },
+  star: { points: 100, ink: 25, speed: [36, 45], r: 16, share: 0.04, ttl: 8 },
 };
 
 export interface Input { left: boolean; right: boolean; /** world point to steer towards (pointer) */ aim: Vec | null }
