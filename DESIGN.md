@@ -88,6 +88,13 @@ pens, frames and focus ≥ 3:1, in both themes.
     decorative pens, because it is a set of drawings, not data. Even there, colour is
     drawn with a pen (hatched or stroked) and never flat-filled over a large area. The
     exception does not extend to other pages.
+  - **Exception: live instruments (Pl. VII's plate, Pl. VIII's field).** A simulation you
+    look *into* keeps its own dark stage in both themes: Chladni's metal plate, and
+    Darkfield's microscope field (`#04070b` slide, cyan-white glass, amber
+    contaminants). Their colours live in the drawing code (`render.ts` `COLORS`),
+    because they are the subject's colours, not interface. The page around them follows
+    the theme and the tokens. Vermilion is the link back: Darkfield's ink is the
+    dark-theme accent. Anything outside the stage (HUD, buttons, cards) uses tokens.
 - **Paper grain.** A tiled `feTurbulence` noise image is part of the `body` background and
   is blended into `--paper` (multiply on paper, screen at night). It is never an overlay,
   so it can't sit on top of content or canvases.
@@ -100,8 +107,9 @@ pens, frames and focus ≥ 3:1, in both themes.
 ## The signature motif: plotted specimens
 
 `src/lib/plot/specimen.ts` (pure, seeded, tested) turns a seed string into single-weight
-strokes, and `<Plot seed=… />` renders them as static SVG at build time. There are five
-species:
+strokes, and `<Plot seed=… />` renders them as static SVG at build time. There are six
+species. A seed picks one of the first five at random; the sixth, `valve`, is opt-in only,
+so adding it redrew nothing:
 
 | Species | What it draws |
 | --- | --- |
@@ -110,6 +118,7 @@ species:
 | `radial` | bent spines from a core: urchin, dandelion, burst |
 | `ridge` | a ridgeline plot with hidden-line removal |
 | `orbit` | a damped harmonograph, cut into strokes |
+| `valve` | a centric diatom valve (Coscinodiscus): a double rim, a rosette, and radial rows of areolae with one row in the accent pen. Opt-in (Pl. VIII) |
 
 - A seed is usually the page's route (`lab/stats`), so each plate has its own specimen,
   the same on every build. `species` can be forced.
@@ -297,3 +306,17 @@ Topic choices for pages whose subject Claude picks are recorded here as they are
     plate's pitch.
   - Under reduced motion the sand settles instantly. The simulation pauses when the
     plate is off-screen.
+- **The game (T11–T13): Darkfield** (`/lab/darkfield/`, Pl. VIII).
+  - *Why this concept.* A game needed a verb that belongs to this site. A plotter's pen,
+    steered under a microscope, loops its line around diatoms, the glass algae that
+    atlases drew. One drawn verb, a single accent colour for the ink, and a live view
+    of what the printed plates only show frozen.
+  - *How it's built.* A pure, seeded, fixed-step simulation (`src/lib/game/`), a Canvas 2D
+    renderer with a cached background (reticle, dust, out-of-focus diatoms), WebAudio
+    synthesis (muted by default), and a `?test=1` hook for the harness and the playtest
+    driver. The design, and a tuning log that summarises the three playtests, are in
+    `docs/GAME_DESIGN.md`.
+  - *Deliberate departures.* The dark stage (see the colour exception). The card
+    specimen is the opt-in `valve`. The ◀ ▶ thumb buttons are a local style: they are
+    physical game controls, not site buttons.
+
