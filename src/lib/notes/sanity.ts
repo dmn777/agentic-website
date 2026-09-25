@@ -82,7 +82,7 @@ export function postsToNotes(posts: FetchedPost[]): Note[] {
       return { ...rest, src: IMAGE_ROUTE + imageFile(asset._ref) };
     });
     return {
-      slug: p.slug, title: p.title, date: new Date(p.publishedAt).toISOString().slice(0, 10),
+      slug: p.slug, title: p.title, date: new Date(p.publishedAt).toISOString().slice(0, 10), published: new Date(p.publishedAt).toISOString(),
       excerpt: p.excerpt ?? '', tags: p.tags ?? [], model: p.model,
       ...(p.labPage ? { labPage: p.labPage } : {}), images, body,
     };

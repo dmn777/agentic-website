@@ -11,6 +11,8 @@
 // Also fails on orphans: indexable pages that no other page links to.
 // And (T27, sweep 2 M1) on a broken journal pairing: a note that names a Lab page
 // (data-lab-page) must link to it, and that page must link back to the note.
+// And (sweep 3, M1) on a feed that isn't faithful: atom:self, channel and item links,
+// newest-first dates, dc:creator, and each item's HTML matching its page (checkFeeds).
 //   --dist <dir>   crawl another build (for self-tests with planted faults)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -119,6 +121,7 @@ async function main() {
       }
     }
   }
+  const feeds = await checkFeeds({ sources, resolve, server, broken });
   await server.close();
 
   // Orphans: every indexable page needs at least one inbound link from another page
@@ -147,8 +150,75 @@ async function main() {
   const summary = { scope, stayUnder: stayUnder ?? null, pages: pages.length, checked, broken, ok: broken.length === 0 };
   fs.writeFileSync(path.join(outDir, 'links.json'), JSON.stringify(summary, null, 2));
   for (const b of broken) console.log(`BROKEN ${b.page} → ${b.url} (${b.why})`);
-  console.log(`${pages.length} page(s), ${checked} internal URL(s) checked, ${pairs} journal pair(s), ${broken.length} broken → ${path.relative(SITE, outDir)}/links.json`);
+  console.log(`${pages.length} page(s), ${checked} internal URL(s) checked, ${pairs} journal pair(s), ${feeds} feed item(s), ${broken.length} broken → ${path.relative(SITE, outDir)}/links.json`);
   process.exitCode = summary.ok ? 0 : 1;
+}
+
+// Feeds (sweep 3, M1 and m11). Every RSS feed a page advertises must name itself
+// (atom:self), point its channel and items at built pages, date its items in order, and
+// carry each post whole: the item's HTML must have as many headings, list items, code
+// blocks and links as the page's note body. Absolute production URLs are checked against
+// the local server.
+async function checkFeeds({ sources, resolve, server, broken }) {
+  const unxml = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  const hrefs = new Set();
+  for (const s of sources) for (const m of (s.html ?? '').matchAll(/<link[^>]+type="application\/rss\+xml"[^>]*>/g)) {
+    const h = m[0].match(/href="([^"]+)"/)?.[1];
+    if (h) hrefs.add(new URL(decode(h), server.url('/')).pathname);
+  }
+  let items = 0;
+  for (const feedPath of hrefs) {
+    const bad = (url, why) => broken.push({ page: feedPath, tag: 'feed', url, resolved: url, why });
+    const res = await fetch(server.origin + feedPath);
+    if (res.status !== 200) { bad(feedPath, `feed status ${res.status}`); continue; }
+    const xml = await res.text();
+    const self = xml.match(/<atom:link[^>]*rel="self"[^>]*>/)?.[0]?.match(/href="([^"]+)"/)?.[1];
+    if (!self) { bad(feedPath, 'no atom:link rel="self"'); continue; }
+    const prod = new URL(self);
+    if (prod.pathname !== feedPath) bad(self, `atom:self is ${prod.pathname}, not the feed's own path ${feedPath}`);
+    const local = async (u, why) => {
+      const abs = new URL(u, prod);
+      if (abs.origin !== prod.origin) return null;
+      const r = await resolve(server.origin + abs.pathname + abs.search);
+      if (r.status !== 200) bad(u, `${why}: status ${r.status}`);
+      return r;
+    };
+    const channel = xml.slice(0, xml.indexOf('<item>'));
+    const chLink = channel.match(/<link>([^<]+)<\/link>/)?.[1];
+    if (!chLink) bad(feedPath, 'channel has no <link>');
+    else await local(chLink, 'channel link');
+    let prev = Infinity;
+    for (const [, item] of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+      items++;
+      const link = item.match(/<link>([^<]+)<\/link>/)?.[1];
+      if (!link) { bad(feedPath, 'an item has no <link>'); continue; }
+      const page = await local(link, 'item link');
+      const when = Date.parse(item.match(/<pubDate>([^<]+)<\/pubDate>/)?.[1] ?? '');
+      if (Number.isNaN(when)) bad(link, 'no readable pubDate');
+      else if (when > prev) bad(link, 'items are not newest first');
+      else prev = when;
+      if (/<author>(?![^<]*@)/.test(item)) bad(link, '<author> without an email (use dc:creator)');
+      if (!/<dc:creator>[^<]+<\/dc:creator>/.test(item)) bad(link, 'no dc:creator');
+      const content = unxml(item.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/)?.[1]?.replace(/^<!\[CDATA\[|\]\]>$/g, '') ?? '');
+      if (!content) { bad(link, 'no content:encoded'); continue; }
+      for (const [, u] of content.matchAll(/\s(?:href|src)="([^"]+)"/g)) {
+        const url = unxml(u);
+        if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) bad(link, `a relative URL in the item's HTML: ${url}`);
+        else await local(url, 'a link inside the item');
+      }
+      const html = page?.html ?? '';
+      const day = html.match(/<time datetime="([^"]+)"/)?.[1];
+      if (day && !Number.isNaN(when) && new Date(when).toISOString().slice(0, 10) !== day) bad(link, `pubDate ${new Date(when).toISOString()} is not the page's date ${day}`);
+      const start = html.indexOf('note-body'), end = html.indexOf('post__tags', start);
+      if (start < 0 || end < 0) { bad(link, 'the page has no note body to compare with'); continue; }
+      const body = html.slice(start, end);
+      for (const [what, re] of [['heading', /<h[23][\s>]/g], ['list item', /<li[\s>]/g], ['code block', /<pre[\s>]/g], ['link', /<a\s/g]]) {
+        const n = (s) => (s.match(re) ?? []).length;
+        if (n(content) !== n(body)) bad(link, `the item has ${n(content)} ${what}(s), the page ${n(body)}`);
+      }
+    }
+  }
+  return items;
 }
 
 function walkCss(dir, out = []) {

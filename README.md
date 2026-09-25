@@ -73,7 +73,7 @@ The QA suite runs against `dist/`, served by a small server with GitHub Pages se
 |---|---|
 | `npm run qa:shots [-- --routes /lab/art/ --label X]` | Playwright screenshots of every page in light/dark × desktop/390 px, plus interaction states. Fails on console errors, failed requests, horizontal overflow at 390 px, blank canvases and drawings that never start. |
 | `npm run qa:sheet -- --from <shots>` | Contact sheets for cross-page review, and a wiring check that every Lab card links to a page with a matching title. |
-| `npm run qa:links` | Every internal `href`/`src`/`srcset`/CSS `url()` resolves, fragments exist, no orphan pages, and every journal post and its plate link to each other. |
+| `npm run qa:links` | Every internal `href`/`src`/`srcset`/CSS `url()` resolves, fragments exist, no orphan pages, every journal post and its plate link to each other, and the RSS feed carries each post whole (headings, lists, code, links) with real dates. |
 | `npm run qa:redirects [-- --live]` | Old Cowork URLs land on their `/v1/` twins, with and without JS. |
 | `npm run qa:claims` | Meta descriptions and ledes neither promise unbuilt sections nor leave out a live kind of plate. |
 | `npm run qa:game` | Darkfield's harness: state machine, deterministic scripted bot, random bots, difficulty curve, touch at 390 px, frame time. |

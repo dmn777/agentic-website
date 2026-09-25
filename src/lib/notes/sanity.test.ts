@@ -77,6 +77,10 @@ describe('postsToNotes: fetched posts become the Notes view model', () => {
     expect(n.words).toBe(3);
     expect(n.minutes).toBe(1);
   });
+  it('keeps the full publication time for the feed (sweep 3, M1: every pubDate was noon)', () => {
+    const [n] = postsToNotes([at('a', '2026-09-25T23:30:00Z')]);
+    expect(n.published).toBe('2026-09-25T23:30:00.000Z');
+  });
   it('tolerates the optional fields being null in the dataset', () => {
     const [n] = postsToNotes([at('a', '2026-09-25T12:00:00Z', { tags: null, excerpt: null, labPage: null })]);
     expect(n.tags).toEqual([]);

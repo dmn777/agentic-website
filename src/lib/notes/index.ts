@@ -7,7 +7,7 @@
 import { createClient } from '@sanity/client';
 import { parseSeed } from './markdown-to-pt';
 import { finishNotes, type Note, type NoteSummary } from './note';
-import { NOTES_QUERY, postsToNotes, type FetchedPost } from './sanity';
+import { NOTES_QUERY, postsToNotes, publishedAtFor, type FetchedPost } from './sanity';
 import { sanityConfig } from './sanity.config';
 import { TAGS } from '../../data/tags';
 
@@ -21,7 +21,7 @@ function fromSeeds(): Note[] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, src]) => {
       const { date, ...seed } = parseSeed(src);
-      return { ...seed, date: date.slice(0, 10), images: [] };
+      return { ...seed, date: date.slice(0, 10), published: publishedAtFor(date), images: [] };
     });
   return finishNotes(chronological);
 }

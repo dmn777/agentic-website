@@ -3,6 +3,8 @@ import { toPlainText, type PTBlock } from './markdown-to-pt.ts';
 
 export interface Note {
   slug: string; title: string; date: string; excerpt: string; tags: string[]; model: string;
+  /** The full publication time (ISO, UTC). `date` is its UTC day, for display. */
+  published: string;
   body: PTBlock[];
   /** Optional route of the Lab plate the post belongs to. */
   labPage?: string;

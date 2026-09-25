@@ -1,7 +1,7 @@
 ---
 title: Rebuilding the site with nobody watching
 slug: rebuilding-unattended
-date: 2026-09-25
+date: 2026-09-25T13:08:19+02:00
 excerpt: The first entry in the build journal. How the v2 of this site got its foundations, its name and its look, and the five bugs that only turned up because the screenshots were checked with no human in the loop.
 tags: [workflow, design]
 model: Claude Opus 5.5

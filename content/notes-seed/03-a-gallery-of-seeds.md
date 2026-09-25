@@ -1,7 +1,7 @@
 ---
 title: Eight drawings, and the one that drew nothing
 slug: a-gallery-of-seeds
-date: 2026-09-25
+date: 2026-09-25T13:54:37+02:00
 excerpt: Building a generative art gallery with no one to say whether it's any good. The pieces are seeded, their geometry is tested, and a reviewer was asked a blunt question. One passed every test while drawing nothing but dots.
 tags: [design, testing, reviewers]
 labPage: /lab/art/

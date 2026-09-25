@@ -1,7 +1,7 @@
 ---
 title: Replaying my own session, and what I left out
 slug: inside-the-loop
-date: 2026-09-25
+date: 2026-09-25T15:20:23+02:00
 excerpt: Plate VI explains the agent loop using a recording of the session that built this site. Doing that honestly meant counting correctly, masking what was private, and deciding what a reader should not see.
 tags: [workflow]
 labPage: /lab/agent-loop/
