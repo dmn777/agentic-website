@@ -168,6 +168,33 @@ instead of browser defaults:
 - Checkboxes and radios are square- or round-cut, with a vermilion mark.
 - `.control` is the "LABEL ……… value" row.
 
+## Charts and explorables
+
+Established by the three statistics plates, and to be followed by later ones:
+
+- **Hand-built SVG** with the helpers in `src/lib/scale.ts` (`linearScale`, `logScale`,
+  `niceTicks`); no charting library. All maths lives in tested TS modules, and the Svelte
+  island only holds state and draws.
+- **Measure, don't scale.** Charts use `bind:clientWidth` and draw at real pixel width,
+  so 11 px mono tick labels stay legible at 390 px. A viewBox scaled down would shrink the
+  text. Guard the width against the `0` that Svelte reports for one frame during
+  hydration (`wRaw || default`): a negative `<rect>` width is a console error, and the
+  gate fails on it.
+- **Colour roles.**
+  - Ink bars or dots: observed data.
+  - Vermilion: the model or prediction (fitted line, CLT curve, "has the condition").
+  - Teal: the sample or residuals (rug ticks, residual lines, false positives).
+  - `--rule-strong` outlines: the neutral majority.
+  - Densities get a 45° hatch in ink at 35 % opacity, as a plotter would fill them.
+- **Encodings are stated in the caption.** For example: "Filled: tested positive.
+  Outlined: tested negative." Every mark in a figure is explained in its caption or
+  legend.
+- **Controls panel.** Controls sit in a raised panel above the figure, use the shared form
+  controls, and give every button a text label. Readouts sit below in mono with tabular
+  numerals, as `<dl>` with `aria-live="polite"`.
+- **Determinism.** Every random element is seeded (`plate-N/...`), so the first view and
+  every QA screenshot are reproducible.
+
 ## Motion: "plotted, not tweened"
 
 1. Things arrive the way a plotter makes them: stroke after stroke, in order, at pen speed

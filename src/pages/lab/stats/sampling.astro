@@ -1,0 +1,40 @@
+---
+import LabPage from '../../../layouts/LabPage.astro';
+import Section from '../../../components/Section.astro';
+import Callout from '../../../components/Callout.astro';
+import SamplingExplorable from '../../../components/islands/SamplingExplorable.svelte';
+---
+<LabPage slug="stats/sampling" lede="Take a sample, work out its average, and do it again a few hundred times. The averages pile up into a bell curve, even when the numbers they come from look nothing like one.">
+  <Section label="§1 · Try it" id="try">
+    <h2 id="try" class="visually-hidden">Try it</h2>
+    <div class="prose intro">
+      <p>The top chart is a <em>population</em>: every value you could possibly draw, and how common it is. Each sample takes <var>n</var> values from it at random and averages them. The bottom chart collects those averages. Start with the skewed population, press <strong>Run</strong>, and watch the pile of averages grow.</p>
+    </div>
+    <div class="stage"><SamplingExplorable client:visible /></div>
+  </Section>
+
+  <Section label="§2 · Notice" id="notice">
+    <div class="prose">
+      <h2 id="notice">Four things to notice</h2>
+      <ol>
+        <li><strong>The averages centre on the population mean μ</strong>, whatever the population's shape. A sample mean is an unbiased estimate.</li>
+        <li><strong>They are far less spread out than single values.</strong> Their spread, the <em>standard error</em>, is <span class="nowrap">σ/√<var>n</var></span>. Quadruple the sample size and the spread halves; the readout under the chart shows the predicted and observed values side by side.</li>
+        <li><strong>Their shape turns into a bell</strong>, even for the skewed and the two-humped populations. That is the central limit theorem. How fast it happens depends on the population: compare <var>n</var> = 2 with <var>n</var> = 30 for the skewed one.</li>
+        <li><strong>At <var>n</var> = 1 nothing happens.</strong> Each "average" is a single draw, so the bottom chart simply copies the population. The bell only appears once you average several values.</li>
+      </ol>
+    </div>
+  </Section>
+
+  <Section label="§3 · Why" id="why">
+    <div class="prose">
+      <h2 id="why">Why this matters</h2>
+      <p>Most of statistics rests on this pattern. A poll of 1000 people, a clinical trial or an A/B test all report an average from one sample, and the central limit theorem is what lets them say how far that average is likely to be from the truth. It is typically within one standard error, and rarely more than two.</p>
+      <p>It also explains why bigger samples help less and less. The error shrinks with the <em>square root</em> of <var>n</var>, so each halving of the error costs four times as much data.</p>
+      <Callout tone="warn" title="What it does not say">The theorem is about <em>averages</em>. The population itself stays as skewed as it was, however many samples you take. And "large enough <var>n</var>" is not a fixed number: the more lopsided or heavy-tailed the population, the larger it has to be.</Callout>
+    </div>
+  </Section>
+</LabPage>
+<style>
+  .intro { margin-bottom: var(--space-m); }
+  .stage { max-width: 60rem; }
+</style>

@@ -72,6 +72,7 @@ h4 { font-family: var(--font-text); font-size: var(--step-1); font-weight: 600; 
 }
 .lede { font-size: var(--step-1); line-height: 1.45; color: var(--ink-2); font-weight: 380; }
 .muted { color: var(--ink-3); }
+.nowrap { white-space: nowrap; }
 
 a {
   color: inherit;
@@ -124,6 +125,7 @@ a:hover { color: var(--accent-ink); text-decoration-thickness: 2px; }
 /* ── Prose (Markdown bodies) ───────────────────────────────────────── */
 .prose { max-width: var(--measure); }
 .prose > * + * { margin-top: 1em; }
+.prose > :first-child { margin-top: 0; }
 .prose h2 { font-size: var(--step-2); margin-top: 1.9em; }
 .prose h3 { font-size: var(--step-1); margin-top: 1.6em; }
 .prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
@@ -237,6 +239,9 @@ input[type='checkbox']::before, input[type='radio']::before {
   background: var(--accent); transition: transform var(--dur-ui) var(--ease-out);
 }
 input[type='radio']::before { border-radius: 50%; }
+/* A real tick, not just a dot, so checked reads at a glance. */
+input[type='checkbox']::before { width: 0.72rem; height: 0.72rem; clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); }
+input[type='checkbox']:checked { border-color: var(--accent); }
 input[type='checkbox']:checked::before, input[type='radio']:checked::before { transform: scale(1); }
 
 /* A labelled control row used by explorables: LABEL ……… value */

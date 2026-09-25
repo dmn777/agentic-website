@@ -1,0 +1,14 @@
+---
+// A plate section: a notebook-margin label beside the content (see .plate-grid).
+interface Props { label: string; id?: string; class?: string }
+const { label, id, class: cls } = Astro.props;
+---
+<section class:list={['plate-grid', 'plate-section', cls]} aria-labelledby={id}>
+  <p class="margin label">{label}</p>
+  <div class="plate-section__body"><slot /></div>
+</section>
+<style>
+  .plate-section { padding-block: var(--space-l); }
+  .plate-section + .plate-section { border-top: var(--hair) solid var(--rule); }
+  .plate-section__body { min-width: 0; }
+</style>

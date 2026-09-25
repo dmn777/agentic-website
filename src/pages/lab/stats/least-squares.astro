@@ -1,0 +1,40 @@
+---
+import LabPage from '../../../layouts/LabPage.astro';
+import Section from '../../../components/Section.astro';
+import Callout from '../../../components/Callout.astro';
+import LeastSquares from '../../../components/islands/LeastSquares.svelte';
+import GuessR from '../../../components/islands/GuessR.svelte';
+---
+<LabPage slug="stats/least-squares" lede="The best-fit line is the one that makes the squared vertical misses as small as possible. Push the points around and you can feel which ones it listens to.">
+  <Section label="§1 · Try it" id="try">
+    <h2 id="try" class="visually-hidden">Try it</h2>
+    <div class="prose intro">
+      <p>The vermilion line is the least-squares fit. The dashed teal lines are the <em>residuals</em>: how far each point sits above or below the line. Turn on the squared residuals to see what the fit minimises, which is the total area of those squares.</p>
+    </div>
+    <div class="stage"><LeastSquares client:visible /></div>
+  </Section>
+
+  <Section label="§2 · Notice" id="notice">
+    <div class="prose">
+      <h2 id="notice">Three things to notice</h2>
+      <ol>
+        <li><strong>The line always passes through the middle of the data</strong>, the point (x̄, ȳ). Drag any point and the line pivots, but it never leaves that centre.</li>
+        <li><strong>Points far to the left or right pull hardest.</strong> Press <em>Add a far-out point</em> and the whole line swings towards it. Such points have high <em>leverage</em>: they sit far from x̄, so the line can't avoid them. Points near the middle can move a lot and change little.</li>
+        <li><strong>r measures how tightly the points hug a line, not how steep it is.</strong> A shallow line through a tight cloud has a high r. A steep line through a loose cloud has a low one. R², the square of r, is the share of the variation in y that the line accounts for.</li>
+      </ol>
+      <Callout tone="warn" title="Squares make outliers loud">Because misses are squared, one point that is twice as far away counts four times as much. That is why a single stray point can drag a least-squares line, and why robust methods that don't square exist.</Callout>
+    </div>
+  </Section>
+
+  <Section label="§3 · Play" id="play">
+    <div class="prose">
+      <h2 id="play">Guess the correlation</h2>
+      <p>Each cloud has 40 points and an exact, hidden correlation between −1 and +1. Slide to your guess and check it. It is harder than it looks.</p>
+    </div>
+    <div class="stage"><GuessR client:visible /></div>
+  </Section>
+</LabPage>
+<style>
+  .intro { margin-bottom: var(--space-m); }
+  .stage { max-width: 60rem; margin-top: var(--space-m); }
+</style>

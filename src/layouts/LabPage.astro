@@ -1,0 +1,70 @@
+---
+// Layout for a Lab plate: plate header (number, kind, series, title, lede, specimen),
+// the page body, and a pager to the neighbouring plates. Metadata comes from src/data/lab.ts.
+import Base from './Base.astro';
+import Plot from '../components/Plot.astro';
+import { lab, labEntry, roman } from '../data/lab';
+import { url } from '../lib/url';
+
+interface Props { slug: string; lede: string; description?: string }
+const { slug, lede, description } = Astro.props;
+const entry = labEntry(slug);
+const ordered = [...lab].sort((a, b) => a.plate - b.plate);
+const i = ordered.findIndex((e) => e.slug === slug);
+const prev = ordered[i - 1], next = ordered[i + 1];
+const inSeries = entry.series ? ordered.filter((e) => e.series === entry.series) : [];
+const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
+---
+<Base title={entry.title} description={description ?? entry.blurb}>
+  <article class="wrap labpage">
+    <header class="labpage__head plate-grid">
+      <p class="margin label labpage__plate">Pl. {roman(entry.plate)}<br /><span>{entry.kind}</span></p>
+      <div class="labpage__intro">
+        {entry.series && <p class="label labpage__series">{entry.series} · {seriesPos} of {inSeries.length}</p>}
+        <h1>{entry.title}</h1>
+        <p class="lede">{lede}</p>
+      </div>
+      <div class="labpage__specimen" aria-hidden="true">
+        <Plot seed={`lab/${entry.slug}`} species={entry.species} detail={0.7} draw duration={2200} />
+      </div>
+    </header>
+    <div class="labpage__body">
+      <slot />
+    </div>
+    <nav class="labpage__pager plate-grid" aria-label="Other plates">
+      <p class="margin label">Continue</p>
+      <div class="pager">
+        {prev ? <a class="pager__link" href={url(`/lab/${prev.slug}/`)}><span class="label">← Pl. {roman(prev.plate)}</span><span class="pager__title">{prev.title}</span></a> : <span />}
+        {next ? <a class="pager__link pager__link--next" href={url(`/lab/${next.slug}/`)}><span class="label">Pl. {roman(next.plate)} →</span><span class="pager__title">{next.title}</span></a> : <a class="pager__link pager__link--next" href={url('/lab/')}><span class="label">Index →</span><span class="pager__title">All plates</span></a>}
+      </div>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .labpage { padding-block: var(--space-xl) 0; }
+  .labpage__head {
+    grid-template-columns: var(--margin-col) minmax(0, 1fr) minmax(0, 13rem);
+    align-items: start;
+    padding-bottom: var(--space-l);
+    border-bottom: var(--hair) solid var(--rule);
+  }
+  .labpage__plate { color: var(--accent-ink); }
+  .labpage__plate span { color: var(--ink-3); }
+  .labpage__series { margin-bottom: var(--space-2xs); }
+  .labpage__intro h1 { margin-bottom: var(--space-s); }
+  .labpage__intro .lede { max-width: 40rem; }
+  .labpage__specimen { width: 100%; max-width: 13rem; justify-self: end; }
+  .labpage__body { padding-block: var(--space-l); }
+  .labpage__pager { padding-block: var(--space-l); border-top: var(--hair) solid var(--rule); }
+  .pager { display: flex; justify-content: space-between; gap: var(--space-m); flex-wrap: wrap; }
+  .pager__link { display: grid; gap: 0.2rem; text-decoration: none; max-width: 22rem; }
+  .pager__link--next { text-align: right; margin-left: auto; }
+  .pager__title { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.1; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em; }
+  .pager__link .label { color: var(--accent-ink); }
+  @media (max-width: 52rem) {
+    .labpage__head { grid-template-columns: minmax(0, 1fr) 6.5rem; }
+    .labpage__head .margin { grid-column: 1 / -1; }
+    .labpage__specimen { max-width: 6.5rem; }
+  }
+</style>

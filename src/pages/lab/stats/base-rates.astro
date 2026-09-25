@@ -1,0 +1,42 @@
+---
+import LabPage from '../../../layouts/LabPage.astro';
+import Section from '../../../components/Section.astro';
+import Callout from '../../../components/Callout.astro';
+import BaseRates from '../../../components/islands/BaseRates.svelte';
+---
+<LabPage slug="stats/base-rates" lede="A test that is right 90% of the time comes back positive. How worried should you be? Usually much less than 90%, and the reason is easier to see in people than in formulas.">
+  <Section label="§1 · Try it" id="try">
+    <h2 id="try" class="visually-hidden">Try it</h2>
+    <div class="prose intro">
+      <p>Picture 1000 people, one square each. Three settings decide what happens: how common the condition is, how often the test catches it (<em>sensitivity</em>), and how often it correctly clears people who don't have it (<em>specificity</em>). Pick a scenario, then move the sliders.</p>
+    </div>
+    <div class="stage"><BaseRates client:visible /></div>
+  </Section>
+
+  <Section label="§2 · Notice" id="notice">
+    <div class="prose">
+      <h2 id="notice">What the squares show</h2>
+      <p>In the screening scenario only 10 of the 1000 people have the condition, and the test catches 9 of them. But 990 people don't have it, and even a 9% false-alarm rate among that many makes about 89 false positives. So a positive result lands you in a group of 98 people, of whom only 9 are actually ill: about 9%, not 90%.</p>
+      <p>The rare-disease scenario pushes this further. With 99% accuracy in both directions, a positive result still means only about 1 chance in 11. The spam filter goes the other way: when the thing you look for is common, a positive result is very likely to be right.</p>
+      <p>Move the first slider and watch the answer swing. The test hasn't changed; only how common the condition is. That number is the <em>base rate</em>, and forgetting it is called <em>base-rate neglect</em>.</p>
+    </div>
+  </Section>
+
+  <Section label="§3 · Rule" id="rule">
+    <div class="prose">
+      <h2 id="rule">The same thing as a formula</h2>
+      <p>Bayes' rule says the chance of having the condition given a positive test is</p>
+      <p class="formula">P(ill | +) = <span class="frac"><span>sensitivity × base rate</span><span>sensitivity × base rate + (1 − specificity) × (1 − base rate)</span></span></p>
+      <p>The top line counts the true positives and the bottom line counts every positive, which is exactly what the bar in Fig. 2 does with people. Counting whole people rounds a little, so the page also shows the exact value.</p>
+      <Callout tone="note" title="About the scenarios">The three scenarios use round numbers chosen to teach the idea. They are not measured rates for any real test or disease.</Callout>
+    </div>
+  </Section>
+</LabPage>
+<style>
+  .intro { margin-bottom: var(--space-m); }
+  .stage { max-width: 60rem; }
+  .formula { font-family: var(--font-mono); font-size: var(--step--1); display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: var(--space-s) var(--space-m); background: var(--paper-raised); border-left: 3px solid var(--accent); overflow-x: auto; }
+  .frac { display: inline-grid; text-align: center; }
+  .frac span:first-child { border-bottom: 1.5px solid var(--ink); padding-bottom: 0.2rem; }
+  .frac span:last-child { padding-top: 0.2rem; }
+</style>

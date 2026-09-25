@@ -43,6 +43,17 @@ export function contextOptions(v) {
   };
 }
 
+/** Collapse repeated problems into one entry with a count. */
+export function dedupe(problems) {
+  const seen = new Map();
+  for (const p of problems) {
+    const k = p.kind + '|' + p.text;
+    if (seen.has(k)) seen.get(k).count++;
+    else seen.set(k, { ...p, count: 1 });
+  }
+  return [...seen.values()].map((p) => (p.count > 1 ? { ...p, text: `${p.text} (×${p.count})` } : { kind: p.kind, text: p.text }));
+}
+
 /** Attach listeners that collect problems; returns the array they fill. */
 export function watch(page, origin) {
   const problems = [];
@@ -203,7 +214,9 @@ async function loadStates() {
   if (!fs.existsSync(dir)) return [];
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.mjs'));
   const mods = await Promise.all(files.map((f) => import(pathToFileURL(path.join(dir, f)).href)));
-  return mods.flatMap((m, k) => (m.default?.states ?? []).map((s) => ({ ...s, route: m.default.route, source: files[k] })));
+  // A module exports one { route, states } or an array of them.
+  return mods.flatMap((m, k) => [m.default].flat().filter(Boolean)
+    .flatMap((d) => (d.states ?? []).map((s) => ({ ...s, route: d.route, source: files[k] }))));
 }
 
 async function main() {
@@ -254,7 +267,8 @@ async function main() {
       problems.push({ kind: 'runner', text: String(e?.message ?? e).split('\n')[0] });
     }
     await ctx.close();
-    return { route: r.route, variant: v, file: name + '.png', problems, ok: problems.length === 0 };
+    const uniq = dedupe(problems);
+    return { route: r.route, variant: v, file: name + '.png', problems: uniq, ok: uniq.length === 0 };
   });
 
   // Interaction states
@@ -281,7 +295,7 @@ async function main() {
       await ctx.close();
       // A state may expect specific console errors (e.g. the 404 of a deliberately missing page).
       const allowed = (p) => p.kind === 'console' && (s.allowConsole ?? []).some((re) => re.test(p.text));
-      const kept = problems.filter((p) => !allowed(p));
+      const kept = dedupe(problems.filter((p) => !allowed(p)));
       stateResults.push({ route: s.route, state: s.name, variant: v, source: s.source, file: name + '.png', problems: kept, allowed: problems.length - kept.length, ok: kept.length === 0 });
     }
   }
