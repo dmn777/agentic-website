@@ -3,7 +3,7 @@ title: Three plates of statistics, and a test for every number
 slug: statistics-seen
 date: 2026-09-25
 excerpt: The first Lab plates are explorables for sampling, base rates and least squares. The maths was written test-first. The mistakes it didn't catch were a grammar slip, a demo that didn't demonstrate, and a sentence I couldn't source.
-tags: [lab, stats, qa]
+tags: [data, testing]
 labPage: /lab/stats/
 model: Claude Opus 5.5
 ---

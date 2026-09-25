@@ -1,14 +1,17 @@
 ---
 import Base from '../../layouts/Base.astro';
-import LabCard from '../../components/LabCard.astro';
 import Plot from '../../components/Plot.astro';
+import PlateRow from '../../components/PlateRow.astro';
 import { lab, roman, series, platesIn, plateRange, type LabEntry } from '../../data/lab';
 import { url } from '../../lib/url';
 import { siteSections } from '../../data/site';
 import { joinList } from '../../lib/sections';
 
 const plates = [...lab].sort((a, b) => a.plate - b.plate);
-// Table of contents in plate order; a series is listed once, where its first plate falls.
+// The atlas index, in plate order: the one listing on this page (sweep 2, M4: a separate
+// card grid listed every plate a second time). A series is listed once, where its first
+// plate falls, with its plates beneath it. Each row carries the plate's own specimen (the
+// same seed as its card and header) and its blurb.
 type Row = { kind: 'plate'; e: LabEntry } | { kind: 'series'; id: string };
 const rows: Row[] = [];
 for (const e of plates) {
@@ -30,22 +33,21 @@ for (const e of plates) {
         <nav aria-label="Contents">
           <ol class="lab__toc">
             {rows.map((r) => r.kind === 'plate' ? (
-              <li><a class="toc-row" href={url(`/lab/${r.e.slug}/`)}><span class="label toc-row__n">Pl. {roman(r.e.plate)}</span><span class="toc-row__title">{r.e.title}</span><span class="label toc-row__kind">{r.e.kind}</span></a></li>
+              <li><PlateRow e={r.e} /></li>
             ) : (
               <li class="toc-series">
-                <a class="toc-row toc-row--series" href={url(series.find((x) => x.id === r.id)!.href)}><span class="label toc-row__n">{plateRange(r.id).replace('Plates ', 'Pl. ')}</span><span class="toc-row__title">{series.find((x) => x.id === r.id)!.title}</span><span class="label toc-row__kind">Series</span></a>
+                <a class="toc-row toc-row--series" href={url(series.find((x) => x.id === r.id)!.href)}>
+                  <span class="label toc-row__n">{plateRange(r.id).replace('Plates ', 'Pl. ')}</span>
+                  <span class="toc-row__text"><span class="toc-row__title">{series.find((x) => x.id === r.id)!.title}</span><span class="toc-row__blurb">{series.find((x) => x.id === r.id)!.blurb}</span></span>
+                  <span class="label toc-row__kind">Series</span>
+                </a>
                 <ol class="toc-sub">
-                  {platesIn(r.id).map((e) => (
-                    <li><a class="toc-row toc-row--sub" href={url(`/lab/${e.slug}/`)}><span class="label toc-row__n">Pl. {roman(e.plate)}</span><span class="toc-row__title">{e.title}</span><span class="label toc-row__kind">{e.kind}</span></a></li>
-                  ))}
+                  {platesIn(r.id).map((e) => <li><PlateRow e={e} sub /></li>)}
                 </ol>
               </li>
             ))}
           </ol>
         </nav>
-        <ul class="card-grid" role="list">
-          {plates.map((entry) => <li><LabCard entry={entry} headingLevel={2} /></li>)}
-        </ul>
       </>
     ) : (
       <div class="lab__empty">
@@ -63,31 +65,45 @@ for (const e of plates) {
   .lab { padding-block: var(--space-xl) 0; }
   .lab__head { padding-bottom: var(--space-l); margin-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
   .lab__head h1 { margin-bottom: var(--space-s); }
-  .lab__toc { list-style: none; padding: 0; margin: 0 0 var(--space-xl) calc(var(--margin-col) + var(--space-l)); max-width: 44rem; border-top: var(--stroke) solid var(--ink); }
+  .lab__toc { list-style: none; padding: 0; margin: 0 0 var(--space-xl) calc(var(--margin-col) + var(--space-l)); max-width: 50rem; border-top: var(--stroke) solid var(--ink); }
   .toc-sub { list-style: none; padding: 0; margin: 0; }
-  .toc-row {
-    display: grid; grid-template-columns: 6rem minmax(0, 1fr) auto; gap: var(--space-s); align-items: baseline;
-    padding: 0.55rem 0.2rem; border-bottom: var(--hair) solid var(--rule); text-decoration: none; color: var(--ink);
+  /* Rows are :global because PlateRow renders them. */
+  .lab :global(.toc-row) {
+    display: grid; grid-template-columns: 5.5rem 4.5rem minmax(0, 1fr) auto; gap: var(--space-s); align-items: center;
+    padding: 0.7rem 0.2rem; border-bottom: var(--hair) solid var(--rule); text-decoration: none; color: var(--ink);
   }
+  /* The series row keeps the plate grid, with its text in the title column, so every
+     title in the index starts on one line. */
+  .lab :global(.toc-row--series) { padding-block: 1rem 0.8rem; }
+  .lab :global(.toc-row--series .toc-row__text) { grid-column: 3; }
+  .lab :global(.toc-row:hover) { background: var(--paper-raised); }
+  .lab :global(.toc-row__n) { color: var(--accent-ink); white-space: nowrap; }
+  .lab :global(.toc-row__spec) { display: block; width: 4.5rem; }
+  .lab :global(.toc-row__text) { display: grid; gap: 0.25rem; }
   /* Rows are links at rest, not only on hover: titles carry the site's link underline. */
-  .toc-row__title { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
-  .toc-row:hover { background: var(--paper-raised); }
-  .toc-row:hover .toc-row__title { text-decoration-thickness: 2.5px; }
-  .toc-row__n { color: var(--accent-ink); white-space: nowrap; }
-  .toc-row__title { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.15; }
-  .toc-row__kind { text-align: right; }
+  .lab :global(.toc-row__title) { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.15; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.22em; }
+  .lab :global(.toc-row:hover .toc-row__title) { text-decoration-thickness: 2.5px; }
+  .lab :global(.toc-row__blurb) { font-size: var(--step--1); color: var(--ink-2); line-height: 1.4; max-width: 34rem; }
+  .lab :global(.toc-row__kind) { text-align: right; }
   .toc-series { border-top: var(--stroke) solid var(--rule-strong); }
   .toc-series:first-child { border-top: 0; }
-  .toc-row--series .toc-row__title { font-size: var(--step-2); font-weight: 560; }
-  .toc-row--sub { padding-left: 1.4rem; }
-  .toc-row--sub .toc-row__title { font-family: var(--font-text); font-size: var(--step-0); }
+  .lab :global(.toc-row--series .toc-row__title) { font-size: var(--step-2); font-weight: 560; }
+  /* Plates in a series: no indent (it broke the columns); a finer rule groups them. */
+  .lab :global(.toc-row--sub) { border-bottom-style: dotted; }
+  .toc-sub li:last-child :global(.toc-row--sub) { border-bottom-style: solid; }
   .lab__empty { margin-left: calc(var(--margin-col) + var(--space-l)); padding-bottom: var(--space-xl); display: grid; grid-template-columns: 11rem minmax(0, 32rem); gap: var(--space-l); align-items: center; }
   .lab :global(.lab__empty-plot) { width: 100%; }
   .lab__empty-title { font-family: var(--font-display); font-size: var(--step-2); line-height: 1.05; margin-bottom: var(--space-2xs); }
   @media (max-width: 52rem) {
     .lab__toc, .lab__empty { margin-left: 0; }
-    .toc-row { grid-template-columns: 5.2rem minmax(0, 1fr); row-gap: 0.1rem; }
-    .toc-row__kind { grid-column: 2; text-align: left; }
+    /* Phones: specimen on the left; number and kind as one label line above the title. */
+    .lab :global(.toc-row) { grid-template-columns: 3.6rem minmax(0, 1fr); grid-template-areas: "spec n" "spec text" "spec kind"; row-gap: 0.15rem; column-gap: var(--space-s); }
+    .lab :global(.toc-row--series) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "n" "text" "kind"; }
+    .lab :global(.toc-row__n) { grid-area: n; }
+    .lab :global(.toc-row__spec) { grid-area: spec; width: 3.6rem; align-self: start; }
+    .lab :global(.toc-row__text) { grid-area: text; }
+    .lab :global(.toc-row__kind) { grid-area: kind; text-align: left; }
+    .lab :global(.toc-row--series .toc-row__text) { grid-column: auto; }
     .lab__empty { grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-m); }
   }
 </style>

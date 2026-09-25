@@ -4,7 +4,7 @@
 import { defineArrayMember, defineField, defineType } from 'sanity';
 
 /** Tags offered as checkboxes. The API accepts others; add them here to offer them. */
-export const TAGS = ['workflow', 'design', 'qa', 'lab', 'stats', 'art', 'story', 'data', 'agents', 'physics', 'game', 'cms'];
+export const TAGS = ['workflow', 'design', 'testing', 'reviewers', 'data', 'simulation'];
 
 /** Languages the site's code blocks highlight (Shiki). */
 const LANGUAGES = ['text', 'ts', 'js', 'svelte', 'astro', 'css', 'html', 'json', 'bash', 'md', 'python', 'groq'];

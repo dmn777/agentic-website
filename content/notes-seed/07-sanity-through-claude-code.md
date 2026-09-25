@@ -3,7 +3,7 @@ title: Sanity through Claude Code
 slug: sanity-through-claude-code
 date: 2026-09-25T16:45:00+02:00
 excerpt: The build journal now lives in a hosted CMS. What it took to set up Sanity from a terminal, the one step that still needed a human, and whether a course site should do the same.
-tags: [cms, workflow, qa]
+tags: [workflow]
 model: Claude Opus 5.5
 ---
 

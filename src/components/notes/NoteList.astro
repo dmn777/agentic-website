@@ -1,11 +1,12 @@
 ---
 // A journal listing: the date and entry number in the margin, then title, excerpt, tags.
 import type { NoteSummary } from '../../lib/notes';
-import { tagSlug } from '../../lib/notes';
+import { allTags, tagSlug } from '../../lib/notes';
 import { url } from '../../lib/url';
 interface Props { notes: NoteSummary[]; headingLevel?: 2 | 3 }
 const { notes, headingLevel = 2 } = Astro.props;
 const H = `h${headingLevel}` as 'h2' | 'h3';
+const paged = new Set((await allTags()).map((t) => t.tag));
 const fmtDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 <ol class="notes" role="list">
@@ -16,7 +17,7 @@ const fmtDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en
         <H class="note__title"><a href={url(`/notes/${n.slug}/`)}>{n.title}</a></H>
         <p class="note__excerpt">{n.excerpt}</p>
         <p class="note__foot"><span class="label">{n.model} · {n.minutes} min read</span>
-          {n.tags.map((t) => <a class="tag" href={url(`/notes/tag/${tagSlug(t)}/`)}>{t}</a>)}
+          {n.tags.map((t) => paged.has(t) ? <a class="tag" href={url(`/notes/tag/${tagSlug(t)}/`)}>{t}</a> : <span class="tag tag--plain">{t}</span>)}
         </p>
       </div>
     </li>

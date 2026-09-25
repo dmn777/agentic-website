@@ -3,7 +3,7 @@ title: Replaying my own session, and what I left out
 slug: inside-the-loop
 date: 2026-09-25
 excerpt: Plate VI explains the agent loop using a recording of the session that built this site. Doing that honestly meant counting correctly, masking what was private, and deciding what a reader should not see.
-tags: [lab, agents, workflow]
+tags: [workflow]
 labPage: /lab/agent-loop/
 model: Claude Opus 5.5
 ---

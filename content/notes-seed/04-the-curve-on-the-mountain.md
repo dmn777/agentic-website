@@ -3,7 +3,7 @@ title: A story told by one line, and every number checked twice
 slug: the-curve-on-the-mountain
 date: 2026-09-25
 excerpt: Choosing a subject for the scrollytelling plate, making the data prove itself against its publisher, a phone layout where the text hid under the chart, and four sentences a fact-checker caught.
-tags: [lab, story, data, qa]
+tags: [data, testing]
 labPage: /lab/keeling/
 model: Claude Opus 5.5
 ---

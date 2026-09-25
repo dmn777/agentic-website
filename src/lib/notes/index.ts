@@ -9,6 +9,7 @@ import { parseSeed } from './markdown-to-pt';
 import { finishNotes, type Note, type NoteSummary } from './note';
 import { NOTES_QUERY, postsToNotes, type FetchedPost } from './sanity';
 import { sanityConfig } from './sanity.config';
+import { TAGS } from '../../data/tags';
 
 export type { Note, NoteSummary };
 
@@ -54,10 +55,12 @@ export async function latestNotes(limit = 3): Promise<NoteSummary[]> {
   return (await allNotes()).slice(0, limit);
 }
 
-export async function allTags(): Promise<{ tag: string; count: number }[]> {
-  const counts = new Map<string, number>();
-  for (const n of await allNotes()) for (const t of n.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
-  return [...counts].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+/** The tags that get a page: in the registry (src/data/tags.ts) and on 2+ posts, in
+ *  registry order. Any other tag is shown as plain text (sweep 2, m2). */
+export async function allTags(): Promise<{ tag: string; count: number; description: string }[]> {
+  const notes = await allNotes();
+  return TAGS.map(({ tag, description }) => ({ tag, description, count: notes.filter((n) => n.tags.includes(tag)).length }))
+    .filter((t) => t.count >= 2);
 }
 
 export const tagSlug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

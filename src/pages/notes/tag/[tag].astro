@@ -6,16 +6,17 @@ import { url } from '../../../lib/url';
 
 export async function getStaticPaths() {
   const notes = await allNotes();
-  return (await allTags()).map(({ tag }) => ({ params: { tag: tagSlug(tag) }, props: { tag, notes: notes.filter((n) => n.tags.includes(tag)) } }));
+  return (await allTags()).map(({ tag, description }) => ({ params: { tag: tagSlug(tag) }, props: { tag, description, notes: notes.filter((n) => n.tags.includes(tag)) } }));
 }
-const { tag, notes } = Astro.props;
+const { tag, description, notes } = Astro.props;
 ---
-<Base title={`Notes tagged “${tag}”`} description={`Build-journal entries about ${tag}.`}>
+<Base title={`Notes tagged “${tag}”`} description={description}>
   <div class="wrap journal">
     <header class="plate-grid journal__head">
       <p class="margin label">Notebook · tag</p>
       <div>
         <h1>#{tag}</h1>
+        <p class="lede">{description}</p>
         <p class="journal__meta label">{notes.length} {notes.length === 1 ? 'entry' : 'entries'} · <a href={url('/notes/')}>All notes</a></p>
       </div>
     </header>

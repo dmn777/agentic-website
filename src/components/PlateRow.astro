@@ -1,0 +1,16 @@
+---
+// One row of the /lab/ atlas index: plate number, the plate's specimen (same seed as its
+// card and header), title and blurb, kind. `sub` indents a plate under its series row.
+import Plot from './Plot.astro';
+import { roman, type LabEntry } from '../data/lab';
+import { url } from '../lib/url';
+
+interface Props { e: LabEntry; sub?: boolean }
+const { e, sub = false } = Astro.props;
+---
+<a class:list={['toc-row', 'toc-row--plate', { 'toc-row--sub': sub }]} href={url(`/lab/${e.slug}/`)}>
+  <span class="label toc-row__n">Pl. {roman(e.plate)}</span>
+  <span class="toc-row__spec" aria-hidden="true"><Plot seed={`lab/${e.slug}`} species={e.species} detail={0.35} /></span>
+  <span class="toc-row__text"><span class="toc-row__title">{e.title}</span><span class="toc-row__blurb">{e.blurb}</span></span>
+  <span class="label toc-row__kind">{e.kind}</span>
+</a>

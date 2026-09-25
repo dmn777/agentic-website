@@ -6,7 +6,7 @@
 // Reads a qa:shots output folder (summary.json + full-page PNGs) and lays the top of every
 // page side by side, labelled, so a reviewer can compare typography, colour, cards, header,
 // footer and nav across the whole site in a few images. Desktop and mobile get separate
-// sheets. Also runs a *wiring* check: every Lab card (on /, /lab/, /lab/stats/) links to a
+// sheets. Also runs a *wiring* check: every Lab card or index row (on /, /lab/, /lab/stats/) links to a
 // page that exists and whose <h1> equals the card title (wiring.json). Card and page both
 // come from src/data/lab.ts, so this proves the data is wired through, not that a blurb is
 // true. Blurb accuracy is a reviewer task (sweep 1, m11).
@@ -65,7 +65,11 @@ const server = await start();
 const problems = [], checked = [];
 for (const listing of ['/', '/lab/', '/lab/stats/']) {
   await page.goto(server.url(listing));
-  const cards = await page.$$eval('.lab-card', (cs) => cs.map((c) => ({ title: c.querySelector('.lab-card__title')?.textContent?.trim(), href: c.querySelector('a.card__link')?.getAttribute('href'), blurb: c.querySelector('.lab-card__blurb')?.textContent?.trim() })));
+  const cards = [
+    ...await page.$$eval('.lab-card', (cs) => cs.map((c) => ({ title: c.querySelector('.lab-card__title')?.textContent?.trim(), href: c.querySelector('a.card__link')?.getAttribute('href'), blurb: c.querySelector('.lab-card__blurb')?.textContent?.trim() }))),
+    // The /lab/ atlas index (T29): each row links a plate or a series hub.
+    ...await page.$$eval('a.toc-row', (rs) => rs.map((r) => ({ title: r.querySelector('.toc-row__title')?.textContent?.trim(), href: r.getAttribute('href'), blurb: r.querySelector('.toc-row__blurb')?.textContent?.trim() }))),
+  ];
   for (const card of cards) {
     const res = await page.request.get(server.origin + card.href);
     const html = await res.text();
