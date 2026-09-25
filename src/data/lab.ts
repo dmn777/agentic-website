@@ -1,5 +1,6 @@
 // The single source of Lab metadata, shared by Home and /lab/ (T5). Only built pages are
-// listed: no "coming soon" cards.
+// listed: no "coming soon" cards. A `draft` plate has a live, noindex page but no listing
+// anywhere (Home, /lab/, neighbours' pagers, the site description) until the flag goes.
 import type { Species } from '../lib/plot/specimen';
 
 export interface LabEntry {
@@ -11,6 +12,7 @@ export interface LabEntry {
   kind: string;          // 'Explorable', 'Gallery', 'Story', 'Game'…
   series?: string;       // id of a Series below, e.g. 'stats'
   species?: Species;     // force a plotter species for the card specimen
+  draft?: boolean;       // built and deployed, but unlisted and noindex
 }
 
 /** Groups of plates with a hub page. Titles, hub labels and counts are derived from here. */
@@ -22,7 +24,8 @@ export const series: Series[] = [
   },
 ];
 
-export const lab: LabEntry[] = [
+/** Every plate, drafts included. Listings use `lab`. */
+export const plates: LabEntry[] = [
   {
     slug: 'stats/sampling', plate: 1, series: 'stats', kind: 'Explorable', species: 'ridge',
     title: 'Sampling, seen',
@@ -65,7 +68,16 @@ export const lab: LabEntry[] = [
     blurb: 'Sand on a ringing plate runs off everything that moves and gathers on the lines that stay still. Pick a mode, shake the plate, and listen if you like.',
     tags: ['physics', 'sound'],
   },
+  {
+    slug: 'darkfield', plate: 8, kind: 'Game', species: 'orbit', draft: true,
+    title: 'Darkfield',
+    blurb: 'Loop your ink around drifting diatoms to catalogue them, before the pen runs dry.',
+    tags: ['game', 'microscopy'],
+  },
 ];
+
+/** The listed plates: everything that is not a draft. */
+export const lab: LabEntry[] = plates.filter((e) => !e.draft);
 
 export const seriesById = (id: string | undefined): Series | undefined => series.find((x) => x.id === id);
 export const platesIn = (id: string): LabEntry[] => lab.filter((e) => e.series === id).sort((a, b) => a.plate - b.plate);
@@ -79,7 +91,7 @@ export function plateRange(id: string): string {
 export const latestPlates = (n: number): LabEntry[] => [...lab].sort((a, b) => b.plate - a.plate).slice(0, n);
 
 export const labEntry = (slug: string): LabEntry => {
-  const e = lab.find((x) => x.slug === slug);
+  const e = plates.find((x) => x.slug === slug);
   if (!e) throw new Error(`No Lab entry for ${slug}`);
   return e;
 };

@@ -9,14 +9,15 @@ import { url } from '../lib/url';
 interface Props { slug: string; lede: string; description?: string }
 const { slug, lede, description } = Astro.props;
 const entry = labEntry(slug);
-const ordered = [...lab].sort((a, b) => a.plate - b.plate);
+// A draft sees its listed neighbours, but they don't see it (see lab.ts).
+const ordered = [...lab, ...(entry.draft ? [entry] : [])].sort((a, b) => a.plate - b.plate);
 const i = ordered.findIndex((e) => e.slug === slug);
 const prev = ordered[i - 1], next = ordered[i + 1];
 const ser = seriesById(entry.series);
 const inSeries = ser ? platesIn(ser.id) : [];
 const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
 ---
-<Base title={entry.title} description={description ?? entry.blurb}>
+<Base title={entry.title} description={description ?? entry.blurb} noindex={entry.draft}>
   <article class="wrap labpage" data-lab-kind={entry.kind} data-lab-slug={entry.slug}>
     <header class="labpage__head">
       <p class="label labpage__plate">Pl. {roman(entry.plate)}<br /><span>{entry.kind}</span></p>

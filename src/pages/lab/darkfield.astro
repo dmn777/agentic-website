@@ -1,0 +1,19 @@
+---
+import LabPage from '../../layouts/LabPage.astro';
+import Section from '../../components/Section.astro';
+import Darkfield from '../../components/islands/Darkfield.svelte';
+---
+<LabPage slug="darkfield" lede="A game for the pen of a plotter. Diatoms drift through a lit circle under the microscope. Loop your line around them to catalogue them, and keep your ink from running dry.">
+  <Section label="§1 · Play" id="play">
+    <h2 id="play" class="visually-hidden">Play Darkfield</h2>
+    <Darkfield client:visible />
+  </Section>
+
+  <Section label="§2 · How it plays" id="how">
+    <div class="prose">
+      <h2 id="how">One line, drawn</h2>
+      <p>The pen never stops. You only steer it, and it leaves wet ink behind. When the line crosses itself it closes a loop, and every diatom inside the loop is caught. A loop around several at once scores their points times their number, so five small diatoms beat one large one many times over. A bigger loop takes longer to close, though, and all that time your line is out in the open.</p>
+      <p>Each catch refills your ink, and the ink drains all the time. Amber contaminants drift in and drift towards you. If one touches your line, the line snaps and you start again. If one touches the pen, the run is over. The field gets busier the longer you last.</p>
+    </div>
+  </Section>
+</LabPage>
