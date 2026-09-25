@@ -13,6 +13,8 @@ const href = (id: string) => url(id === 'index' ? '/' : `/${id}/`);
 const siteTitle = 'Agentic Website';
 const fullTitle = title === siteTitle ? title : `${title} · ${siteTitle}`;
 const built = new Date().toISOString().slice(0, 10);
+// In CI, GITHUB_SHA identifies the commit being built; qa:deploy compares it with HEAD.
+const buildSha = process.env.GITHUB_SHA;
 ---
 <!doctype html>
 <html lang="en">
@@ -22,6 +24,7 @@ const built = new Date().toISOString().slice(0, 10);
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    {buildSha && <meta name="build-sha" content={buildSha} />}
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>

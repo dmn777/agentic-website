@@ -9,12 +9,15 @@ const BASE = '/agentic-website';
 // Tiny rehype plugin: lets authors write root-relative links in Markdown
 // (e.g. [How it works](/how-it-works/)) and prefixes them with BASE at build time.
 function rehypeBaseLinks() {
+  /** @param {any} tree */
   return (tree) => {
+    /** @param {unknown} url */
     const fix = (url) =>
       typeof url === 'string' && url.startsWith('/') && !url.startsWith('//') &&
       url !== BASE && !url.startsWith(BASE + '/')
         ? BASE + url
         : url;
+    /** @param {any} node */
     const walk = (node) => {
       if (node.type === 'element') {
         if (node.tagName === 'a') node.properties.href = fix(node.properties.href);
