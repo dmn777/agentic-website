@@ -18,6 +18,9 @@
   let canvas: HTMLCanvasElement;
   let root: HTMLDivElement;
   let game: Game | null = null;
+  // The title screen's attract mode: a field of its own, drifting behind the card, with the
+  // pen hidden. It never touches the real game, and it stands still under reduced motion.
+  let demo: Game | null = null;
   let renderer: Renderer | null = null;
   let sound: Sound | null = null;
   let mode = $state<'title' | 'play' | 'paused' | 'over'>('title');
@@ -109,15 +112,26 @@
     renderer.resize(size, Math.min(2, window.devicePixelRatio || 1));
     sound = createSound();
     game = createGame(testMode ? 'test' : String(Date.now()), { best: readBest() });
+    demo = createGame('attract');
+    start(demo);
+    Object.assign(demo, { ink: Infinity, noHazards: true });
     sync();
+    const paint = (now: number) => {
+      if (game!.mode === 'title') renderer!.draw(demo!, now, { hidePen: true });
+      else renderer!.draw(game!, now);
+    };
 
     let raf = 0, last = performance.now(), acc = 0;
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       acc = Math.min(acc + (now - last) / 1000, 0.25); // never spiral after a stall
       last = now;
-      while (acc >= DT) { tick(now); acc -= DT; }
-      renderer!.draw(game!, now);
+      while (acc >= DT) {
+        if (game!.mode === 'title' && !prefersReducedMotion()) step(demo!, { left: false, right: false, aim: null });
+        tick(now);
+        acc -= DT;
+      }
+      paint(now);
       if (game!.mode !== mode || game!.score !== score || Math.abs(game!.ink - ink) > 0.5) sync();
     };
 
@@ -126,17 +140,17 @@
       const state = () => ({ ...snapshot(game!), canvas: { width: canvas.width, height: canvas.height }, muted });
       w.__game = {
         getState: state,
-        step: (n = 1) => { for (let i = 0; i < n; i++) tick(performance.now()); renderer!.draw(game!, performance.now()); sync(); return state(); },
+        step: (n = 1) => { for (let i = 0; i < n; i++) tick(performance.now()); paint(performance.now()); sync(); return state(); },
         input: (action: string, down = true) => {
           if (action === 'left' || action === 'right') { keys[action] = down; aim = null; }
           else if (down && action === 'start') begin();
           else if (down && action === 'pause') pause();
           else if (down && action === 'mute') toggleSound();
-          renderer!.draw(game!, performance.now());
+          paint(performance.now());
           return state();
         },
         aim: (x: number | null, y?: number) => { aim = x === null ? null : { x, y: y ?? 0 }; },
-        seed: (s: string) => { game = createGame(String(s), { best: game?.best ?? 0 }); renderer!.reset(); sync(); renderer!.draw(game, performance.now()); return state(); },
+        seed: (s: string) => { game = createGame(String(s), { best: game?.best ?? 0 }); renderer!.reset(); sync(); paint(performance.now()); return state(); },
         // Test switches for the harness: a bottomless ink well, and contaminants on, frozen or off.
         cheat: (o: { ink?: number; hazards?: 'on' | 'frozen' | 'off' } = {}) => {
           if (o.ink !== undefined) game!.ink = o.ink;
@@ -144,7 +158,7 @@
           return state();
         },
       };
-      renderer.draw(game, performance.now());
+      paint(performance.now());
     } else {
       raf = requestAnimationFrame(frame);
     }
@@ -163,7 +177,11 @@
 
   $effect(() => {
     const s = size;
-    if (renderer && game) { renderer.resize(s, Math.min(2, window.devicePixelRatio || 1)); renderer.draw(game, performance.now()); }
+    if (renderer && game && demo) {
+      renderer.resize(s, Math.min(2, window.devicePixelRatio || 1));
+      if (game.mode === 'title') renderer.draw(demo, performance.now(), { hidePen: true });
+      else renderer.draw(game, performance.now());
+    }
   });
 
   const inkLow = $derived(mode === 'play' && ink < 20);
@@ -187,7 +205,7 @@
     </dl>
     <div class="hud__buttons">
       <button class="btn btn--secondary btn--sm" type="button" data-action="sound" aria-pressed={!muted} onclick={toggleSound} title="Sound (M)">
-        {muted ? 'Sound off' : 'Sound on'}
+        Sound: {muted ? 'off' : 'on'}
       </button>
       <button class="btn btn--secondary btn--sm" type="button" data-action="pause" onclick={pause} disabled={mode !== 'play' && mode !== 'paused'} title="Pause (P)">{mode === 'paused' ? 'Resume' : 'Pause'}</button>
     </div>
@@ -213,15 +231,15 @@
       onpointerleave={pointerEnd}
     ></canvas>
 
+    {#if mode !== 'title' && mode !== 'play'}<div class="scrim" aria-hidden="true"></div>{/if}
     {#if mode === 'title'}
-      <div class="card" data-screen="title">
-        <p class="label card__kicker">Pl. VIII · A game</p>
-        <h2 class="card__title">Darkfield</h2>
-        <ol class="card__rules">
-          <li>Your pen never stops. Steer it with <kbd aria-label="left arrow">◀</kbd> <kbd aria-label="right arrow">▶</kbd> or point where it should go; on a phone, hold your finger where it should go.</li>
+      <div class="card card--title" data-screen="title">
+        <ol class="card__rules card__rules--full">
+          <li>Your pen never stops. Steer it with <kbd aria-label="left arrow">◀</kbd> <kbd aria-label="right arrow">▶</kbd>, or point where it should go.</li>
           <li>Close your line into a loop around diatoms to catch them. Catch several at once and they multiply.</li>
           <li>Catching refills your ink. Keep your pen and your line clear of the amber contaminants.</li>
         </ol>
+        <p class="card__rules--short">Loop your ink around diatoms to catch them, and keep clear of the amber ones. Hold a finger where the pen should go, or use ◀ ▶.</p>
         <button class="btn btn--primary" type="button" data-action="start" onclick={begin}>Start</button>
       </div>
     {:else if mode === 'paused'}
@@ -232,7 +250,7 @@
     {:else if mode === 'over'}
       <div class="card" data-screen="over" aria-live="polite">
         <p class="label card__kicker">{overReason === 'ink' ? 'Out of ink' : 'Contaminated'}</p>
-        <h2 class="card__title">{score} <span class="card__unit">points</span></h2>
+        <h2 class="card__title card__score">{score}<span class="label card__unit">points</span></h2>
         <p class="card__best">{newBest ? 'A new personal best.' : `Your best: ${best}.`}</p>
         <dl class="card__stats">
           <div><dt>Time</dt><dd>{minutes(summary.t)}</dd></div>
@@ -266,6 +284,7 @@
   .hud__stats dt, .card__stats dt { font-size: var(--step--2); letter-spacing: var(--tracking-caps); text-transform: uppercase; color: var(--ink-3); }
   .hud__stats dd { margin: 0; font-size: var(--step-0); font-variant-numeric: tabular-nums; min-width: 3ch; }
   .hud__buttons { display: flex; gap: var(--space-2xs); }
+  .hud__buttons .btn { white-space: nowrap; }
   .gauge { display: block; width: 7rem; height: 0.6rem; margin-top: 0.35rem; border: var(--hair) solid var(--rule-strong); background: var(--paper-sunk); }
   .gauge span { display: block; height: 100%; background: var(--accent); }
   .hud__ink.low dt { color: var(--accent-ink); }
@@ -277,9 +296,10 @@
   .stage { position: relative; outline-offset: 4px; border-radius: 50%; touch-action: none; }
   .stage:focus-visible { outline: 2px solid var(--focus); }
   canvas { display: block; border-radius: 50%; touch-action: none; cursor: crosshair; }
+  .scrim { position: absolute; inset: 0; border-radius: 50%; background: rgba(4, 7, 11, 0.45); pointer-events: none; }
   .card {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: min(88%, 26rem); padding: var(--space-m);
+    width: min(78%, 26rem); padding: var(--space-m);
     background: var(--paper-raised); color: var(--ink);
     border: var(--hair) solid var(--rule-strong);
     display: grid; gap: var(--space-2xs); justify-items: start;
@@ -287,7 +307,9 @@
   .card--small { width: auto; min-width: 12rem; }
   .card__kicker { color: var(--accent-ink); margin: 0; }
   .card__title { font-family: var(--font-display); font-size: var(--step-3); line-height: 1; margin: 0 0 var(--space-3xs); }
-  .card__unit { font-size: var(--step-0); font-family: var(--font-mono); color: var(--ink-3); }
+  .card__score { font-size: var(--step-4); display: grid; gap: 0.2em; }
+  .card__unit { color: var(--ink-3); }
+  .card__rules--short { display: none; margin: 0 0 var(--space-xs); }
   .card__rules { margin: 0 0 var(--space-xs); padding-left: 1.2em; font-size: var(--step--1); display: grid; gap: 0.35em; }
   .card__best { margin: 0; font-size: var(--step--1); color: var(--ink-2); }
   .card__stats { display: flex; gap: var(--space-s); margin: 0 0 var(--space-xs); font-family: var(--font-mono); flex-wrap: wrap; }
@@ -316,10 +338,17 @@
     [data-touch="left"] { grid-area: left; }
     [data-touch="right"] { grid-area: right; }
   }
+  /* Phones: the cards must fit inside the disc, so the title card trades its list for two
+     sentences (the full rules are in §2 just below), and body text stays at 16 px. */
+  @media (max-width: 40rem) {
+    .card { padding: var(--space-s); gap: var(--space-3xs); }
+    .card__rules--full { display: none; }
+    .card__rules--short { display: block; font-size: var(--step-0); line-height: 1.35; }
+    .card__best { font-size: var(--step-0); }
+    .card__score { font-size: var(--step-3); display: flex; align-items: baseline; gap: 0.5rem; }
+    .card__stats { gap: var(--space-2xs) var(--space-s); margin-bottom: var(--space-3xs); }
+  }
   @media (max-width: 30rem) {
-    .card { padding: var(--space-s); width: 92%; }
-    .card__rules { font-size: var(--step--2); }
-    .card__title { font-size: var(--step-2); }
     .hud__stats { gap: var(--space-s); }
     .hud__slide { display: none; }
     .gauge { width: 4.5rem; }

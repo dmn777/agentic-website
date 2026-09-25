@@ -16,6 +16,26 @@ const startRun = async (page, seed) => { await game(page, 'seed', seed); return 
 const fail = (msg, s) => { throw new Error(`${msg} (${JSON.stringify({ mode: s.mode, t: s.t, score: s.score, diatoms: s.diatoms, hazards: s.hazards, trailPoints: s.trailPoints })})`); };
 const visible = (page, sel) => page.locator(sel).isVisible();
 
+const captureMoment = async (page) => {
+        await testMode(page);
+        await startRun(page, 'shot-capture');
+        await game(page, 'cheat', { hazards: 'off' });
+        let best = null;
+        for (let i = 0; i < 6; i++) {
+          await page.evaluate(() => window.__qa.begin({ loopAround: 'cluster' }));
+          let r;
+          do r = await page.evaluate(() => window.__qa.run({ stopOnEvents: true })); while (r.reason === 'event' && !r.events.some((e) => e.type === 'capture'));
+          const cap = r.events.find((e) => e.type === 'capture');
+          if (cap && (!best || cap.caught > best.caught)) best = cap;
+          if (cap?.caught >= 2 || r.state.mode !== 'play') break;
+        }
+        if (!best) fail('no loop captured anything', await game(page, 'getState'));
+        // The run stopped on the capture tick; age the effects a little (100 ms) and redraw.
+        await page.evaluate(() => window.__qa.redraw(100));
+        const s = await game(page, 'getState');
+        if (s.stats.captured < 1 || s.score <= 0) fail('the capture did not score', s);
+};
+
 export default {
   route: '/lab/darkfield/',
   states: [
@@ -44,24 +64,40 @@ export default {
       name: 'capture',
       variant: 'desktop-light',
       wait: 100,
+      run: captureMoment,
+    },
+    {
+      // The same moment under reduced motion: the wash and label, no flights (visual QA m13).
+      name: 'capture-rm',
+      variant: 'desktop-light-rm',
+      wait: 100,
+      run: captureMoment,
+    },
+    {
+      // The title screen's attract mode: the field drifts behind the card (visual QA M5).
+      name: 'title-attract',
+      variant: 'desktop-dark',
       run: async (page) => {
-        await testMode(page);
-        await startRun(page, 'shot-capture');
-        await game(page, 'cheat', { hazards: 'off' });
-        let best = null;
-        for (let i = 0; i < 6; i++) {
-          await page.evaluate(() => window.__qa.begin({ loopAround: 'cluster' }));
-          let r;
-          do r = await page.evaluate(() => window.__qa.run({ stopOnEvents: true })); while (r.reason === 'event' && !r.events.some((e) => e.type === 'capture'));
-          const cap = r.events.find((e) => e.type === 'capture');
-          if (cap && (!best || cap.caught > best.caught)) best = cap;
-          if (cap?.caught >= 2 || r.state.mode !== 'play') break;
-        }
-        if (!best) fail('no loop captured anything', await game(page, 'getState'));
-        // The run stopped on the capture tick; age the effects a little (100 ms) and redraw.
-        await page.evaluate(() => window.__qa.redraw(100));
-        const s = await game(page, 'getState');
-        if (s.stats.captured < 1 || s.score <= 0) fail('the capture did not score', s);
+        const canvas = page.locator('.darkfield canvas');
+        await canvas.scrollIntoViewIfNeeded();
+        const a = await canvas.evaluate((c) => c.toDataURL());
+        await page.waitForTimeout(700);
+        const b = await canvas.evaluate((c) => c.toDataURL());
+        if (a === b) throw new Error('the title field does not move');
+      },
+    },
+    {
+      // Keyboard focus on the field, reached with Tab (visual QA m13).
+      name: 'focus',
+      variant: 'desktop-light',
+      run: async (page) => {
+        await page.locator('.darkfield').scrollIntoViewIfNeeded();
+        await page.locator('[data-action="sound"]').focus();
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Shift+Tab');
+        await page.keyboard.press('Tab');
+        const ok = await page.evaluate(() => document.activeElement?.matches('.darkfield [data-action="pause"], .darkfield .stage'));
+        if (!ok) throw new Error(`focus went to ${await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80))}`);
       },
     },
     {
@@ -92,6 +128,22 @@ export default {
         await page.locator('.darkfield').evaluate((el) => el.scrollIntoView({ block: 'center' }));
         if (!(await visible(page, '[data-screen="over"]'))) fail('the game-over card is not showing', s);
         for (const side of ['left', 'right']) if (!(await visible(page, `[data-touch="${side}"]`))) fail(`the ${side} thumb button is not showing`, s);
+      },
+    },
+    {
+      // Game over under reduced motion: the blot is there at once, nothing shakes.
+      name: 'over-rm',
+      variant: 'desktop-light-rm',
+      wait: 100,
+      run: async (page) => {
+        await testMode(page);
+        let s = await startRun(page, 'shot-over');
+        for (let i = 0; i < 40 && s.mode === 'play'; i++) s = (await act(page, { loopAround: 'nearest' })).state;
+        while (s.mode === 'play') s = await page.evaluate(() => window.__qa.step(600));
+        if (s.mode !== 'over') fail('the run did not end', s);
+        s = await page.evaluate(() => window.__qa.redraw(600)); // let the ink blot bloom
+        await page.locator('.darkfield').evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        if (!(await visible(page, '[data-screen="over"]'))) fail('the game-over card is not showing', s);
       },
     },
   ],

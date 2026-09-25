@@ -69,7 +69,7 @@ export const plates: LabEntry[] = [
     tags: ['physics', 'sound'],
   },
   {
-    slug: 'darkfield', plate: 8, kind: 'Game', species: 'orbit',
+    slug: 'darkfield', plate: 8, kind: 'Game', species: 'radial',
     title: 'Darkfield',
     blurb: 'Loop your ink around drifting diatoms to catalogue them, before the pen runs dry.',
     tags: ['game', 'microscopy'],

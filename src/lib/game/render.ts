@@ -10,7 +10,7 @@ import type { Vec } from './geometry';
 // Drawn art, not interface: these are the slide's own colours (DESIGN.md allows raw
 // values in generated art).
 export const COLORS = {
-  slide: '#04070b', lit: '#0d1a28', rim: '#27435a', reticle: 'rgba(150, 200, 225, 0.09)',
+  slide: '#04070b', lit: '#10202f', rim: 'rgba(150, 195, 215, 0.22)', reticle: 'rgba(150, 200, 225, 0.13)',
   glass: '#d4eef4', glow: 'rgba(110, 215, 255, 0.55)', ink: '#ff6a48',
   hazard: '#ffb347', hazardGlow: 'rgba(255, 170, 60, 0.6)', label: 'rgba(212, 238, 244, 0.55)',
 };
@@ -34,7 +34,8 @@ export interface Renderer {
   milestone(slide: number, now: number): void;
   /** Clear effects and the game-over blot (a new run or a new seed). */
   reset(): void;
-  draw(g: Game, now: number): void;
+  /** `hidePen` draws the field without the pen and its ink (the title screen's attract mode). */
+  draw(g: Game, now: number, o?: { hidePen?: boolean }): void;
 }
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
@@ -49,22 +50,30 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
   let hatch: CanvasPattern | null = null;
   /** World units for n CSS pixels: keeps strokes and small marks legible on a phone. */
   const px = (n: number) => n / scale;
-  /** Drawn radius of a species: its world radius, but never under 7 CSS px. */
-  const drawnR = (kind: Species) => Math.max(SPECIES[kind].r, px(7));
+  /** Drawn radius of a species: 1.7× its world (capture) radius, and never under 8 CSS px.
+   *  Capture is by centre, so a larger drawing changes nothing in the rules. */
+  const drawnR = (kind: Species) => Math.max(SPECIES[kind].r * 1.7, px(8));
 
   function buildSprites() {
     sprites.clear();
     for (const kind of Object.keys(SPECIES) as Species[]) {
       const r = drawnR(kind) * scale * dpr;
-      const pad = Math.ceil(r * 0.9 + 6 * dpr);
+      const pad = Math.ceil(r * 0.9 + 16 * dpr);
       const c = document.createElement('canvas');
       c.width = c.height = Math.ceil(2 * r + 2 * pad);
       const x = c.getContext('2d')!;
       x.translate(c.width / 2, c.height / 2);
-      x.strokeStyle = COLORS.glass;
-      x.lineWidth = Math.max(1, 1.1 * dpr);
+      // Bloom: a wide faint pass, then the crisp line with a tight glow.
+      x.strokeStyle = COLORS.glow;
+      x.lineWidth = Math.max(2, 3 * dpr);
       x.shadowColor = COLORS.glow;
-      x.shadowBlur = 6 * dpr;
+      x.shadowBlur = 14 * dpr;
+      x.globalAlpha = 0.35;
+      drawDiatom(x, kind, r);
+      x.globalAlpha = 1;
+      x.strokeStyle = COLORS.glass;
+      x.lineWidth = Math.max(1, 1.2 * dpr);
+      x.shadowBlur = 5 * dpr;
       drawDiatom(x, kind, r);
       sprites.set(kind, c);
     }
@@ -110,7 +119,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
   }
   function reset() { effects = []; blot = null; shakeUntil = 0; }
 
-  function draw(g: Game, now: number) {
+  function draw(g: Game, now: number, o: { hidePen?: boolean } = {}) {
     const still = opts.reducedMotion();
     const W = canvas.width;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -122,17 +131,25 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     if (now < shakeUntil && !still) { ox += (Math.random() - 0.5) * 10 * dpr; oy += (Math.random() - 0.5) * 10 * dpr; }
     ctx.setTransform(s, 0, 0, s, ox, oy);
 
-    // The lit field and its reticle.
-    const lit = ctx.createRadialGradient(0, 0, R * 0.1, 0, 0, R);
-    lit.addColorStop(0, COLORS.lit); lit.addColorStop(1, COLORS.slide);
+    // The lit field: brightest in the middle, falling off to the field stop, where a faint
+    // edge marks the rim the pen bounces off.
+    const lit = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+    lit.addColorStop(0, COLORS.lit); lit.addColorStop(0.72, '#08111a'); lit.addColorStop(1, COLORS.slide);
     ctx.fillStyle = lit;
     ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = COLORS.rim; ctx.lineWidth = px(1.25);
+    ctx.beginPath(); ctx.arc(0, 0, R - px(1), 0, Math.PI * 2); ctx.stroke();
+    // The eyepiece reticle: a faint crosshair and an ocular micrometer along the horizontal,
+    // a long tick every 50 u and a short one every 10 u.
     ctx.strokeStyle = COLORS.reticle; ctx.lineWidth = px(1);
-    ctx.beginPath(); ctx.moveTo(-R, 0); ctx.lineTo(R, 0); ctx.moveTo(0, -R); ctx.lineTo(0, R);
-    for (let k = 1; k < 5; k++) { ctx.moveTo(R * k / 5, 0); ctx.arc(0, 0, R * k / 5, 0, Math.PI * 2); }
+    ctx.beginPath();
+    ctx.moveTo(-R, 0); ctx.lineTo(R, 0); ctx.moveTo(0, -R * 0.06); ctx.lineTo(0, R * 0.06);
+    ctx.moveTo(0, -R); ctx.lineTo(0, -R * 0.62); ctx.moveTo(0, R * 0.62); ctx.lineTo(0, R);
+    for (let u = -300; u <= 300; u += 10) {
+      const h = u % 50 === 0 ? (u % 100 === 0 ? 16 : 11) : 5;
+      ctx.moveTo(u, 0); ctx.lineTo(u, -h);
+    }
     ctx.stroke();
-    ctx.strokeStyle = COLORS.rim; ctx.lineWidth = px(2.5);
-    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
 
     // The game-over blot sits under everything that still moves.
     if (g.mode === 'over') {
@@ -140,6 +157,17 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       const grow = still ? 1 : easeOut(Math.min(1, (now - blot.born) / 500));
       drawBlot(ctx, blot.x, blot.y, px(46) * grow, blot.lobes);
     }
+
+    // Scale bar (100 µm, by the fiction's convention), inside the disc, bottom right.
+    ctx.save();
+    ctx.strokeStyle = COLORS.label; ctx.fillStyle = COLORS.label; ctx.lineWidth = px(1);
+    const bx = R * 0.2, by = R * 0.8, tick = px(4);
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + 100, by);
+    ctx.moveTo(bx, by - tick); ctx.lineTo(bx, by + tick); ctx.moveTo(bx + 100, by - tick); ctx.lineTo(bx + 100, by + tick);
+    ctx.stroke();
+    ctx.font = `${px(10)}px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText('100 µm', bx + 50, by - px(7));
+    ctx.restore();
 
     // Diatoms (sprites) and contaminants (drawn: they pulse).
     for (const d of g.diatoms) {
@@ -197,7 +225,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     // The wet ink: dim at the tail, bright at the nib. Butt caps where chunks meet, so the
     // overlaps don't show as beads.
     const tr = g.trail;
-    if (tr.length > 1) {
+    if (tr.length > 1 && !o.hidePen) {
       ctx.lineJoin = 'round';
       ctx.strokeStyle = COLORS.ink;
       ctx.lineWidth = px(3.2);
@@ -214,7 +242,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       ctx.globalAlpha = 1;
     }
     // The nib.
-    if (g.mode !== 'title') {
+    if (g.mode !== 'title' && !o.hidePen) {
       const nib = Math.max(6, px(3.5));
       ctx.fillStyle = COLORS.ink;
       ctx.shadowColor = COLORS.ink; ctx.shadowBlur = 12 * dpr;
@@ -228,8 +256,9 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     // Catches flash, then fly to the catalogue corner (top left, towards the score).
     const corner = { x: -R * 0.74, y: -R * 0.74 };
     for (const e of effects) {
-      if (e.kind !== 'catch' || now - e.born < e.delay) continue;
-      const age = (now - e.born - e.delay) / LIFE.catch;
+      if (e.kind !== 'catch') continue;
+      // A catch waiting for its turn (they flash one after another) stays where it was.
+      const age = Math.max(0, (now - e.born - e.delay) / LIFE.catch);
       const sp = sprites.get(e.sp);
       if (!sp) continue;
       const fly = easeIn(Math.max(0, (age - 0.3) / 0.7));
@@ -272,15 +301,6 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
         ctx.restore();
       }
     }
-
-    // Scale bar (100 µm, by the fiction's convention).
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = COLORS.label; ctx.strokeStyle = COLORS.label; ctx.lineWidth = 1;
-    const bar = 100 * scale, bx = size - 18 - bar, by = size - 18;
-    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bar, by); ctx.moveTo(bx, by - 4); ctx.lineTo(bx, by + 4); ctx.moveTo(bx + bar, by - 4); ctx.lineTo(bx + bar, by + 4); ctx.stroke();
-    ctx.font = `10px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText('100 µm', bx + bar / 2, by - 7);
   }
 
   return { resize, toWorld, events, milestone, reset, draw };
