@@ -53,6 +53,12 @@ export const lab: LabEntry[] = [
     blurb: 'Sixty-eight years of carbon dioxide measured on a Hawaiian volcano: a line that breathes every year and climbs every decade.',
     tags: ['climate', 'data'],
   },
+  {
+    slug: 'agent-loop', plate: 6, kind: 'Explainer', species: 'radial',
+    title: 'Inside the loop',
+    blurb: 'Replay a real task from the session that built this site: every model turn, tool call and result, and the context growing as it goes.',
+    tags: ['agents', 'Claude Code'],
+  },
 ];
 
 export const seriesById = (id: string | undefined): Series | undefined => series.find((x) => x.id === id);

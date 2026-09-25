@@ -1,0 +1,93 @@
+---
+import LabPage from '../../layouts/LabPage.astro';
+import Section from '../../components/Section.astro';
+import Callout from '../../components/Callout.astro';
+import SessionCharts from '../../components/islands/SessionCharts.svelte';
+import AgentLoop from '../../components/islands/AgentLoop.svelte';
+import trace from '../../data/trace/t1-workspace.json';
+import stats from '../../data/trace/session-stats.json';
+
+// Everything here comes from the real session that built this site: an abridged,
+// sanitized extract of its first task, and content-free statistics of the whole session.
+const steps = trace.steps as any[];
+const calls = steps.filter((s) => s.kind === 'call').length;
+const seconds = Math.round(steps.at(-1).at);
+const fmt = (n: number) => n.toLocaleString('en');
+const byTool = Object.fromEntries(stats.toolCalls.map((t) => [t.tool, t.n]));
+const totalCalls = stats.toolCalls.reduce((a, t) => a + t.n, 0);
+// Exact duration from the timestamps (not the rounded series), e.g. "2 hours 45 minutes".
+const mins = Math.round((Date.parse(stats.snapshot) - Date.parse(stats.started)) / 60000);
+const duration = `${Math.floor(mins / 60)} hours ${mins % 60} minutes`;
+const reviewers = stats.subagents.filter((a) => a.model === 'sonnet').length;
+const sameModel = stats.subagents.length - reviewers;
+const snapshot = new Date(stats.snapshot).toISOString().slice(0, 10);
+// Glosses for a few steps, keyed by step index in the trace (model-written).
+const notes: Record<number, string> = {
+  3: 'The plan it reads was written earlier, in a planning session with the project\'s owner.',
+  10: 'The code already existed: the first edition of the site, built with a different Claude product.',
+  13: 'The build works before anything is changed, which gives a baseline to compare against later.',
+  17: 'LEAK=no and CFGLEAK=no are two checks that the access token appears in no file of the site\'s repository, including git\'s own settings.',
+  20: 'This failure is deliberate. With the credential helper switched off the push fails, which proves the helper is what makes it work.',
+  26: 'The task is written up as done, and the loop moves on to the next task.',
+};
+---
+<LabPage slug="agent-loop" lede="Every page on this site was made by an AI model working in a loop: read, decide, act, read again. Here is one real task from that loop, replayed step by step, with the machinery around it explained.">
+  <Section label="§1 · Replay" id="replay">
+    <h2 id="replay" class="visually-hidden">Replay</h2>
+    <div class="prose intro">
+      <p>The very first task in building this site was to set up the workspace: download the code, configure it, build it once and check that publishing would work. It took <strong>{calls} tool calls in {seconds} seconds</strong>. The replay has {steps.length} steps because each lap of the loop shows up as several: the model's turn, the tool call, and the result that comes back. Press <strong>Play</strong>, or drag the slider (arrow keys work on it too), to step through what the model saw and did. The commands and outputs are real. Only long commands and outputs are shortened, and private paths and secrets are masked.</p>
+    </div>
+    <AgentLoop client:visible steps={steps} notes={notes} />
+  </Section>
+
+  <Section label="§2 · Loop" id="loop">
+    <div class="prose">
+      <h2 id="loop">The loop</h2>
+      <p>A language model can only produce text. What makes it an <em>agent</em> is the program around it, here Claude Code, and the tools that program offers. On each turn the model reads everything in front of it and writes an answer, or asks to use one or more tools, sometimes with a note alongside. A tool request might be "run this command" or "open this file". Claude Code carries out the request and adds the output to what the model can see. Then the model reads again.</p>
+      <p>The loop ends when the model replies without asking for a tool. The replay stops earlier, when the first task is written up as done. In the real session the loop kept going, task after task. Every tool call in between is one lap of the loop.</p>
+    </div>
+  </Section>
+
+  <Section label="§3 · Context" id="context">
+    <div class="prose">
+      <h2 id="context">The context window</h2>
+      <p>The model has no memory beyond what is in its <em>context</em>: the text it reads on every turn. That includes the system instructions, the definitions of its tools, the project's notes, the conversation, and the output of every tool call so far. Before this session's first step, the context already held <strong>{fmt(stats.context.first)}</strong> tokens. For this model a token is, on average, a little over half an English word.</p>
+      <p>Until the limit gets close, nothing leaves the context; every result is added. In {duration} and {fmt(stats.modelCalls)} model calls, up to the snapshot on {snapshot}, the context grew to <strong>{fmt(stats.context.max)}</strong> tokens. That is most of the model's window of {fmt(stats.context.window)}. When a session nears the limit, Claude Code first clears older tool outputs and then, if it needs to, summarises the conversation to make room.</p>
+    </div>
+    <div class="charts"><SessionCharts client:visible stats={stats} /></div>
+  </Section>
+
+  <Section label="§4 · Tools" id="tools">
+    <div class="prose">
+      <h2 id="tools">Tools</h2>
+      <p>Fig. 4 counts every one of the session's {fmt(totalCalls)} tool calls. Most were <strong>Bash</strong> ({byTool.Bash}), which runs a shell command: building the site, running tests, taking screenshots, pushing to GitHub. <strong>Read</strong> ({byTool.Read}) opens a file. Here that mostly meant looking at screenshots, which is how the model checks its own pages. <strong>Write</strong> ({byTool.Write}) creates a file. The rest start subagents or talk to them, except one call that listed the running agents and one that loaded a skill, a packaged procedure like the one behind <code>/proceed</code>.</p>
+    </div>
+  </Section>
+
+  <Section label="§5 · Permission" id="permission">
+    <div class="prose">
+      <h2 id="permission">Permission</h2>
+      <p>The model only <em>asks</em> for actions; Claude Code decides whether they happen, according to a <em>permission mode</em>. In manual mode it asks the person at the keyboard before most commands and file changes, and people can allow particular actions in advance. In auto mode, a second model screens each action and blocks risky ones instead of asking.</p>
+      <p>No person approved individual steps while this site was built. The session ran in auto mode, and the project's instructions give standing permission to publish once the checks pass. That makes the checks the safety net: every new page passes tests, screenshots and a reviewer before it goes live. Rules the model must follow, such as never printing the access token, are written in the project's own instruction file.</p>
+      <Callout tone="note" title="What the replay leaves out">The model's private reasoning before each action is not shown, only how many tokens each turn produced. The system instructions are left out too.</Callout>
+    </div>
+  </Section>
+
+  <Section label="§6 · Subagents" id="subagents">
+    <div class="prose">
+      <h2 id="subagents">Subagents</h2>
+      <p>Some jobs need fresh eyes, or would crowd the context with detail. For those, the model can start a <em>subagent</em>. A subagent is a separate agent with a fresh context of its own, holding its instructions, the task and the project's notes but none of the conversation. It does the job and sends back only its final report. By the snapshot, this session had started {stats.subagents.length} of them. {reviewers} were visual reviewers running on a faster, cheaper model, Claude Sonnet 5. {sameModel} ran on the same model as the main session: a number checker, a consistency reviewer and a fact-checker.</p>
+      <ol class="agents">
+        {stats.subagents.map((a) => <li><span class="agents__desc">{a.description}</span> <span class="label">{a.model === 'sonnet' ? 'Sonnet' : 'same model'}</span></li>)}
+      </ol>
+      <p>The main agent never sees a subagent's working, only its report. So it can ask for a thorough, adversarial review without paying for every screenshot the reviewer looked at in its own context.</p>
+    </div>
+  </Section>
+</LabPage>
+<style>
+  .intro { margin-bottom: var(--space-m); }
+  .charts { margin-top: var(--space-l); max-width: 50rem; }
+  .agents { padding-left: 1.4em; font-size: var(--step--1); }
+  .agents li { display: flex; justify-content: space-between; gap: 1rem; border-bottom: var(--hair) dashed var(--rule); padding-block: 0.2rem; }
+  .agents .label { flex: none; }
+</style>
