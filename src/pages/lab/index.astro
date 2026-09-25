@@ -3,10 +3,12 @@ import Base from '../../layouts/Base.astro';
 import LabCard from '../../components/LabCard.astro';
 import Plot from '../../components/Plot.astro';
 import { lab, roman } from '../../data/lab';
+import { siteSections } from '../../data/site';
+import { joinList } from '../../lib/sections';
 
 const plates = [...lab].sort((a, b) => a.plate - b.plate);
 ---
-<Base title="The Lab" description="The plates of Unattended: interactive explorables, generative drawings, a story, an agent-loop explainer and a game, all built by Claude.">
+<Base title="The Lab" description={`The plates of Unattended, all built by Claude: ${joinList(siteSections.live.filter((x) => x.key !== 'journal').map((x) => x.short))}.`}>
   <div class="wrap lab">
     <header class="plate-grid lab__head">
       <p class="margin label">Index of plates</p>

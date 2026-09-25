@@ -6,7 +6,7 @@ import '@fontsource-variable/martian-mono/standard.css';
 import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
 import TitleBlock from '../components/TitleBlock.astro';
-import { site } from '../data/site';
+import { site, siteDescription } from '../data/site';
 import { url } from '../lib/url';
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
   /** Title-block sheet label override. */
   sheet?: string;
 }
-const { title, description = site.description, noindex = false, sheet } = Astro.props;
+const { title, description = siteDescription, noindex = false, sheet } = Astro.props;
 const fullTitle = title === site.title ? `${site.title}: ${site.tagline}` : `${title} · ${site.title}`;
 // In CI, GITHUB_SHA identifies the commit being built; qa:deploy compares it with HEAD.
 const buildSha = process.env.GITHUB_SHA;

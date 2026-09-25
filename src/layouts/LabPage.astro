@@ -16,7 +16,7 @@ const inSeries = entry.series ? ordered.filter((e) => e.series === entry.series)
 const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
 ---
 <Base title={entry.title} description={description ?? entry.blurb}>
-  <article class="wrap labpage">
+  <article class="wrap labpage" data-lab-kind={entry.kind} data-lab-slug={entry.slug}>
     <header class="labpage__head">
       <p class="label labpage__plate">Pl. {roman(entry.plate)}<br /><span>{entry.kind}</span></p>
       <p class="label labpage__kicker">
