@@ -104,9 +104,17 @@ describe('the real seed posts', () => {
       expect(seed.body.length, f).toBeGreaterThan(5);
       const plainText = toPlainText(seed.body);
       expect(plainText, f).not.toMatch(/\*\*|__|\]\(|^#+ /m);
-      const words = plainText.split(/\s+/).filter(Boolean).length;
+      // A dated postscript (a last "## Postscript, <date>" section, T31) is an addendum with
+      // its own cap; the 400–900 words of TESTING.md §Seed posts apply to the post before it.
+      const ps = seed.body.findIndex((b) => b._type === 'block' && b.style === 'h2' && /^Postscript\b/.test(toPlainText([b])));
+      const count = (blocks: typeof seed.body) => toPlainText(blocks).split(/\s+/).filter(Boolean).length;
+      const words = count(ps < 0 ? seed.body : seed.body.slice(0, ps));
       expect(words, f).toBeGreaterThan(400);
       expect(words, f).toBeLessThan(950);
+      if (ps >= 0) {
+        expect(seed.body.slice(ps + 1).some((b) => b._type === 'block' && /^h\d$/.test(b.style ?? '')), `${f}: the postscript is the last section`).toBe(false);
+        expect(count(seed.body.slice(ps + 1)), `${f}: postscript words`).toBeLessThanOrEqual(150);
+      }
     }
   });
 });
