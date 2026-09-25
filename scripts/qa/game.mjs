@@ -323,7 +323,8 @@ const checks = {
     }
     await page.evaluate(() => window.__qa.release());
     for (let i = 1; i < counts.length; i++) expect(counts[i].hazards >= counts[i - 1].hazards, `the contaminant count fell at ${counts[i].t} s`);
-    const off = counts.filter((c) => c.hazards !== c.target);
+    // Before the grace period ends there are none; after it, exactly the target.
+    const off = counts.filter((c) => c.hazards !== (c.t < s.hazardGrace ? 0 : c.target));
     expect(!off.length, `contaminants ≠ hazardTarget at ${off.map((c) => `${c.t} s (${c.hazards}/${c.target})`).join(', ')}`);
     expect(counts.at(-1).hazards > counts[0].hazards, `the contaminant count did not rise (${counts[0].hazards} → ${counts.at(-1).hazards})`);
     const pick = (x) => ({ d: x.d, penSpeed: r2(x.penSpeed), drain: r2(x.drain), diatomTarget: x.diatomTarget, respawnDelay: r2(x.respawnDelay), hazardTarget: x.hazardTarget, hazardSpeed: r2(x.hazardSpeed), homing: r2(x.homing) });

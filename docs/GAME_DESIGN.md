@@ -59,7 +59,9 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
 
 - **Pen.** Its speed is set by the difficulty (170 → 250 u/s), and its turn rate is
   3.4 rad/s (a turning circle of about 50–74 u). At the rim it reflects, like a ball
-  off a cushion, and that costs 3 ink.
+  off a cushion, and that costs 3 ink, at most once every 0.5 s. An aim point outside
+  0.85 R is pulled in to that radius, so a resting pointer can't grind the pen along the
+  rim (playtest 1 found −48 ink in a third of a second).
 - **Wet ink (the trail).** One point per tick. The trail keeps only the newest
   **1,500 u** of line; older ink dries and fades away. So a loop has to close within
   1,500 u of line.
@@ -72,7 +74,8 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
     starts a fresh line.
   - The four newest segments are never tested, so a line can't cross itself at the pen.
 - **Diatoms.** They spawn at random points at least 180 u from the pen, drift at
-  15–45 u/s with a slow spin, and bounce off the rim. Four species:
+  10–30 u/s with a slow spin, and bounce off the rim. (They were 15–45 until playtest 1:
+  at that speed, clusters broke up during a 4–5 s lap.) Four species:
   | Species | Look | Points | Speed | Share |
   | --- | --- | --- | --- | --- |
   | *Coscinodiscus* (disc) | radial, round | 10 | slow | 55 % |
@@ -86,27 +89,30 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
     that costs 6 ink.
   - A contaminant *inside* a closed loop is removed for 25 points. It is risky but
     allowed.
-- **Ink.** A reservoir of 100. It drains all the time, at 2.5 → 7.5 per second as the
-  difficulty rises. Each captured diatom refills 12 (the star refills 25). **At 0 ink the
-  run ends.** A passive player runs dry in about 30 s, which bounds the random bot.
+- **Ink.** A run starts with 100, and catches can overfill the well to **120**. It
+  drains all the time, at 2.2 → 5.5 per second as the difficulty rises. **A loop
+  refills the way it scores: (the sum of its catches' ink) × n.** A diatom is worth 14
+  ink and the star 25, so one disc refills 14, two refill 56, and three fill the well.
+  Greed pays in ink as well as points. **At 0 ink the run ends.** A passive pen runs dry
+  in about 35 s, which bounds the random bot.
 - **Scoring.** A loop that captures n diatoms scores (sum of their points) × n. So one
-  disc is 10, and five discs are 250. Every 1,000 points is a "slide", a milestone
+  disc is 10, and five discs are 250. Every 500 points is a "slide", a milestone
   shown on the HUD. The personal best is stored in `localStorage` (`darkfield.best`).
 
 ## Difficulty curve
 
-One continuous value, **d(t) = 1 − e^(−t / 140 s)**. It is monotone: 0 at the start,
-0.5 after 97 s, 0.88 after 5 min. Every parameter is a monotone function of d:
+One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at the start,
+0.5 after 139 s, 0.78 after 5 min. Every parameter is a monotone function of d:
 
 | Parameter | d = 0 | d = 1 |
 | --- | --- | --- |
 | pen speed | 170 u/s | 250 u/s |
-| ink drain | 2.5 /s | 7.5 /s |
+| ink drain | 2.2 /s | 5.5 /s |
 | diatoms on the field (target) | 9 | 5 |
 | diatom respawn delay | 0.8 s | 1.8 s |
-| contaminants (target) | 1 | 6 (+1 at d = 0.15, 0.3, 0.45, 0.6, 0.75) |
+| contaminants (target) | 1 (from t = 12 s) | 6 (+1 at d = 0.3, 0.5, 0.65, 0.8, 0.9) |
 | contaminant speed | 45 u/s | 115 u/s |
-| contaminant homing | 0.15 rad/s | 0.6 rad/s |
+| contaminant homing | 0.1 rad/s | 0.6 rad/s |
 
 - The state exposes `d` and all derived parameters, so the harness can assert that they
   rise (or, for diatom supply, fall) monotonically.
@@ -124,20 +130,42 @@ One continuous value, **d(t) = 1 − e^(−t / 140 s)**. It is monotone: 0 at th
   and 9 → 5 diatoms, the same bot lasts a median 47–51 s (max 69 s), and a passive pen
   about 30 s. The bot catches about one diatom per loop; a player who makes multi-catches
   should do much better. T13's playtest judges it.
+- **T13, playtest 1 retune.** The playtest found the game 2–3× too harsh. Every persona
+  died at 25–85 s with d below 0.5, so the greed game and the scramble never happened.
+  Greed barely paid, since every strategy had a median death of 54–61 s. The playtester's
+  skilled bot, run on a bundle of the real sim, confirmed a 60.9 s median. The package,
+  all of it at once (each change alone added only 4–13 s):
+  - drain 2.2 → 5.5;
+  - τ 200 s;
+  - refill 14 × n per catch, with a 120 cap;
+  - contaminant steps at d = 0.3–0.9, the first at 12 s, and starting homing 0.1;
+  - diatom drift ×0.65;
+  - a rim cooldown and an aim clamp.
+  Result over 40 seeds: the skilled bot's median went from 61 s to 164 s (90th
+  percentile 215 s, best 240 s, median score 1,010). The naive "point at the nearest
+  diatom" bot went from 42 s to 79 s. That puts a new player at 1–2 minutes and a
+  practised player towards the intended 4–6.
 
 ## Juice (feedback)
 
 - **Capture:** the loop polygon fills with a hatched vermilion wash and fades out over
-  400 ms. Captured diatoms flash white, then fly to the catalogue counter, and a
-  "+score ×n" label rises from the loop. The chime pitch climbs with n.
-- **Ink:** the pen's line is brightest at the nib and dims along the trail. The ink gauge
-  pulses and ticks when it drops below 20.
+  400 ms. Captured diatoms flash white, then fly to the catalogue counter, and a label
+  rises from the loop that spells out the multiplier ("40 × 3 = +120"). The chime pitch
+  climbs with n. A loop that catches nothing gets a grey dashed outline and the word
+  "empty", so it can't pass for a catch.
+- **Ink:** the pen's line is brightest at the nib and dims along the trail. The ink also
+  shows on the field, where the eyes are: an arc round the field stop from twelve
+  o'clock. The arc and the HUD gauge pulse, and a tick sounds, below 20. A rim hit floats
+  a vermilion "−3" in from the rim and flashes the HUD gauge.
 - **Snap:** the trail shatters into fragments (particles), with a dry crack sound.
 - **Game over:** an ink-blot bloom from the pen, then the result card, which shows the
   score, time, catches and best loop. A contaminant hit adds a 250 ms screen shake; running
   dry doesn't, because nothing hit anything.
-- **Slides:** every 1,000 points a "Slide II" banner crosses the field, and the HUD
-  counts slides.
+- **Slides:** every 500 points a large "Slide II" banner crosses the top of the field
+  for 2.5 s, and the HUD counts slides.
+- **Attract mode:** behind the title card, an autopilot pen (`autopilot.ts`, tested)
+  flies a field of its own and closes loops around clusters, washes and all. It shows
+  the verb before the rules ask for it, and stands still under reduced motion.
 - **Reduced motion** (`prefers-reduced-motion`): no shake, no particles, no flying
   diatoms, and fades become instant state changes. The game itself still moves (it is a
   game), but nothing moves that isn't gameplay.

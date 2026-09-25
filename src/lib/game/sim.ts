@@ -11,27 +11,30 @@ export const TURN = 3.4;         // rad/s
 export const MAX_TRAIL = 1500;   // u of wet ink
 export const MIN_LOOP_AREA = 1500;
 export const PEN_R = 5;
+export const MAX_INK = 120;      // a run starts at 100; catches can overfill to this
 const SKIP_NEWEST = 4;           // segments next to the nib are never tested for crossings
 const RIM_COST = 3, SNAP_COST = 6;
-const HAZARD_GRACE = 4;          // s before the first contaminant
+const RIM_COOLDOWN = 0.5;        // s: the rim charges at most this often
+const AIM_REACH = 0.85 * 500;    // an aim point outside this radius is pulled in to it
+export const HAZARD_GRACE = 12;  // s before the first contaminant
 const HAZARD_POINTS = 25;
 
 export type Mode = 'title' | 'play' | 'paused' | 'over';
 export type Species = 'disc' | 'boat' | 'triangle' | 'star';
 export const SPECIES: Record<Species, { points: number; ink: number; speed: [number, number]; r: number; share: number; ttl?: number }> = {
-  disc: { points: 10, ink: 12, speed: [15, 25], r: 14, share: 0.55 },
-  boat: { points: 20, ink: 12, speed: [22, 34], r: 15, share: 0.28 },
-  triangle: { points: 40, ink: 12, speed: [30, 42], r: 14, share: 0.13 },
-  star: { points: 100, ink: 25, speed: [36, 45], r: 16, share: 0.04, ttl: 8 },
+  disc: { points: 10, ink: 14, speed: [10, 16], r: 14, share: 0.55 },
+  boat: { points: 20, ink: 14, speed: [14, 22], r: 15, share: 0.28 },
+  triangle: { points: 40, ink: 14, speed: [20, 27], r: 14, share: 0.13 },
+  star: { points: 100, ink: 25, speed: [23, 29], r: 16, share: 0.04, ttl: 8 },
 };
 
 export interface Input { left: boolean; right: boolean; /** world point to steer towards (pointer) */ aim: Vec | null }
 export interface Diatom { id: number; kind: Species; x: number; y: number; vx: number; vy: number; rot: number; spin: number; r: number; age: number }
 export interface Hazard { id: number; x: number; y: number; vx: number; vy: number; heading: number; r: number; phase: number }
 export type GameEvent =
-  | { type: 'loop'; poly: Vec[]; caught: { kind: Species; x: number; y: number }[]; hazards: number; points: number; multiplier: number }
+  | { type: 'loop'; poly: Vec[]; caught: { kind: Species; x: number; y: number }[]; hazards: number; points: number; base: number; multiplier: number; refill: number }
   | { type: 'snap'; trail: Vec[] }
-  | { type: 'rim'; x: number; y: number }
+  | { type: 'rim'; x: number; y: number; cost: number }
   | { type: 'over'; reason: 'ink' | 'contact'; best: boolean }
   | { type: 'lowInk' };
 
@@ -43,6 +46,8 @@ export interface Game {
   trail: Vec[]; trailLen: number;
   diatoms: Diatom[]; hazards: Hazard[];
   respawnTimer: number; nextId: number;
+  /** Time (s) of the last charged rim hit. */
+  rimAt: number;
   stats: { loops: number; captured: number; snaps: number; rimHits: number; runs: number; bestLoop: { points: number; n: number } };
   events: GameEvent[];
   /** Test switches: freeze contaminant motion, or keep them from spawning. */
@@ -55,7 +60,7 @@ export function createGame(seed: string, opts: { spawn?: boolean; best?: number 
     mode: 'title', tick: 0, t: 0, d: 0, params: paramsAt(0),
     score: 0, best: opts.best ?? 0, ink: 100, overReason: null,
     pen: { x: 0, y: 0, heading: -Math.PI / 2 }, trail: [], trailLen: 0,
-    diatoms: [], hazards: [], respawnTimer: 0, nextId: 1,
+    diatoms: [], hazards: [], respawnTimer: 0, nextId: 1, rimAt: -Infinity,
     stats: { loops: 0, captured: 0, snaps: 0, rimHits: 0, runs: 0, bestLoop: { points: 0, n: 0 } }, events: [],
   };
 }
@@ -64,7 +69,7 @@ export function createGame(seed: string, opts: { spawn?: boolean; best?: number 
 export function start(g: Game): void {
   Object.assign(g, {
     mode: 'play', tick: 0, t: 0, d: 0, params: paramsAt(0), score: 0, ink: 100, overReason: null,
-    pen: { x: 0, y: 150, heading: -Math.PI / 2 }, diatoms: [], hazards: [], respawnTimer: 0, events: [],
+    pen: { x: 0, y: 150, heading: -Math.PI / 2 }, diatoms: [], hazards: [], respawnTimer: 0, events: [], rimAt: -Infinity,
     frozenHazards: false, noHazards: false,
   });
   g.trail = [{ x: g.pen.x, y: g.pen.y }];
@@ -145,7 +150,12 @@ export function step(g: Game, input: Input): void {
   // Steering: keys turn at the full rate; an aim point turns towards it, never overshooting.
   const pen = g.pen;
   let turn = 0;
-  if (input.aim) turn = Math.max(-TURN * DT, Math.min(TURN * DT, wrapAngle(Math.atan2(input.aim.y - pen.y, input.aim.x - pen.x) - pen.heading)));
+  if (input.aim) {
+    // A pointer resting outside the field would steer the pen into the rim again and again.
+    const m = Math.hypot(input.aim.x, input.aim.y), k = m > AIM_REACH ? AIM_REACH / m : 1;
+    const ax = input.aim.x * k, ay = input.aim.y * k;
+    turn = Math.max(-TURN * DT, Math.min(TURN * DT, wrapAngle(Math.atan2(ay - pen.y, ax - pen.x) - pen.heading)));
+  }
   else turn = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * TURN * DT;
   pen.heading = wrapAngle(pen.heading + turn);
 
@@ -153,9 +163,12 @@ export function step(g: Game, input: Input): void {
   const body = { x: pen.x + p.penSpeed * DT * Math.cos(pen.heading), y: pen.y + p.penSpeed * DT * Math.sin(pen.heading), vx: Math.cos(pen.heading), vy: Math.sin(pen.heading) };
   if (bounce(body, PEN_R)) {
     pen.heading = Math.atan2(body.vy, body.vx);
-    g.ink -= RIM_COST;
-    g.stats.rimHits++;
-    g.events.push({ type: 'rim', x: body.x, y: body.y });
+    if (g.t - g.rimAt >= RIM_COOLDOWN) {
+      g.rimAt = g.t;
+      g.ink -= RIM_COST;
+      g.stats.rimHits++;
+      g.events.push({ type: 'rim', x: body.x, y: body.y, cost: RIM_COST });
+    }
   }
   pen.x = body.x; pen.y = body.y;
 
@@ -237,12 +250,14 @@ function closeLoop(g: Game, poly: Vec[]): void {
   g.hazards = g.hazards.filter((h) => !zapped.includes(h));
   const points = loopScore(caught.map((dm) => SPECIES[dm.kind].points)) + zapped.length * HAZARD_POINTS;
   g.score += points;
-  const refill = caught.reduce((s, dm) => s + SPECIES[dm.kind].ink, 0);
-  g.ink = Math.max(g.ink, Math.min(100, g.ink + refill)); // a refill never lowers the ink
+  // Ink refills the way points score: the catch's ink times the number caught.
+  const refill = caught.reduce((s, dm) => s + SPECIES[dm.kind].ink, 0) * caught.length;
+  g.ink = Math.max(g.ink, Math.min(MAX_INK, g.ink + refill)); // a refill never lowers the ink
   g.stats.loops++;
   g.stats.captured += caught.length;
   if (points > g.stats.bestLoop.points) g.stats.bestLoop = { points, n: caught.length };
-  g.events.push({ type: 'loop', poly, caught: caught.map((dm) => ({ kind: dm.kind, x: dm.x, y: dm.y })), hazards: zapped.length, points, multiplier: caught.length });
+  const base = caught.reduce((s, dm) => s + SPECIES[dm.kind].points, 0);
+  g.events.push({ type: 'loop', poly, caught: caught.map((dm) => ({ kind: dm.kind, x: dm.x, y: dm.y })), hazards: zapped.length, points, base, multiplier: caught.length, refill });
   clearTrail(g);
 }
 
@@ -250,7 +265,7 @@ function closeLoop(g: Game, poly: Vec[]): void {
 export function snapshot(g: Game) {
   return {
     seed: g.seed, mode: g.mode, tick: g.tick, t: +g.t.toFixed(3), d: +g.d.toFixed(4), params: g.params,
-    score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason,
+    score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason, hazardGrace: HAZARD_GRACE,
     pen: { x: +g.pen.x.toFixed(2), y: +g.pen.y.toFixed(2), heading: +g.pen.heading.toFixed(4) },
     trailLen: +g.trailLen.toFixed(2), trailPoints: g.trail.length,
     diatoms: g.diatoms.length, hazards: g.hazards.length, stats: { ...g.stats, bestLoop: { ...g.stats.bestLoop } },

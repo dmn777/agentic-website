@@ -4,7 +4,7 @@
 // game-over blot, slide banners) are driven by the events a tick emits. Under reduced
 // motion nothing moves that isn't gameplay: no shake, particles or flights, and fades
 // become plain on/off states.
-import { R, SPECIES, type Game, type GameEvent, type Species } from './sim';
+import { R, SPECIES, MAX_INK, type Game, type GameEvent, type Species } from './sim';
 import type { Vec } from './geometry';
 import { mulberry32 } from '../random';
 
@@ -19,12 +19,12 @@ const MONO = '"Martian Mono Variable", ui-monospace, monospace';
 const DISPLAY = '"Imbue Variable", Georgia, serif';
 
 type Effect =
-  | { kind: 'wash'; born: number; poly: Vec[]; text: string }
+  | { kind: 'wash'; born: number; poly: Vec[]; text: string; empty: boolean }
   | { kind: 'catch'; born: number; x: number; y: number; sp: Species; delay: number }
   | { kind: 'snap'; born: number; pts: { x: number; y: number; vx: number; vy: number; a: number }[] }
-  | { kind: 'rim'; born: number; x: number; y: number }
+  | { kind: 'rim'; born: number; x: number; y: number; text: string }
   | { kind: 'banner'; born: number; text: string };
-const LIFE: Record<Effect['kind'], number> = { wash: 650, catch: 750, snap: 500, rim: 260, banner: 1500 };
+const LIFE: Record<Effect['kind'], number> = { wash: 650, catch: 750, snap: 500, rim: 700, banner: 2500 };
 
 export interface Renderer {
   resize(cssSize: number, dpr: number): void;
@@ -35,8 +35,9 @@ export interface Renderer {
   milestone(slide: number, now: number): void;
   /** Clear effects and the game-over blot (a new run or a new seed). */
   reset(): void;
-  /** `hidePen` draws the field without the pen and its ink (the title screen's attract mode). */
-  draw(g: Game, now: number, o?: { hidePen?: boolean }): void;
+  /** `hidePen` draws the field without the pen and its ink; `attract` (the title screen's
+   *  demo) keeps the pen but leaves out the ink gauge. */
+  draw(g: Game, now: number, o?: { hidePen?: boolean; attract?: boolean }): void;
 }
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
@@ -165,13 +166,16 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     const still = opts.reducedMotion();
     for (const e of evts) {
       if (e.type === 'loop') {
-        effects.push({ kind: 'wash', born: now, poly: e.poly, text: e.points ? `+${e.points}${e.multiplier > 1 ? ` ×${e.multiplier}` : ''}` : '' });
+        const empty = e.points === 0;
+        // "40 × 3 = +120" says how the multiplier works; an empty loop says so, plainly.
+        const text = empty ? 'empty' : e.multiplier > 1 && !e.hazards ? `${e.base} × ${e.multiplier} = +${e.points}` : `+${e.points}`;
+        effects.push({ kind: 'wash', born: now, poly: e.poly, text, empty });
         if (!still) e.caught.forEach((c, i) => effects.push({ kind: 'catch', born: now, x: c.x, y: c.y, sp: c.kind, delay: i * 40 }));
       } else if (e.type === 'snap' && !still) {
         const pts = e.trail.filter((_, i) => i % 5 === 0).map((p) => ({ x: p.x, y: p.y, vx: (Math.random() - 0.5) * 70, vy: (Math.random() - 0.5) * 70, a: Math.random() * Math.PI }));
         effects.push({ kind: 'snap', born: now, pts });
-      } else if (e.type === 'rim' && !still) {
-        effects.push({ kind: 'rim', born: now, x: e.x, y: e.y });
+      } else if (e.type === 'rim') {
+        effects.push({ kind: 'rim', born: now, x: e.x, y: e.y, text: `−${e.cost}` });
       } else if (e.type === 'over') {
         if (e.reason === 'contact' && !still) shakeUntil = now + 250;
       }
@@ -182,7 +186,7 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
   }
   function reset() { effects = []; blot = null; shakeUntil = 0; }
 
-  function draw(g: Game, now: number, o: { hidePen?: boolean } = {}) {
+  function draw(g: Game, now: number, o: { hidePen?: boolean; attract?: boolean } = {}) {
     const still = opts.reducedMotion();
     const W = canvas.width;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -220,7 +224,14 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
     effects = effects.filter((e) => now - e.born < LIFE[e.kind] + (e.kind === 'catch' ? e.delay : 0));
     for (const e of effects) {
       const age = Math.max(0, (now - e.born - (e.kind === 'catch' ? e.delay : 0)) / LIFE[e.kind]);
-      if (e.kind === 'wash') {
+      if (e.kind === 'wash' && e.empty) {
+        // Nothing caught: a grey outline, no hatch, so it can't pass for a catch.
+        ctx.save();
+        ctx.globalAlpha = still ? 0.45 : 0.55 * (1 - age);
+        ctx.strokeStyle = COLORS.glass; ctx.lineWidth = px(1.25); ctx.setLineDash([px(4), px(4)]);
+        tracePoly(ctx, e.poly); ctx.stroke();
+        ctx.restore();
+      } else if (e.kind === 'wash') {
         ctx.save();
         tracePoly(ctx, e.poly);
         ctx.clip();
@@ -249,9 +260,17 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
         ctx.stroke();
         ctx.restore();
       } else if (e.kind === 'rim') {
+        // The rim costs ink: a spark where it hit, and the cost drifting inwards.
         ctx.save();
-        ctx.strokeStyle = COLORS.glass; ctx.globalAlpha = 0.8 * (1 - age); ctx.lineWidth = px(1.5);
-        ctx.beginPath(); ctx.arc(e.x, e.y, px(4 + 14 * age), 0, Math.PI * 2); ctx.stroke();
+        if (!still && age < 0.4) {
+          ctx.strokeStyle = COLORS.glass; ctx.globalAlpha = 0.8 * (1 - age / 0.4); ctx.lineWidth = px(1.5);
+          ctx.beginPath(); ctx.arc(e.x, e.y, px(4 + 14 * age), 0, Math.PI * 2); ctx.stroke();
+        }
+        const m = Math.hypot(e.x, e.y) || 1, inward = px(22) + (still ? 0 : age * px(16));
+        ctx.globalAlpha = still ? 1 : 1 - age * age;
+        ctx.font = `600 ${px(13)}px ${MONO}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillText(e.text, e.x - (e.x / m) * inward, e.y - (e.y / m) * inward);
         ctx.restore();
       }
     }
@@ -285,6 +304,21 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       ctx.strokeStyle = COLORS.glass; ctx.lineWidth = px(1.5);
       const tip = Math.max(16, px(11));
       ctx.beginPath(); ctx.moveTo(g.pen.x, g.pen.y); ctx.lineTo(g.pen.x + tip * Math.cos(g.pen.heading), g.pen.y + tip * Math.sin(g.pen.heading)); ctx.stroke();
+    }
+
+    // The ink, where the eyes are: an arc round the field stop, from twelve o'clock. It
+    // pulses once the well runs low.
+    if (!o.hidePen && !o.attract && g.mode !== 'title') {
+      const f = Math.max(0, Math.min(1, g.ink / MAX_INK)), rr = R - px(5);
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.lineWidth = px(2.5);
+      ctx.strokeStyle = COLORS.ink; ctx.globalAlpha = 0.1;
+      ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.stroke();
+      // Quiet while the well is healthy, loud when it isn't.
+      const low = g.ink < 20 && g.mode === 'play';
+      ctx.globalAlpha = low && !still ? 0.55 + 0.45 * Math.sin(now / 90) : low ? 1 : 0.2 + 0.25 * (1 - f);
+      if (f > 0) { ctx.beginPath(); ctx.arc(0, 0, rr, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.stroke(); }
+      ctx.restore();
     }
 
     // Catches flash, then fly to the catalogue corner (top left, towards the score).
@@ -326,8 +360,8 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
         ctx.restore();
       } else if (e.kind === 'banner') {
         ctx.save();
-        ctx.globalAlpha = still ? 1 : Math.min(1, age * 6, (1 - age) * 3);
-        ctx.font = `${px(30)}px ${DISPLAY}`;
+        ctx.globalAlpha = still ? 1 : Math.min(1, age * 8, (1 - age) * 4);
+        ctx.font = `${px(44)}px ${DISPLAY}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = px(6); ctx.strokeStyle = COLORS.slide; ctx.lineJoin = 'round';
         ctx.strokeText(e.text, 0, -R * 0.55);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, start, step, togglePause, snapshot, R, DT, TURN, MAX_TRAIL, SPECIES, type Game, type Input } from './sim';
+import { createGame, start, step, togglePause, snapshot, R, DT, TURN, MAX_TRAIL, MAX_INK, SPECIES, type Game, type Input } from './sim';
 
 const idle: Input = { left: false, right: false, aim: null };
 const left: Input = { left: true, right: false, aim: null };
@@ -118,6 +118,25 @@ describe('the pen', () => {
     expect(Math.hypot(g.pen.x, g.pen.y)).toBeLessThanOrEqual(R);
     expect(g.stats.rimHits).toBeGreaterThan(0);
   });
+  it('charges the rim at most once per half second, however often the pen touches it', () => {
+    const g = quiet();
+    g.ink = 100;
+    let touches = 0;
+    for (let i = 0; i < 60; i++) { // one second of the pen shoved against the rim every tick
+      g.pen.x = 0; g.pen.y = -(R - 6); g.pen.heading = -Math.PI / 2;
+      step(g, idle);
+      touches++;
+    }
+    expect(touches).toBe(60);
+    expect(g.stats.rimHits).toBeLessThanOrEqual(2);
+    expect(100 - g.ink).toBeLessThan(2 * 3 + g.params.drain + 0.01);
+  });
+  it('steers towards the field when the pointer is outside it, so a resting pointer does not grind the rim', () => {
+    const g = quiet();
+    g.ink = 1e9;
+    run(g, 60 * 15, { left: false, right: false, aim: { x: 2000, y: -2000 } });
+    expect(g.stats.rimHits).toBeLessThanOrEqual(2);
+  });
   it('keeps at most MAX_TRAIL of wet ink', () => {
     const g = quiet();
     g.ink = 1e9;
@@ -147,7 +166,7 @@ describe('loops', () => {
       step(h, { left: i >= 30 && i < 30 + turnTicks, right: false, aim: null });
       jump = h.ink - before;
     }
-    expect(jump).toBeCloseTo(12 - h.params.drain * DT, 5);
+    expect(jump).toBeCloseTo(14 - h.params.drain * DT, 5);
     expect(h.trailLen).toBe(0); // the loop used up the whole wet line
   });
   it('multiplies: three diatoms in one loop score (10+10+10)×3', () => {
@@ -157,6 +176,23 @@ describe('loops', () => {
     c.drive();
     expect(g.score).toBe(90);
     expect(g.stats.bestLoop).toEqual({ points: 90, n: 3 });
+  });
+  it('refills like it scores: the catch\'s ink times the number caught, up to the cap', () => {
+    for (const [n, from, want] of [[1, 20, 34], [2, 20, 76], [3, 20, MAX_INK]] as const) {
+      const g = quiet();
+      const c = teardrop(g);
+      g.diatoms = [diatom(c.x, c.y), diatom(c.x + 12, c.y), diatom(c.x, c.y + 12)].slice(0, n);
+      const turnTicks = Math.round((1.5 * Math.PI) / (TURN * DT));
+      let after = 0;
+      for (let i = 0; i < 30 + turnTicks + 40 && g.stats.captured === 0; i++) {
+        g.ink = from; // hold the well steady until the capture tick
+        step(g, { left: i >= 30 && i < 30 + turnTicks, right: false, aim: null });
+        after = g.ink;
+      }
+      expect(g.stats.captured).toBe(n);
+      expect(after + g.params.drain * DT).toBeCloseTo(want, 5);
+    }
+    expect(MAX_INK).toBe(120);
   });
   it('leaves diatoms outside the loop alone', () => {
     const g = quiet();
@@ -202,7 +238,7 @@ describe('contaminants', () => {
 });
 
 describe('the ink economy and difficulty', () => {
-  it('runs dry for a passive player in about 30 s (between 25 and 40)', () => {
+  it('runs dry for a passive player in about 35 s (between 25 and 45)', () => {
     const g = createGame('passive');
     start(g);
     g.hazards = []; g.frozenHazards = true; g.noHazards = true;
@@ -210,7 +246,7 @@ describe('the ink economy and difficulty', () => {
     while (g.mode === 'play' && t < 60 * 60) { step(g, idle); t++; }
     expect(g.mode).toBe('over');
     expect(g.overReason).toBe('ink');
-    expect(t / 60).toBeLessThan(40);
+    expect(t / 60).toBeLessThan(45);
     expect(t / 60).toBeGreaterThan(25);
   });
   it('raises difficulty and its parameters over a long run', () => {
@@ -223,15 +259,15 @@ describe('the ink economy and difficulty', () => {
       expect(seen[i].speed).toBeGreaterThanOrEqual(seen[i - 1].speed);
       expect(seen[i].drain).toBeGreaterThanOrEqual(seen[i - 1].drain);
     }
-    expect(seen.at(-1)!.d).toBeGreaterThan(0.8);
+    expect(seen.at(-1)!.d).toBeGreaterThan(0.65); // 1 − e^(−240/200) ≈ 0.70
   });
   it('spawns contaminants after a short grace period, more of them later', () => {
     const g = createGame('spawns');
     start(g);
     g.ink = 1e9;
-    run(g, 60 * 3);
+    run(g, 60 * 11);
     expect(g.hazards.length).toBe(0);
-    run(g, 60 * 6, (i) => ({ left: i % 100 < 25, right: false, aim: null }));
+    run(g, 60 * 4, (i) => ({ left: i % 100 < 25, right: false, aim: null }));
     if (g.mode === 'play') expect(g.hazards.length).toBeGreaterThanOrEqual(1);
   });
   it('keeps restocking diatoms up to the target', () => {
@@ -245,6 +281,12 @@ describe('the ink economy and difficulty', () => {
 });
 
 describe('species', () => {
+  it('drift slowly enough (10–30 u/s) that a cluster survives a lap', () => {
+    for (const k of Object.keys(SPECIES) as (keyof typeof SPECIES)[]) {
+      expect(SPECIES[k].speed[0]).toBeGreaterThanOrEqual(10);
+      expect(SPECIES[k].speed[1]).toBeLessThanOrEqual(30);
+    }
+  });
   it('spawns all four species in roughly their shares', () => {
     const g = createGame('species');
     const counts: Record<string, number> = { disc: 0, boat: 0, triangle: 0, star: 0 };
@@ -284,6 +326,7 @@ describe('snapshot', () => {
     expect(s.diatomList.length).toBe(g.diatoms.length);
     expect(s.diatomList[0]).toEqual({ x: +g.diatoms[0].x.toFixed(1), y: +g.diatoms[0].y.toFixed(1), kind: g.diatoms[0].kind });
     expect(s.hazardList).toEqual([{ x: 12.3, y: -6.8 }]);
+    expect(s.hazardGrace).toBe(12);
     expect(JSON.parse(JSON.stringify(s))).toEqual(s);
   });
 });

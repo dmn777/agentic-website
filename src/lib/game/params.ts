@@ -11,22 +11,22 @@ export interface Params {
   homing: number;        // rad/s a contaminant turns towards the pen
 }
 
-const TAU = 140; // s
-const HAZARD_STEPS = [0.15, 0.3, 0.45, 0.6, 0.75];
+const TAU = 200; // s
+const HAZARD_STEPS = [0.3, 0.5, 0.65, 0.8, 0.9];
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-/** d(t) = 1 − e^(−t/140): 0 at the start, ½ after ~97 s, ~0.88 after 5 min. */
+/** d(t) = 1 − e^(−t/200): 0 at the start, ½ after ~139 s, ~0.78 after 5 min. */
 export const difficulty = (t: number) => 1 - Math.exp(-Math.max(0, t) / TAU);
 
 export function paramsAt(d: number): Params {
   return {
     penSpeed: lerp(170, 250, d),
-    drain: lerp(2.5, 7.5, d),
+    drain: lerp(2.2, 5.5, d),
     diatomTarget: Math.round(lerp(9, 5, d)),
     respawnDelay: lerp(0.8, 1.8, d),
     hazardTarget: 1 + HAZARD_STEPS.filter((s) => d >= s).length,
     hazardSpeed: lerp(45, 115, d),
-    homing: lerp(0.15, 0.6, d),
+    homing: lerp(0.1, 0.6, d),
   };
 }
 

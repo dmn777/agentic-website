@@ -4,23 +4,28 @@
   // sound and the screens. With ?test=1 the real-time loop is off and window.__game drives
   // it (contract: GAME_DESIGN.md §Test hook; harness: scripts/qa/game.mjs).
   import { onMount } from 'svelte';
-  import { createGame, start, step, togglePause, snapshot, DT, type Game, type Input } from '../../lib/game/sim';
+  import { createGame, start, step, togglePause, snapshot, DT, MAX_INK, type Game, type Input } from '../../lib/game/sim';
   import { createRenderer, type Renderer } from '../../lib/game/render';
   import { createSound, type Sound } from '../../lib/game/audio';
+  import { createAutopilot } from '../../lib/game/autopilot';
   import { usable } from '../../lib/measure';
   import { prefersReducedMotion } from '../../scripts/theme';
 
   const BEST_KEY = 'darkfield.best';
-  const SLIDE = 1000;
+  const SLIDE = 500;
   let wRaw = $state(640);
   const size = $derived(Math.min(680, usable(wRaw, 640, 240)));
 
   let canvas: HTMLCanvasElement;
   let root: HTMLDivElement;
   let game: Game | null = null;
-  // The title screen's attract mode: a field of its own, drifting behind the card, with the
-  // pen hidden. It never touches the real game, and it stands still under reduced motion.
+  // The title screen's attract mode: a field of its own behind the card, where an autopilot
+  // pen shows the verb (loops, catches). It never touches the real game, and it stands
+  // still under reduced motion.
   let demo: Game | null = null;
+  const pilot = createAutopilot();
+  let inkHit = $state(false);
+  let inkHitTimer = 0;
   let renderer: Renderer | null = null;
   let sound: Sound | null = null;
   let mode = $state<'title' | 'play' | 'paused' | 'over'>('title');
@@ -66,6 +71,7 @@
     for (const e of game.events) {
       if (e.type === 'loop' && e.caught.length) sound?.chime(e.caught.length);
       else if (e.type === 'snap') sound?.snap();
+      else if (e.type === 'rim') { inkHit = true; clearTimeout(inkHitTimer); inkHitTimer = window.setTimeout(() => (inkHit = false), 350); }
       else if (e.type === 'over') { newBest = e.best; if (e.best) saveBest(game.best); sound?.over(); }
     }
   }
@@ -120,7 +126,7 @@
     Object.assign(demo, { ink: Infinity, noHazards: true });
     sync();
     const paint = (now: number) => {
-      if (game!.mode === 'title') renderer!.draw(demo!, now, { hidePen: true });
+      if (game!.mode === 'title') renderer!.draw(demo!, now, { attract: true });
       else renderer!.draw(game!, now);
     };
 
@@ -130,7 +136,10 @@
       acc = Math.min(acc + (now - last) / 1000, 0.25); // never spiral after a stall
       last = now;
       while (acc >= DT) {
-        if (game!.mode === 'title' && !prefersReducedMotion()) step(demo!, { left: false, right: false, aim: null });
+        if (game!.mode === 'title' && !prefersReducedMotion()) {
+          step(demo!, pilot(demo!));
+          if (demo!.events.length) renderer!.events(demo!.events.filter((e) => e.type === 'loop'), now);
+        }
         tick(now);
         acc -= DT;
       }
@@ -182,7 +191,7 @@
     const s = size;
     if (renderer && game && demo) {
       renderer.resize(s, Math.min(2, window.devicePixelRatio || 1));
-      if (game.mode === 'title') renderer.draw(demo, performance.now(), { hidePen: true });
+      if (game.mode === 'title') renderer.draw(demo, performance.now(), { attract: true });
       else renderer.draw(game, performance.now());
     }
   });
@@ -201,9 +210,9 @@
       <div><dt>Score</dt><dd data-score>{score}</dd></div>
       <div class="hud__slide"><dt>Slide</dt><dd>{slide}</dd></div>
       <div><dt>Best</dt><dd>{best}</dd></div>
-      <div class="hud__ink" class:low={inkLow}>
+      <div class="hud__ink" class:low={inkLow} class:hit={inkHit}>
         <dt>Ink</dt>
-        <dd><span class="gauge" role="meter" aria-label="Ink" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(Math.min(100, ink))}><span style:width="{Math.max(0, Math.min(100, ink))}%"></span></span></dd>
+        <dd><span class="gauge" role="meter" aria-label="Ink" aria-valuemin="0" aria-valuemax={MAX_INK} aria-valuenow={Math.round(Math.min(MAX_INK, ink))}><span style:width="{(Math.max(0, Math.min(MAX_INK, ink)) / MAX_INK) * 100}%"></span></span></dd>
       </div>
     </dl>
     <div class="hud__buttons">
@@ -239,10 +248,10 @@
       <div class="card card--title" data-screen="title">
         <ol class="card__rules card__rules--full">
           <li>Your pen never stops. Steer it with <kbd aria-label="left arrow">◀</kbd> <kbd aria-label="right arrow">▶</kbd>, or point where it should go.</li>
-          <li>Close your line into a loop around diatoms to catch them. Catch several at once and they multiply.</li>
-          <li>Catching refills your ink. Keep your pen and your line clear of the amber contaminants.</li>
+          <li>When your line crosses itself, the loop closes and catches every diatom inside. Catch several at once and they multiply, in points and in ink.</li>
+          <li>Your ink drains all the time, and the rim costs a little. Keep your pen and your line clear of the amber contaminants.</li>
         </ol>
-        <p class="card__rules--short">Loop your ink around diatoms to catch them, and keep clear of the amber ones. Hold a finger where the pen should go, or use ◀ ▶.</p>
+        <p class="card__rules--short">Loop your ink around diatoms to catch them: the more in one loop, the more points and ink. Avoid the amber contaminants. Hold a finger where the pen should go, or use ◀ ▶.</p>
         <button class="btn btn--primary" type="button" data-action="start" onclick={begin}>Start</button>
       </div>
     {:else if mode === 'paused'}
@@ -291,7 +300,8 @@
   .gauge { display: block; width: 7rem; height: 0.6rem; margin-top: 0.35rem; border: var(--hair) solid var(--rule-strong); background: var(--paper-sunk); }
   .gauge span { display: block; height: 100%; background: var(--accent); }
   .hud__ink.low dt { color: var(--accent-ink); }
-  .hud__ink.low .gauge { border-color: var(--accent-ink); }
+  .hud__ink.low .gauge, .hud__ink.hit .gauge { border-color: var(--accent-ink); }
+  .hud__ink.hit .gauge span { background: var(--accent-ink); }
   @media (prefers-reduced-motion: no-preference) {
     .hud__ink.low .gauge { animation: low 0.6s ease-in-out infinite alternate; }
   }
