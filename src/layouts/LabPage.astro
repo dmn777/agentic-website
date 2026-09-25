@@ -3,7 +3,7 @@
 // the page body, and a pager to the neighbouring plates. Metadata comes from src/data/lab.ts.
 import Base from './Base.astro';
 import Plot from '../components/Plot.astro';
-import { lab, labEntry, roman } from '../data/lab';
+import { lab, labEntry, roman, seriesById, platesIn } from '../data/lab';
 import { url } from '../lib/url';
 
 interface Props { slug: string; lede: string; description?: string }
@@ -12,7 +12,8 @@ const entry = labEntry(slug);
 const ordered = [...lab].sort((a, b) => a.plate - b.plate);
 const i = ordered.findIndex((e) => e.slug === slug);
 const prev = ordered[i - 1], next = ordered[i + 1];
-const inSeries = entry.series ? ordered.filter((e) => e.series === entry.series) : [];
+const ser = seriesById(entry.series);
+const inSeries = ser ? platesIn(ser.id) : [];
 const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
 ---
 <Base title={entry.title} description={description ?? entry.blurb}>
@@ -20,9 +21,9 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
     <header class="labpage__head">
       <p class="label labpage__plate">Pl. {roman(entry.plate)}<br /><span>{entry.kind}</span></p>
       <p class="label labpage__kicker">
-        <span class="labpage__kicker-plate">Pl. {roman(entry.plate)} · {entry.kind}</span>{entry.series && <span class="labpage__kicker-series"> · {entry.series} {seriesPos}/{inSeries.length}</span>}
+        <span class="labpage__kicker-plate">Pl. {roman(entry.plate)} · {entry.kind}</span>{ser && <span class="labpage__kicker-series"> · <a href={url(ser.href)}>{ser.title}</a> {seriesPos}/{inSeries.length}</span>}
       </p>
-      {entry.series && <p class="label labpage__series">{entry.series} · {seriesPos} of {inSeries.length}</p>}
+      {ser && <p class="label labpage__series"><a href={url(ser.href)}>{ser.title}</a> · {seriesPos} of {inSeries.length}</p>}
       <h1 class="labpage__title">{entry.title}</h1>
       <p class="lede labpage__lede">{lede}</p>
       <div class="labpage__specimen" aria-hidden="true">
@@ -61,6 +62,7 @@ const seriesPos = inSeries.findIndex((e) => e.slug === slug) + 1;
   .labpage__plate span { color: var(--ink-3); }
   .labpage__kicker { display: none; }
   .labpage__series { grid-area: series; margin-bottom: var(--space-2xs); }
+  .labpage__series a, .labpage__kicker-series a { color: inherit; text-decoration-color: var(--accent); }
   .labpage__title { grid-area: title; margin-bottom: var(--space-s); }
   .labpage__lede { grid-area: lede; }
   .labpage__specimen { grid-area: spec; width: 100%; max-width: 13rem; justify-self: end; }

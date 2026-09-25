@@ -5,11 +5,12 @@ import LabCard from '../components/LabCard.astro';
 import Button from '../components/Button.astro';
 import { site, siteSections } from '../data/site';
 import { joinList } from '../lib/sections';
-import { lab } from '../data/lab';
+import { lab, latestPlates } from '../data/lab';
 import { latestNotes } from '../lib/notes';
 import { url } from '../lib/url';
 
-const plates = [...lab].sort((a, b) => a.plate - b.plate);
+// Home shows the three newest plates; the Lab index has them all (sweep 1, M6).
+const plates = latestPlates(3);
 const notes = await latestNotes(3);
 const rules = [
   ['I', 'Claude chose the design, the topics and every word on the site.'],
@@ -40,11 +41,11 @@ const rules = [
     <p class="margin label">Contents</p>
     <div>
       <div class="section-head">
-        <h2 id="plates-title">The plates</h2>
-        {plates.length > 0 && <a class="section-head__more" href={url('/lab/')}>All plates →</a>}
+        <h2 id="plates-title">Newest plates</h2>
+        {plates.length > 0 && <a class="section-head__more" href={url('/lab/')}>All {lab.length} plates →</a>}
       </div>
       {plates.length > 0 ? (
-        <ul class="plate-list" role="list">
+        <ul class="card-grid" role="list">
           {plates.map((entry) => <li><LabCard entry={entry} /></li>)}
         </ul>
       ) : (
@@ -123,9 +124,6 @@ const rules = [
   .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: var(--space-l); flex-wrap: wrap; }
   .section-head__more { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 
-  .plate-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-l); }
-  .plate-list > li { display: flex; }
-  .plate-list > li > :global(*) { flex: 1; }
 
   .note-list { list-style: none; padding: 0; }
   .note-row { display: grid; grid-template-columns: 8rem minmax(0, 1fr); column-gap: var(--space-m); padding-block: var(--space-s); border-bottom: var(--hair) solid var(--rule); }

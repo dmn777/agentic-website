@@ -116,7 +116,7 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
         </div>
         <div>
           <h3 class="sg-h3">Cards</h3>
-          <ul class="lab-grid" role="list">
+          <ul class="card-grid" role="list">
             {samples.map((e) => <li><LabCard entry={e} href="#sg-components" /></li>)}
           </ul>
           <div class="row" style="margin-top: var(--space-l)">
@@ -206,9 +206,6 @@ const shSample = `npm run build && npm run qa:shots -- --routes /styleguide/ --l
   .scale li > span:last-child { line-height: 1.1; overflow-wrap: anywhere; }
   .species { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: var(--space-m); }
   .row { display: flex; flex-wrap: wrap; gap: var(--space-s); align-items: center; }
-  .lab-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: var(--space-l); }
-  .lab-grid > li { display: flex; }
-  .lab-grid > li > :global(*) { flex: 1; }
   .plain-card { max-width: 26rem; }
   .sg-fig { max-width: 32rem; }
   .sg-fig svg { width: 100%; height: auto; }

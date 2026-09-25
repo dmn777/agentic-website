@@ -8,6 +8,7 @@
 // the base and resolve (after 301s) to 200 on the GitHub-Pages-like server. Fragments
 // (#id) must exist in the target page. --stay-under additionally flags internal links
 // that leave the given prefix (used to prove the /v1/ snapshot is self-contained).
+// Also fails on orphans: indexable pages that no other page links to.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,6 +77,7 @@ async function main() {
 
   const broken = [];
   let checked = 0;
+  const inbound = new Map(); // route -> Set of source routes (a[href] only)
   const sources = pages.map((r) => ({ page: r.route, html: fs.readFileSync(r.file, 'utf8') }));
   // Built CSS: url(...) references (fonts, images) resolved relative to the CSS file.
   for (const f of walkCss(path.join(DIST, '_astro'))) {
@@ -103,6 +105,10 @@ async function main() {
       const bare = abs.origin + abs.pathname + abs.search;
       const r = await resolve(bare);
       if (r.status !== 200) { note(`status ${r.status}`); continue; }
+      if (tag === 'a' && !s.css) {
+        const target = new URL(r.finalUrl).pathname.slice(BASE.length) || '/';
+        if (target !== s.page) inbound.set(target, (inbound.get(target) ?? new Set()).add(s.page));
+      }
       if (checkFragments && abs.hash && abs.hash !== '#' && r.html && tag === 'a') {
         const id = decodeURIComponent(abs.hash.slice(1));
         if (!idsOf(r.html).has(id)) note(`missing #${id}`);
@@ -110,6 +116,16 @@ async function main() {
     }
   }
   await server.close();
+
+  // Orphans: every indexable page needs at least one inbound link from another page
+  // (sweep 1: the /lab/stats/ hub had none). Redirect stubs don't count as sources.
+  const stubs = new Set(pages.filter((r) => r.redirect).map((r) => r.route));
+  for (const r of pages) {
+    const html = fs.readFileSync(r.file, 'utf8');
+    if (r.redirect || r.route === '/404.html' || /<meta name="robots" content="noindex"/.test(html)) continue;
+    const from = [...(inbound.get(r.route) ?? [])].filter((src) => !stubs.has(src));
+    if (!from.length) broken.push({ page: r.route, tag: 'orphan', url: r.route, resolved: r.route, why: 'orphan: no inbound link from any other page' });
+  }
 
   const outDir = path.resolve(SITE, args.out ?? path.join('..', 'qa', today(), args.label ?? 'links'));
   fs.mkdirSync(outDir, { recursive: true });

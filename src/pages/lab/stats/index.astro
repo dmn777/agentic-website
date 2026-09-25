@@ -1,20 +1,22 @@
 ---
+// A series hub, generated from the series registry in src/data/lab.ts.
 import Base from '../../../layouts/Base.astro';
 import LabCard from '../../../components/LabCard.astro';
-import { lab } from '../../../data/lab';
+import { seriesById, platesIn, plateRange } from '../../../data/lab';
 
-const plates = lab.filter((e) => e.series === 'Statistics, seen').sort((a, b) => a.plate - b.plate);
+const ser = seriesById('stats')!;
+const plates = platesIn(ser.id);
 ---
-<Base title="Statistics, seen" description="Three explorables about the ideas behind everyday statistics: sampling, base rates and least squares.">
+<Base title={ser.title} description={ser.blurb}>
   <div class="wrap series">
     <header class="plate-grid series__head">
-      <p class="margin label">Series · Plates I–III</p>
+      <p class="margin label">Series · {plateRange(ser.id)}</p>
       <div>
-        <h1>Statistics, seen</h1>
-        <p class="lede">Three ideas that most of statistics rests on, each as something to pull on rather than a formula to memorise: why averages behave, why base rates matter, and what a best-fit line is actually fitting.</p>
+        <h1>{ser.title}</h1>
+        <p class="lede">{ser.blurb}</p>
       </div>
     </header>
-    <ul class="series__grid" role="list">
+    <ul class="card-grid" role="list">
       {plates.map((e) => <li><LabCard entry={e} headingLevel={2} /></li>)}
     </ul>
   </div>
@@ -23,7 +25,4 @@ const plates = lab.filter((e) => e.series === 'Statistics, seen').sort((a, b) =>
   .series { padding-block: var(--space-xl) var(--space-l); }
   .series__head { padding-bottom: var(--space-l); margin-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
   .series__head h1 { margin-bottom: var(--space-s); }
-  .series__grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: var(--space-l); }
-  .series__grid > li { display: flex; }
-  .series__grid > li > :global(*) { flex: 1; }
 </style>

@@ -1,6 +1,6 @@
 ---
 // A Lab plate: plate number, a specimen drawn from the page's slug, title, blurb, tags.
-// Hovering (or focusing) re-plots the specimen.
+// The specimen is static; hovering (or focusing) the card re-plots it.
 import Card from './Card.astro';
 import Plot from './Plot.astro';
 import Tag from './Tag.astro';
@@ -18,7 +18,7 @@ const H = `h${headingLevel}` as 'h2' | 'h3';
     <span>{entry.kind}</span>
   </div>
   <div class="lab-card__plot">
-    <Plot seed={`lab/${entry.slug}`} species={entry.species} detail={0.55} draw duration={1600} />
+    <Plot seed={`lab/${entry.slug}`} species={entry.species} detail={0.55} duration={1600} />
   </div>
   <H class="lab-card__title"><a class="card__link" href={href}>{entry.title}</a></H>
   <p class="lab-card__blurb">{entry.blurb}</p>
@@ -39,9 +39,13 @@ const H = `h${headingLevel}` as 'h2' | 'h3';
   .lab-card:hover .lab-card__title a { color: var(--accent-ink); }
   .lab-card__blurb { color: var(--ink-2); font-size: 0.97em; line-height: 1.5; }
   .lab-card__tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; padding-top: var(--space-2xs); }
-  /* Out-specify the entry animation in global.css so the hover swap restarts the pen. */
-  :global(html.js) .lab-card:hover :global(.plot[data-draw][data-in] path),
-  :global(html.js) .lab-card:focus-within :global(.plot[data-draw][data-in] path) {
-    animation-name: plot-redraw;
+  /* Card specimens are printed, not drawn on arrival: a page of cards would otherwise run a
+     dozen plotter animations at once ("one orchestrated moment per page"). Hovering or
+     focusing a card re-plots its specimen. */
+  .lab-card:hover :global(.plot path),
+  .lab-card:focus-within :global(.plot path) {
+    stroke-dasharray: 1 1;
+    animation: plot-redraw var(--dur-stroke) var(--ease-pen) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger));
   }
 </style>
