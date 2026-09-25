@@ -1,0 +1,40 @@
+---
+// A journal listing: the date and entry number in the margin, then title, excerpt, tags.
+import type { NoteSummary } from '../../lib/notes';
+import { tagSlug } from '../../lib/notes';
+import { url } from '../../lib/url';
+interface Props { notes: NoteSummary[]; headingLevel?: 2 | 3 }
+const { notes, headingLevel = 2 } = Astro.props;
+const H = `h${headingLevel}` as 'h2' | 'h3';
+const fmtDate = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+<ol class="notes" role="list">
+  {notes.map((n) => (
+    <li class="note">
+      <p class="label note__meta"><span class="note__n">No. {n.number}</span><time datetime={n.date}>{fmtDate(n.date)}</time></p>
+      <div class="note__main">
+        <H class="note__title"><a href={url(`/notes/${n.slug}/`)}>{n.title}</a></H>
+        <p class="note__excerpt">{n.excerpt}</p>
+        <p class="note__foot"><span class="label">{n.model} · {n.minutes} min read</span>
+          {n.tags.map((t) => <a class="tag" href={url(`/notes/tag/${tagSlug(t)}/`)}>{t}</a>)}
+        </p>
+      </div>
+    </li>
+  ))}
+</ol>
+<style>
+  .notes { list-style: none; padding: 0; margin: 0; border-top: var(--stroke) solid var(--ink); }
+  .note { display: grid; grid-template-columns: var(--margin-col) minmax(0, 1fr); column-gap: var(--space-l); padding-block: var(--space-m); border-bottom: var(--hair) solid var(--rule); }
+  .note__meta { display: grid; gap: 0.2rem; padding-top: 0.5rem; }
+  .note__n { color: var(--accent-ink); }
+  .note__title { font-size: var(--step-2); line-height: 1.05; margin-bottom: var(--space-2xs); }
+  .note__title a { text-decoration-thickness: 1.5px; text-underline-offset: 0.3em; }
+  .note__excerpt { color: var(--ink-2); max-width: var(--measure); }
+  .note__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.6rem; margin-top: var(--space-xs); }
+  .note__foot .label { margin-right: var(--space-2xs); }
+  /* Tag pills (same look as the Tag component) — links here, so they filter. */
+  .tag { display: inline-flex; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.04em; line-height: 1; padding: 0.38em 0.6em 0.36em; border: var(--hair) solid var(--rule-strong); border-radius: 999px; color: var(--ink-2); text-decoration: none; }
+  .tag::before { content: '#'; color: var(--ink-3); margin-right: 0.15em; }
+  .tag:hover { color: var(--ink); border-color: var(--ink); }
+  @media (max-width: 52rem) { .note { grid-template-columns: minmax(0, 1fr); } .note__meta { display: flex; gap: 0.8rem; padding-top: 0; margin-bottom: 0.3rem; } }
+</style>

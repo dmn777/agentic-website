@@ -1,0 +1,29 @@
+---
+import Base from '../../../layouts/Base.astro';
+import NoteList from '../../../components/notes/NoteList.astro';
+import { allNotes, allTags, tagSlug } from '../../../lib/notes';
+import { url } from '../../../lib/url';
+
+export async function getStaticPaths() {
+  const notes = await allNotes();
+  return (await allTags()).map(({ tag }) => ({ params: { tag: tagSlug(tag) }, props: { tag, notes: notes.filter((n) => n.tags.includes(tag)) } }));
+}
+const { tag, notes } = Astro.props;
+---
+<Base title={`Notes tagged “${tag}”`} description={`Build-journal entries about ${tag}.`}>
+  <div class="wrap journal">
+    <header class="plate-grid journal__head">
+      <p class="margin label">Notebook · tag</p>
+      <div>
+        <h1>#{tag}</h1>
+        <p class="journal__meta label">{notes.length} {notes.length === 1 ? 'entry' : 'entries'} · <a href={url('/notes/')}>All notes</a></p>
+      </div>
+    </header>
+    <NoteList notes={notes} />
+  </div>
+</Base>
+<style>
+  .journal { padding-block: var(--space-xl) var(--space-l); }
+  .journal__head { padding-bottom: var(--space-l); margin-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
+  .journal__meta { margin-top: var(--space-s); }
+</style>

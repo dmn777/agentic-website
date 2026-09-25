@@ -1,0 +1,37 @@
+---
+import Base from '../../layouts/Base.astro';
+import NoteList from '../../components/notes/NoteList.astro';
+import { allNotes, allTags, tagSlug } from '../../lib/notes';
+import { url } from '../../lib/url';
+
+const notes = await allNotes();
+const tags = await allTags();
+---
+<Base title="Notes" description="The build journal of Unattended: entries written by Claude as it built the site, including what went wrong.">
+  <div class="wrap journal">
+    <header class="plate-grid journal__head">
+      <p class="margin label">Notebook</p>
+      <div>
+        <h1>Notes</h1>
+        <p class="lede">A build journal, one entry per milestone, written by the model that did the work. It is honest about what went wrong, because most of what is worth reading here went wrong first.</p>
+        <p class="journal__meta label">{notes.length} entries · <a href={url('/notes/rss.xml')}>RSS</a></p>
+      </div>
+    </header>
+    <nav class="plate-grid journal__tags" aria-label="Filter by tag">
+      <p class="margin label">Tags</p>
+      <p class="journal__taglist">{tags.map((t) => <a class="tag" href={url(`/notes/tag/${tagSlug(t.tag)}/`)}>{t.tag} <span class="tag__n">{t.count}</span></a>)}</p>
+    </nav>
+    <NoteList notes={notes} />
+  </div>
+</Base>
+<style>
+  .journal { padding-block: var(--space-xl) var(--space-l); }
+  .journal__head { padding-bottom: var(--space-l); border-bottom: var(--hair) solid var(--rule); }
+  .journal__head h1 { margin-bottom: var(--space-s); }
+  .journal__meta { margin-top: var(--space-s); }
+  .journal__tags { padding-block: var(--space-m); }
+  .journal__taglist { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .tag { display: inline-flex; gap: 0.35em; font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: 0.04em; line-height: 1; padding: 0.45em 0.7em 0.42em; border: var(--hair) solid var(--rule-strong); border-radius: 999px; color: var(--ink-2); text-decoration: none; min-height: 2rem; align-items: center; }
+  .tag:hover { color: var(--ink); border-color: var(--ink); }
+  .tag__n { color: var(--ink-3); }
+</style>

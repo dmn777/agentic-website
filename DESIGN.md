@@ -204,8 +204,11 @@ Established by the three statistics plates, and to be followed by later ones:
   segmented control or panel is a regression (grep for it).
   - `.controls`: the raised panel that holds an island's controls, above the figure.
   - `.seg` / `.seg__opt`: a radio group drawn as joined square buttons. Use it for any
-    "pick one" choice, such as populations or scenarios; never pill-shaped chips, which
-    on this site mean non-clickable tags.
+    "pick one" choice, such as populations or scenarios. Never use pills for a control:
+    on this site the pill shape means a *tag*. Tags are labels on cards, where they
+    aren't links, and filters in Notes, where they are links to tag pages and
+    underline-free but show a hover and focus state. A pill never selects a state inside
+    an explorable.
   - `.btn .btn--primary | --secondary | --quiet` (and `.btn--sm` in panels): the same
     plate buttons as `<Button>`, mono and uppercase. **At most one primary per panel:**
     the action that moves the reader forward (Run, Check my guess, Next cloud, New seed).

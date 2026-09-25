@@ -1,0 +1,7 @@
+---
+import Figure from '../Figure.astro';
+import { joinBase, isInternal } from '../../lib/url';
+const { node } = Astro.props as { node: { src: string; alt: string; caption?: string } };
+const src = isInternal(node.src) ? joinBase(import.meta.env.BASE_URL, node.src) : node.src;
+---
+<Figure caption={node.caption}><img src={src} alt={node.alt} loading="lazy" /></Figure>

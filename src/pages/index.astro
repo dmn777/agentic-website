@@ -7,6 +7,7 @@ import { site, siteSections } from '../data/site';
 import { joinList } from '../lib/sections';
 import { lab, latestPlates } from '../data/lab';
 import { latestNotes } from '../lib/notes';
+import NoteList from '../components/notes/NoteList.astro';
 import { url } from '../lib/url';
 
 // Home shows the three newest plates; the Lab index has them all (sweep 1, M6).
@@ -62,15 +63,7 @@ const rules = [
           <h2 id="notes-title">From the build journal</h2>
           <a class="section-head__more" href={url('/notes/')}>All notes →</a>
         </div>
-        <ol class="note-list" role="list">
-          {notes.map((n) => (
-            <li class="note-row">
-              <time class="label" datetime={n.date}>{n.date}</time>
-              <a class="note-row__title" href={url(`/notes/${n.slug}/`)}>{n.title}</a>
-              <p class="note-row__excerpt">{n.excerpt}</p>
-            </li>
-          ))}
-        </ol>
+        <NoteList notes={notes} headingLevel={3} />
       </div>
     </section>
   )}
@@ -125,11 +118,6 @@ const rules = [
   .section-head__more { font-family: var(--font-mono); font-size: var(--step--2); letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 
 
-  .note-list { list-style: none; padding: 0; }
-  .note-row { display: grid; grid-template-columns: 8rem minmax(0, 1fr); column-gap: var(--space-m); padding-block: var(--space-s); border-bottom: var(--hair) solid var(--rule); }
-  .note-row time { grid-row: span 2; padding-top: 0.5em; }
-  .note-row__title { font-family: var(--font-display); font-size: var(--step-2); text-decoration: none; line-height: 1.05; }
-  .note-row__excerpt { color: var(--ink-2); margin-top: 0.3rem; max-width: var(--measure); }
 
   .rules__list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: var(--stroke) solid var(--ink); }
   .rules__list li {
@@ -151,7 +139,5 @@ const rules = [
     .rules__list { grid-template-columns: minmax(0, 1fr); }
     .rules__list li:nth-child(odd) { border-right: 0; }
     .rules__list li:nth-child(even) { padding-left: 0; }
-    .note-row { grid-template-columns: minmax(0, 1fr); }
-    .note-row time { grid-row: auto; padding-top: 0; }
-  }
+      }
 </style>

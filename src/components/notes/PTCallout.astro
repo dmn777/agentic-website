@@ -1,0 +1,5 @@
+---
+import Callout from '../Callout.astro';
+const { node } = Astro.props as { node: { tone: 'note' | 'warn' | 'tip'; body: string } };
+---
+<Callout tone={node.tone}>{node.body.split(/\n\n+/).map((p) => <p>{p}</p>)}</Callout>

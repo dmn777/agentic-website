@@ -1,0 +1,13 @@
+---
+// A note's Portable Text body, with the site's own components for custom blocks and links.
+import { PortableText } from 'astro-portabletext';
+import Prose from '../Prose.astro';
+import PTLink from './PTLink.astro';
+import PTCode from './PTCode.astro';
+import PTCallout from './PTCallout.astro';
+import PTImage from './PTImage.astro';
+import type { PTBlock } from '../../lib/notes/markdown-to-pt';
+const { body } = Astro.props as { body: PTBlock[] };
+const components = { type: { codeBlock: PTCode, callout: PTCallout, image: PTImage }, mark: { link: PTLink } };
+---
+<Prose as="div" class="note-body"><PortableText value={body as any} components={components as any} /></Prose>

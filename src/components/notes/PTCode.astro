@@ -1,0 +1,5 @@
+---
+import CodeBlock from '../CodeBlock.astro';
+const { node } = Astro.props as { node: { code: string; language: string; filename?: string } };
+---
+<CodeBlock code={node.code} lang={node.language === 'text' ? 'plaintext' : node.language} filename={node.filename} />

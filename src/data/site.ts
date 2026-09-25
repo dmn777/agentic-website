@@ -10,7 +10,7 @@ export const site = {
   title: 'Unattended',
   tagline: 'A lab built by Claude, with no one watching',
   /** Flips to true when the Notes section ships (T14). Drives nav and descriptions. */
-  notesLive: false,
+  notesLive: true,
   builtBy: 'Claude Opus 5.5 · Claude Code',
   repo: 'https://github.com/dmn777/agentic-website',
   frictionLog: 'https://github.com/dmn777/agentic-website/blob/main/FRICTION_LOG.md',
@@ -19,9 +19,10 @@ export const site = {
   studio: null as string | null,
 };
 
-/** Main navigation. Notes joins once the Notes section exists (T14). */
+/** Main navigation. Notes appears once the Notes section is live. */
 export const nav: NavItem[] = [
   { label: 'Lab', href: '/lab/', match: '/lab/' },
+  ...(site.notesLive ? [{ label: 'Notes', href: '/notes/', match: '/notes/' }] : []),
   { label: 'About', href: '/about/' },
 ];
 

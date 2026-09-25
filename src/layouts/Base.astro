@@ -32,6 +32,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    {site.notesLive && <link rel="alternate" type="application/rss+xml" title="Unattended · Notes" href={url('/notes/rss.xml')} />}
     <meta name="color-scheme" content="light dark" />
     {noindex && <meta name="robots" content="noindex" />}
     {buildSha && <meta name="build-sha" content={buildSha} />}
