@@ -22,8 +22,9 @@
   // pen shows the verb (loops, catches). It never touches the real game, and it stands
   // still under reduced motion.
   let demo: Game | null = null;
-  // The title card docks low, so the pilot works the upper field where it can be seen.
-  const pilot = createAutopilot({ avoid: (c) => c.y > -170 });
+  // Only Start sits on the field, low (from y ≈ 250 u down), so the pilot leaves the clusters
+  // behind it alone and works the rest of the field.
+  const pilot = createAutopilot({ avoid: (c) => c.y > 220 });
   let inkHit = $state(false);
   let inkHitTimer = 0;
   let renderer: Renderer | null = null;
@@ -163,10 +164,12 @@
         },
         aim: (x: number | null, y?: number) => { aim = x === null ? null : { x, y: y ?? 0 }; },
         seed: (s: string) => { game = createGame(String(s), { best: game?.best ?? 0 }); renderer!.reset(); sync(); paint(performance.now()); return state(); },
-        // Test switches for the harness: a bottomless ink well, and contaminants on, frozen or off.
-        cheat: (o: { ink?: number; hazards?: 'on' | 'frozen' | 'off' } = {}) => {
+        // Test switches for the harness: a bottomless ink well, contaminants on, frozen or off,
+        // and one contaminant placed at a world point (for the wet-ink QA state).
+        cheat: (o: { ink?: number; hazards?: 'on' | 'frozen' | 'off'; hazardAt?: [number, number] } = {}) => {
           if (o.ink !== undefined) game!.ink = o.ink;
           if (o.hazards) { game!.frozenHazards = o.hazards === 'frozen'; game!.noHazards = o.hazards === 'off'; if (o.hazards === 'off') game!.hazards = []; }
+          if (o.hazardAt) game!.hazards.push({ id: game!.nextId++, x: o.hazardAt[0], y: o.hazardAt[1], vx: 0, vy: 0, heading: 0, r: 12, phase: 0 });
           return state();
         },
       };
@@ -245,11 +248,6 @@
     {#if mode !== 'title' && mode !== 'play'}<div class="scrim" aria-hidden="true"></div>{/if}
     {#if mode === 'title'}
       <div class="card card--title" data-screen="title">
-        <ol class="card__rules card__rules--full">
-          <li>Your pen never stops. Steer it with <kbd aria-label="left arrow">◀</kbd> <kbd aria-label="right arrow">▶</kbd>, or point where it should go.</li>
-          <li>When your line crosses itself, the loop closes and catches every diatom inside. Catch several at once and they multiply, in points and in ink.</li>
-          <li>Your ink drains all the time, and the rim costs a little. Keep your pen and your line clear of the amber contaminants.</li>
-        </ol>
         <button class="btn btn--primary" type="button" data-action="start" onclick={begin}>Start</button>
       </div>
     {:else if mode === 'paused'}
@@ -273,8 +271,15 @@
   </div>
 
   {#if mode === 'title'}
-    <!-- Phones: the rules sit under the field, so the demo above the Start button stays in view. -->
-    <p class="title-caption">Loop your ink around diatoms to catch them: the more in one loop, the more points and ink. Avoid the amber contaminants. Hold a finger where the pen should go, or use ◀ ▶.</p>
+    <!-- The rules sit under the field and only Start sits on it, so the demo stays in view
+         (T26: on desktop the old rules card hid the demo pen 55% of the time). Phones get a
+         shorter caption. -->
+    <ol class="title-rules">
+      <li>Your pen never stops. Steer it with <kbd aria-label="left arrow">◀</kbd> <kbd aria-label="right arrow">▶</kbd>, or point where it should go.</li>
+      <li>When your line crosses itself, the loop closes and catches every diatom inside. Catch several at once and they multiply, in points and in ink.</li>
+      <li>Your ink drains all the time, and the rim costs a little. Keep your pen, and the wet ink just behind it, clear of the amber contaminants.</li>
+    </ol>
+    <p class="title-caption">Loop your ink around diatoms to catch them: the more in one loop, the more points and ink. Keep the amber contaminants off your pen and its wet ink. Hold a finger where the pen should go, or use ◀ ▶.</p>
   {/if}
   <div class="thumbs" aria-label="Steering buttons">
     <button class="thumb" type="button" data-touch="left" aria-label="Steer left"
@@ -328,9 +333,10 @@
   .card__title { font-family: var(--font-display); font-size: var(--step-3); line-height: 1; margin: 0 0 var(--space-3xs); }
   .card__score { font-size: var(--step-4); display: flex; align-items: baseline; gap: 0.6rem; }
   .card__unit { color: var(--ink-3); }
-  .card--title { top: 62%; }
+  /* Only Start sits on the field, low, clear of the demo. */
+  .card--title { top: auto; bottom: 9%; transform: translateX(-50%); width: auto; padding: var(--space-2xs); }
+  .title-rules { margin: var(--space-2xs) 0 0; max-width: 34rem; padding-left: 1.2em; font-size: var(--step-0); line-height: 1.4; color: var(--ink-2); display: grid; gap: 0.35em; }
   .title-caption { display: none; margin: 0; max-width: 34rem; font-size: var(--step-0); line-height: 1.4; color: var(--ink-2); }
-  .card__rules { margin: 0 0 var(--space-xs); padding-left: 1.2em; font-size: var(--step-0); line-height: 1.35; display: grid; gap: 0.4em; }
   .card__best { margin: 0; font-size: var(--step--1); color: var(--ink-2); }
   .card__stats { display: flex; gap: var(--space-s); margin: 0 0 var(--space-xs); font-family: var(--font-mono); flex-wrap: wrap; }
   .card__stats dd { margin: 0; font-size: var(--step--1); font-variant-numeric: tabular-nums; }
@@ -356,16 +362,17 @@
     .hud__stats { grid-area: stats; justify-self: start; }
     .stage { grid-area: stage; }
     .hud__buttons { grid-area: mid; justify-self: center; align-self: center; }
+    .title-rules { grid-area: caption; }
     [data-touch="left"] { grid-area: left; }
     [data-touch="right"] { grid-area: right; }
   }
-  /* Phones: the cards must fit inside the disc. The title card keeps only Start, low on the
-     field, and the rules move to a caption under it; body text stays at 16 px. */
+  /* Phones: the cards must fit inside the disc, and the rules are a shorter caption; body
+     text stays at 16 px. */
   @media (max-width: 40rem) {
     .card { padding: var(--space-s); gap: var(--space-3xs); }
-    .card__rules--full { display: none; }
+    .card--title { padding: var(--space-2xs); }
     .card--over { top: calc(50% + var(--away, 0) * 4%); }
-    .card--title { top: auto; bottom: 9%; transform: translateX(-50%); width: auto; padding: var(--space-2xs); }
+    .title-rules { display: none; }
     .title-caption { display: block; grid-area: caption; }
     .card__best { font-size: var(--step-0); }
     .card__score { font-size: var(--step-3); gap: 0.5rem; }

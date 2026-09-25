@@ -74,6 +74,34 @@ export default {
       run: captureMoment,
     },
     {
+      // T26's two kinds of ink: a long line whose older part has set (thin, matte) and whose
+      // newest 300 u are wet (bright, with a sheen). One contaminant sits on the set ink and
+      // snaps nothing; another is within reach of the wet ink, which trembles amber.
+      name: 'wet-ink',
+      variant: 'desktop-dark',
+      wait: 100,
+      run: async (page) => {
+        await testMode(page);
+        await startRun(page, 'shot-wet');
+        await game(page, 'cheat', { hazards: 'off', ink: 100 });
+        const step = (n) => page.evaluate((k) => window.__qa.step(k), n);
+        await step(100); // straight up from (0, 150)
+        let s = await game(page, 'getState');
+        await game(page, 'aim', 420, s.pen.y); // curve right, then run straight
+        await step(110);
+        s = await game(page, 'getState');
+        const h = s.pen.heading, back = 110;
+        const near = [s.pen.x - back * Math.cos(h) - 40 * Math.sin(h), s.pen.y - back * Math.sin(h) + 40 * Math.cos(h)];
+        await game(page, 'cheat', { hazardAt: [5, 20] }); // on the set, vertical stretch
+        await game(page, 'cheat', { hazardAt: near });
+        await game(page, 'cheat', { hazards: 'frozen' });
+        await step(1);
+        s = await game(page, 'getState');
+        if (s.mode !== 'play' || s.stats.snaps !== 0 || s.hazards !== 2) fail('a contaminant on set ink or beside the wet ink snapped the line', s);
+        if (s.trailLen < s.wetInk + 150) fail('the line is too short to show set ink', s);
+      },
+    },
+    {
       // The title screen's attract mode: the field drifts behind the card (visual QA M5).
       name: 'title-attract',
       variant: 'desktop-dark',

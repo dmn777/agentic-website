@@ -9,6 +9,7 @@ export const R = 500;            // field radius (u)
 export const DT = 1 / 60;        // s per tick
 export const TURN = 3.4;         // rad/s
 export const MAX_TRAIL = 1500;   // u of wet ink
+export const WET_INK = 300;      // u behind the nib that is still wet: only this much can snap
 export const MIN_LOOP_AREA = 1500;
 export const PEN_R = 5;
 export const SLIDE_POINTS = 500; // a "slide" milestone every this many points
@@ -134,6 +135,14 @@ function endRun(g: Game, reason: 'ink' | 'contact'): void {
   g.events.push({ type: 'over', reason, best });
 }
 
+/** Index of the first trail point in the wet ink: the newest WET_INK of arc back from the
+ *  nib (the last point). Segment i (point i to i + 1) is wet when i ≥ wetFrom(trail). */
+export function wetFrom(trail: Vec[]): number {
+  let arc = 0, j = trail.length - 1;
+  while (j > 0 && arc < WET_INK) { arc += Math.hypot(trail[j].x - trail[j - 1].x, trail[j].y - trail[j - 1].y); j--; }
+  return j;
+}
+
 function clearTrail(g: Game): void {
   g.trail = [{ x: g.pen.x, y: g.pen.y }];
   g.trailLen = 0;
@@ -215,10 +224,13 @@ export function step(g: Game, input: Input): void {
   for (const h of g.hazards) {
     if (Math.hypot(h.x - pen.x, h.y - pen.y) <= h.r + PEN_R) { endRun(g, 'contact'); return; }
   }
+  // Only the wet ink near the nib can snap; further back it has set (T26: most snaps used to
+  // land far behind the nib, where nobody was looking).
+  const wet = wetFrom(g.trail);
   for (const h of g.hazards) {
     const t = g.trail;
     let touched = false;
-    for (let i = 0; i < t.length - 1 && !touched; i++) {
+    for (let i = wet; i < t.length - 1 && !touched; i++) {
       if (Math.abs(t[i].x - h.x) > h.r + 12 && Math.abs(t[i + 1].x - h.x) > h.r + 12 && Math.sign(t[i].x - h.x) === Math.sign(t[i + 1].x - h.x)) continue;
       if (distToSegment(h, t[i], t[i + 1]) <= h.r) touched = true;
     }
@@ -267,7 +279,7 @@ function closeLoop(g: Game, poly: Vec[]): void {
 export function snapshot(g: Game) {
   return {
     seed: g.seed, mode: g.mode, tick: g.tick, t: +g.t.toFixed(3), d: +g.d.toFixed(4), params: g.params,
-    score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason, hazardGrace: HAZARD_GRACE, slidePoints: SLIDE_POINTS,
+    score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason, hazardGrace: HAZARD_GRACE, slidePoints: SLIDE_POINTS, wetInk: WET_INK,
     pen: { x: +g.pen.x.toFixed(2), y: +g.pen.y.toFixed(2), heading: +g.pen.heading.toFixed(4) },
     trailLen: +g.trailLen.toFixed(2), trailPoints: g.trail.length,
     diatoms: g.diatoms.length, hazards: g.hazards.length, stats: { ...g.stats, bestLoop: { ...g.stats.bestLoop } },

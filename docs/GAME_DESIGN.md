@@ -62,9 +62,11 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
   off a cushion, and that costs 3 ink, at most once every 0.5 s. An aim point outside
   0.85 R is pulled in to that radius, so a resting pointer can't grind the pen along the
   rim (playtest 1 found −48 ink in a third of a second).
-- **Wet ink (the trail).** One point per tick. The trail keeps only the newest
-  **1,500 u** of line; older ink dries and fades away. So a loop has to close within
-  1,500 u of line.
+- **The ink line (the trail).** One point per tick. The trail keeps only the newest
+  **1,500 u** of line; older ink fades away. So a loop has to close within 1,500 u of line.
+  - **Wet and set ink (T26).** The newest **300 u** behind the nib are still wet (drawn
+    full and bright, with a sheen). Further back the ink has set (drawn thin and matte).
+    Loops close across both, but only wet ink can snap (see Contaminants).
 - **Loop capture.** When the pen's newest segment crosses an older segment of its own
   wet trail, the line closes. The loop is the polygon from the crossing point along the
   trail to the pen.
@@ -87,8 +89,10 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
 - **Contaminants.** Amber, spiky and pulsing. They drift faster than diatoms and turn
   slowly towards the pen, with a lazy homing that you can outturn.
   - Contaminant touches the pen: **the run ends.**
-  - Contaminant touches the wet trail: **the trail snaps.** It is cleared at once, and
-    that costs 6 ink.
+  - Contaminant touches the **wet** ink: **the trail snaps.** The whole line is cleared at
+    once, and that costs 6 ink. A contaminant drifting over set ink does nothing. (Until
+    T26 the whole line could snap, and most snaps landed far behind the nib, where nobody
+    was looking.)
   - A contaminant *inside* a closed loop is removed for 25 points. It is risky but
     allowed.
 - **Ink.** A run starts with 100, and catches can overfill the well to **120**. It
@@ -172,6 +176,9 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
   o'clock. The arc and the HUD gauge pulse, and a tick sounds, below 20. A rim hit floats
   a vermilion "−3" in from the rim and flashes the HUD gauge.
 - **Snap:** the trail shatters into fragments (particles), with a dry crack sound.
+- **Snap warning (T26):** wet ink within 45 u of a contaminant's edge trembles amber, with
+  a glow, so the warning is where the eyes already are (about 0.4–1 s ahead). Under reduced
+  motion it is a steady amber.
 - **Game over:** an ink-blot bloom from the pen, then the result card, which shows the
   score, time, catches and best loop. A contaminant hit adds a 250 ms screen shake; running
   dry doesn't, because nothing hit anything.
@@ -180,10 +187,10 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
 - **Attract mode:** behind the title card, an autopilot pen (`autopilot.ts`, tested)
   flies a field of its own and closes loops around clusters, washes and all. It shows
   the verb before the rules ask for it, and stands still under reduced motion.
-  - The title card docks low and the pilot prefers the upper field, so the demo stays in
-    view.
-  - On phones only Start sits on the field, and the rules are a caption under the
-    controls, which therefore never move when a run starts.
+  - Only Start sits on the field, docked low, and the pilot leaves the clusters behind it
+    alone (T26; before, the desktop rules card hid the demo pen 55% of the time, now 0–1%).
+  - The rules sit under the field: the three numbered rules on desktop, and a shorter
+    caption below the controls on phones, so the controls never move when a run starts.
 - **Low ink:** below 20, the whole ink ring and a ring round the nib pulse.
 - **Reduced motion** (`prefers-reduced-motion`): no shake, no particles, no flying
   diatoms, and fades become instant state changes. The game itself still moves (it is a
@@ -237,7 +244,7 @@ the *live* view the atlas was drawn from.
 - **Test hook:** with `?test=1` only, the real-time loop is off and the seed is `test`.
   `window.__game` has:
   - `getState()`: a JSON snapshot. It has mode, tick, t, score, best, ink, overReason, d,
-    params, pen `{x, y, heading}`, trailLen, trailPoints, counts of diatoms and
+    params, pen `{x, y, heading}`, trailLen, trailPoints, wetInk, counts of diatoms and
     contaminants, `diatomList` `[{x, y, kind}]`, `hazardList` `[{x, y}]`, stats
     `{loops, captured, snaps, rimHits, runs, bestLoop}`, `canvas {width, height}` and
     `muted`.
@@ -246,8 +253,9 @@ the *live* view the atlas was drawn from.
     `start`, `pause`, `mute` (on press). It returns the state.
   - `aim(x, y)` steers towards a world point; `aim(null)` hands control back to the keys.
   - `seed(s)` makes a new game on the title screen.
-  - `cheat({ ink?, hazards?: 'on' | 'frozen' | 'off' })`: harness-only switches for a
-    bottomless ink well and for contaminants.
+  - `cheat({ ink?, hazards?: 'on' | 'frozen' | 'off', hazardAt?: [x, y] })`: harness-only
+    switches for a bottomless ink well and for contaminants; `hazardAt` places one
+    contaminant at a world point (the `wet-ink` QA state).
   - Gotchas: `start` resets the cheats, so call `cheat` *after* `input('start')`.
     `input('start')` restarts even mid-run, although the UI only offers it on the title
     and game-over cards. Effects age by wall-clock time, so shot scripts

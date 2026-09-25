@@ -4,8 +4,8 @@
 // game-over blot, slide banners) are driven by the events a tick emits. Under reduced
 // motion nothing moves that isn't gameplay: no shake, particles or flights, and fades
 // become plain on/off states.
-import { R, SPECIES, MAX_INK, type Game, type GameEvent, type Species } from './sim';
-import type { Vec } from './geometry';
+import { R, SPECIES, MAX_INK, wetFrom, type Game, type GameEvent, type Species } from './sim';
+import { distToSegment, type Vec } from './geometry';
 import { mulberry32 } from '../random';
 
 // Drawn art, not interface: these are the slide's own colours (DESIGN.md allows raw
@@ -14,7 +14,10 @@ export const COLORS = {
   slide: '#04070b', lit: '#10202f', reticle: 'rgba(150, 200, 225, 0.13)',
   glass: '#d4eef4', glow: 'rgba(110, 215, 255, 0.55)', ink: '#ff6a48',
   hazard: '#ffb347', hazardGlow: 'rgba(255, 170, 60, 0.6)', label: 'rgba(212, 238, 244, 0.55)',
+  sheen: '#ffd9c9',
 };
+/** u beyond a contaminant's radius at which the wet ink starts to tremble (about 0.4–1 s of warning). */
+const THREAT = 45;
 const MONO = '"Martian Mono Variable", ui-monospace, monospace';
 const DISPLAY = '"Imbue Variable", Georgia, serif';
 
@@ -276,24 +279,45 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
       }
     }
 
-    // The wet ink: dim at the tail, bright at the nib. Butt caps where chunks meet, so the
-    // overlaps don't show as beads.
+    // The ink (T26). Set ink, further back than WET_INK, is thin and matte: loops still close
+    // on it, but contaminants pass over it. The wet ink near the nib is full and bright, with a
+    // sheen, and it is the part that snaps. Where a contaminant is about to touch the wet ink,
+    // that stretch trembles, so the warning sits where the eyes already are. Butt caps where
+    // pieces meet, so the overlaps don't show as beads.
     const tr = g.trail;
     if (tr.length > 1 && !o.hidePen) {
+      const wet = wetFrom(tr);
+      ctx.save();
       ctx.lineJoin = 'round';
       ctx.strokeStyle = COLORS.ink;
+      if (wet > 0) {
+        ctx.globalAlpha = 0.42; ctx.lineWidth = px(1.8); ctx.lineCap = 'butt';
+        tracePath(ctx, tr, 0, wet); ctx.stroke();
+      }
+      const n = tr.length - 1 - wet, chunks = Math.min(8, n);
       ctx.lineWidth = px(3.2);
-      const chunks = Math.min(16, tr.length - 1);
       for (let k = 0; k < chunks; k++) {
-        const a = Math.floor((k * (tr.length - 1)) / chunks), b = Math.floor(((k + 1) * (tr.length - 1)) / chunks);
+        const a = wet + Math.floor((k * n) / chunks), b = wet + Math.floor(((k + 1) * n) / chunks);
         if (b <= a) continue;
-        ctx.globalAlpha = 0.25 + 0.75 * ((k + 1) / chunks) ** 1.5;
+        ctx.globalAlpha = 0.62 + 0.38 * ((k + 1) / chunks);
         ctx.lineCap = k === chunks - 1 ? 'round' : 'butt';
-        ctx.beginPath(); ctx.moveTo(tr[a].x, tr[a].y);
-        for (let i = a + 1; i <= b; i++) ctx.lineTo(tr[i].x, tr[i].y);
+        tracePath(ctx, tr, a, b); ctx.stroke();
+      }
+      // The sheen: a thin pale line along the wet ink only.
+      ctx.globalAlpha = 0.45; ctx.strokeStyle = COLORS.sheen; ctx.lineWidth = px(0.9); ctx.lineCap = 'round';
+      tracePath(ctx, tr, wet, tr.length - 1); ctx.stroke();
+      // The warning: wet segments within reach of a contaminant.
+      if (g.mode === 'play' && g.hazards.length) {
+        ctx.strokeStyle = COLORS.hazard; ctx.lineWidth = px(3.6); ctx.lineCap = 'round';
+        ctx.shadowColor = COLORS.hazardGlow; ctx.shadowBlur = 8 * dpr;
+        ctx.globalAlpha = still ? 0.9 : 0.35 + 0.65 * Math.abs(Math.sin(now / 55));
+        ctx.beginPath();
+        for (let i = wet; i < tr.length - 1; i++) {
+          if (g.hazards.some((h) => distToSegment(h, tr[i], tr[i + 1]) <= h.r + THREAT)) { ctx.moveTo(tr[i].x, tr[i].y); ctx.lineTo(tr[i + 1].x, tr[i + 1].y); }
+        }
         ctx.stroke();
       }
-      ctx.globalAlpha = 1;
+      ctx.restore();
     }
     // The nib.
     if (g.mode !== 'title' && !o.hidePen) {
@@ -393,6 +417,12 @@ function tracePoly(ctx: CanvasRenderingContext2D, poly: Vec[]) {
   ctx.beginPath();
   poly.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
   ctx.closePath();
+}
+
+/** An open path along the trail from point a to point b. */
+function tracePath(ctx: CanvasRenderingContext2D, tr: Vec[], a: number, b: number) {
+  ctx.beginPath(); ctx.moveTo(tr[a].x, tr[a].y);
+  for (let i = a + 1; i <= b; i++) ctx.lineTo(tr[i].x, tr[i].y);
 }
 
 function centroid(poly: Vec[]): Vec {

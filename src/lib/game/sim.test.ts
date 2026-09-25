@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, start, step, togglePause, snapshot, R, DT, TURN, MAX_TRAIL, MAX_INK, SPECIES, type Game, type Input } from './sim';
+import { createGame, start, step, togglePause, snapshot, wetFrom, R, DT, TURN, MAX_TRAIL, MAX_INK, WET_INK, SPECIES, type Game, type Input } from './sim';
 
 const idle: Input = { left: false, right: false, aim: null };
 const left: Input = { left: true, right: false, aim: null };
@@ -235,6 +235,49 @@ describe('contaminants', () => {
     expect(g.stats.snaps).toBe(1);
     expect(ink - g.ink).toBeGreaterThan(5.9);
   });
+  // T26 (playtest 3's far snaps): only the newest WET_INK of line is still wet. Further back
+  // the ink has set, and a contaminant drifting over it does nothing.
+  it('snap wet ink up to WET_INK behind the nib', () => {
+    const g = quiet();
+    run(g, 150); // about 425 u straight up
+    const back = WET_INK - 40;
+    g.hazards = [{ id: 1, x: g.pen.x + 5, y: g.pen.y + back, vx: 0, vy: 0, heading: 0, r: 12, phase: 0 }];
+    g.frozenHazards = true;
+    step(g, idle);
+    expect(g.stats.snaps).toBe(1);
+    expect(g.trailLen).toBeLessThan(10);
+  });
+  it('pass over set ink further back than WET_INK without snapping it', () => {
+    const g = quiet();
+    run(g, 150);
+    const back = WET_INK + 60;
+    g.hazards = [{ id: 1, x: g.pen.x + 5, y: g.pen.y + back, vx: 0, vy: 0, heading: 0, r: 12, phase: 0 }];
+    g.frozenHazards = true;
+    const len = g.trailLen, ink = g.ink;
+    step(g, idle);
+    expect(g.stats.snaps).toBe(0);
+    expect(g.trailLen).toBeGreaterThan(len);
+    expect(ink - g.ink).toBeLessThan(0.1); // only the drain
+  });
+  it('still close loops across set ink', () => {
+    const g = quiet();
+    run(g, 150); // a long lead-in, so the crossing lands on set ink
+    const c = teardrop(g);
+    g.diatoms = [diatom(c.x, c.y)];
+    c.drive();
+    expect(g.stats.loops).toBe(1);
+    expect(g.stats.captured).toBe(1);
+  });
+});
+
+describe('wetFrom', () => {
+  it('finds where the wet ink starts, WET_INK of arc back from the nib', () => {
+    expect(WET_INK).toBe(300);
+    const line = Array.from({ length: 101 }, (_, i) => ({ x: 0, y: -10 * i })); // 1000 u, nib last
+    expect(wetFrom(line)).toBe(70); // points 70…100 span the newest 300 u
+    expect(wetFrom(line.slice(0, 11))).toBe(0); // a 100 u line is all wet
+    expect(wetFrom([{ x: 0, y: 0 }])).toBe(0);
+  });
 });
 
 describe('the ink economy and difficulty', () => {
@@ -337,6 +380,7 @@ describe('snapshot', () => {
     expect(s.hazardList).toEqual([{ x: 12.3, y: -6.8 }]);
     expect(s.hazardGrace).toBe(12);
     expect(s.slidePoints).toBe(500);
+    expect(s.wetInk).toBe(300);
     expect(JSON.parse(JSON.stringify(s))).toEqual(s);
   });
 });
