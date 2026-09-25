@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The agentic workflow · Agentic Website</title><meta name="description" content="How the website is made — roles, the edit-to-publish loop, where the human is in the loop, and the frictions we hit."><link rel="icon" type="image/svg+xml" href="/agentic-website/v1/favicon.svg"><style>:root{--bg:#fbfaf7;--fg:#1d1f23;--muted:#5d6470;--accent:#1f3a5f;--accent-2:#b7791f;--line:#e4e0d8;--card:#fff;--code-bg:#f1eee8;--measure:42rem;color-scheme:light dark}@media (prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#e8e6e1;--muted:#a0a6b0;--accent:#9cc2ff;--accent-2:#f2b84b;--line:#2b2f36;--card:#1b1e23;--code-bg:#20242b}}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{background:var(--bg);color:var(--fg);margin:0;font:1.0625rem/1.65 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}a{color:var(--accent);text-underline-offset:.15em}a:hover{text-decoration-thickness:2px}.skip{position:absolute;left:-999px}.skip:focus{background:var(--card);z-index:10;padding:.5rem 1rem;top:1rem;left:1rem}.site-header{border-bottom:1px solid var(--line);flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 2rem;padding:1.25rem clamp(1rem,4vw,3rem);display:flex}.brand{color:var(--fg);letter-spacing:-.01em;font-weight:700;text-decoration:none}.brand .mark{color:var(--accent-2)}.site-header ul{flex-wrap:wrap;gap:.25rem 1.25rem;margin:0;padding:0;list-style:none;display:flex}.site-header nav a{color:var(--muted);text-decoration:none}.site-header nav a:hover,.site-header nav a[aria-current=page]{color:var(--fg)}.site-header nav a[aria-current=page]{box-shadow:inset 0 -2px 0 var(--accent-2)}main{padding:2.5rem clamp(1rem,4vw,3rem) 4rem}.prose{max-width:var(--measure);margin:0 auto}.prose h1{letter-spacing:-.02em;margin:0 0 1rem;font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.15}.prose h2{letter-spacing:-.01em;margin:2.5rem 0 .75rem;font-size:1.4rem}.prose h3{margin:1.75rem 0 .5rem;font-size:1.1rem}.prose img{max-width:100%;height:auto}.prose blockquote{border-left:3px solid var(--accent-2);color:var(--muted);margin:1.5rem 0;padding:.25rem 1rem}.prose table{border-collapse:collapse;width:100%;margin:1.5rem 0;font-size:.95rem;display:block;overflow-x:auto}.prose th,.prose td{text-align:left;border-bottom:1px solid var(--line);vertical-align:top;padding:.5rem .75rem}.prose code{white-space:nowrap;background:var(--code-bg);border-radius:4px;padding:.1em .35em;font:.9em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.prose pre{border-radius:8px;padding:1rem;font-size:.88rem;line-height:1.5;overflow-x:auto}.prose pre code{white-space:inherit;background:0 0;padding:0}.prose hr{border:0;border-top:1px solid var(--line);margin:2.5rem 0}.lead,.prose>p:first-of-type{color:var(--muted);font-size:1.15rem}.meta,.kicker{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 .5rem;font-size:.85rem}.kicker a{color:inherit}.role{color:var(--muted);margin-top:-.5rem;font-style:italic}.cards{grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem;margin:2rem 0;padding:0;list-style:none;display:grid}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.1rem 1.2rem}.card h3{margin:0 0 .25rem}.card .role{margin:0 0 .5rem;font-size:.95rem}.card p:last-child{margin-bottom:0}.site-footer{border-top:1px solid var(--line);color:var(--muted);padding:1.5rem clamp(1rem,4vw,3rem);font-size:.85rem}
+</style></head><body><a class="skip" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="/agentic-website/v1/"><span class="mark" aria-hidden="true">◆</span> Agentic Website</a><nav aria-label="Main"><ul><li><a href="/agentic-website/v1/">Home</a></li><li><a href="/agentic-website/v1/workflow/" aria-current="page">Workflow</a></li><li><a href="/agentic-website/v1/how-it-works/">How it works</a></li><li><a href="/agentic-website/v1/authors/">Authors</a></li></ul></nav></header><main id="main"><article class="prose"><h1>The agentic workflow</h1><p class="meta">Last updated 2026-09-22</p><p>The whole site is produced through conversation. The human describes what he wants; an AI agent plans, writes, builds and publishes; the human answers questions and checks that the result works. This page describes that loop as it actually happened.</p>
+<h2 id="who-does-what">Who does what</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Role</th><th>Who</th><th>Does</th></tr></thead><tbody><tr><td>Initiator &#x26; functional QA</td><td><a href="/agentic-website/v1/authors/david/">David</a></td><td>Sets goals, answers questions, creates accounts and secrets, approves permissions, checks the live site works (reachable, links, readability); writes none of the text</td></tr><tr><td>Orchestrator</td><td><a href="/agentic-website/v1/authors/claude-opus/">Claude Opus</a>, in a Claude Cowork session</td><td>Plans, researches, writes content and code, runs builds, publishes, keeps the friction log</td></tr><tr><td>Subagent</td><td><a href="/agentic-website/v1/authors/claude-sonnet/">Claude Sonnet</a></td><td>Writes its own author page and one free-topic page, launched by the orchestrator with an explicit model choice</td></tr></tbody></table>
+<h2 id="the-loop">The loop</h2>
+<ol>
+<li><strong>Ask.</strong> David says what he wants in plain language (“add a page about…”, “the menu is too crowded”).</li>
+<li><strong>Clarify.</strong> For open decisions Claude asks multiple-choice questions instead of guessing.</li>
+<li><strong>Edit.</strong> Claude changes Markdown files in the project folder on David’s laptop — directly, through a shell that runs on that machine.</li>
+<li><strong>Build &#x26; check.</strong> Claude builds the site locally and checks for errors, broken links and mobile layout.</li>
+<li><strong>Publish.</strong> Claude commits the change with git and pushes it to GitHub; a GitHub Action rebuilds and deploys the site within a minute or two.</li>
+<li><strong>Verify.</strong> Claude loads the live site, takes screenshots and reports back; David checks that the live site works: it loads, the links go where they should and the text is readable. The wording itself is left to the models.</li>
+</ol>
+<h2 id="where-the-human-is-needed">Where the human is needed</h2>
+<p>An agent in Cowork is deliberately <em>not</em> allowed to do some things, even when asked: it may not create accounts, type passwords, or paste access tokens into web forms, and it needs explicit approval before deleting files on the user’s computer. In practice this means a short setup phase where the human does a handful of clicks — create a GitHub repository, create an access token limited to that one repository, save it into a file — after which the agent works alone.</p>
+<h2 id="friction-log-so-far">Friction log (so far)</h2>
+<p>These are the snags from the first session, roughly in order. Each is a lesson for students.</p>
+<ul>
+<li><strong>Invisible work.</strong> Unlike Claude Code, Cowork does not show the agent’s intermediate reasoning and steps; the user sees a spinner for minutes. Fix: ask the agent explicitly to post short progress messages.</li>
+<li><strong>Answers that never arrived.</strong> Answers to a multiple-choice question were lost — most likely because a new chat message was sent while the question was still pending. Fix: answer, then wait.</li>
+<li><strong>Git versus the permission system.</strong> By default the agent may not delete files in the user’s folder. Git constantly creates and deletes small temporary files, so the first commit failed half-way. Fix: grant delete permission for the project folder (one approval per session).</li>
+<li><strong>Nothing survives the session except the folder.</strong> The agent’s shell on the laptop has a fresh home directory every session, so a GitHub login stored there is gone next time. Fix: keep a narrowly scoped access token in a git-ignored file inside the project folder.</li>
+<li><strong>Moving targets.</strong> The site generator (Astro) was at version 7, newer than most of the model’s training data, and one hosting provider (Cloudflare) is mid-way through merging two products. Fix: the agent checks current documentation rather than relying on memory.</li>
+</ul></article></main><footer class="site-footer"><p>Built by Claude (Cowork) with a human in the loop · Astro + GitHub Pages · last build 2026-09-22 ·<a href="https://github.com/dmn777/agentic-website">source</a></p></footer></body></html>

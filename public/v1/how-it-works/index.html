@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>How this website works · Agentic Website</title><meta name="description" content="The technical side — how content is authored, how it becomes a static website, and where every piece lives."><link rel="icon" type="image/svg+xml" href="/agentic-website/v1/favicon.svg"><style>:root{--bg:#fbfaf7;--fg:#1d1f23;--muted:#5d6470;--accent:#1f3a5f;--accent-2:#b7791f;--line:#e4e0d8;--card:#fff;--code-bg:#f1eee8;--measure:42rem;color-scheme:light dark}@media (prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#e8e6e1;--muted:#a0a6b0;--accent:#9cc2ff;--accent-2:#f2b84b;--line:#2b2f36;--card:#1b1e23;--code-bg:#20242b}}*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{background:var(--bg);color:var(--fg);margin:0;font:1.0625rem/1.65 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}a{color:var(--accent);text-underline-offset:.15em}a:hover{text-decoration-thickness:2px}.skip{position:absolute;left:-999px}.skip:focus{background:var(--card);z-index:10;padding:.5rem 1rem;top:1rem;left:1rem}.site-header{border-bottom:1px solid var(--line);flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.5rem 2rem;padding:1.25rem clamp(1rem,4vw,3rem);display:flex}.brand{color:var(--fg);letter-spacing:-.01em;font-weight:700;text-decoration:none}.brand .mark{color:var(--accent-2)}.site-header ul{flex-wrap:wrap;gap:.25rem 1.25rem;margin:0;padding:0;list-style:none;display:flex}.site-header nav a{color:var(--muted);text-decoration:none}.site-header nav a:hover,.site-header nav a[aria-current=page]{color:var(--fg)}.site-header nav a[aria-current=page]{box-shadow:inset 0 -2px 0 var(--accent-2)}main{padding:2.5rem clamp(1rem,4vw,3rem) 4rem}.prose{max-width:var(--measure);margin:0 auto}.prose h1{letter-spacing:-.02em;margin:0 0 1rem;font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.15}.prose h2{letter-spacing:-.01em;margin:2.5rem 0 .75rem;font-size:1.4rem}.prose h3{margin:1.75rem 0 .5rem;font-size:1.1rem}.prose img{max-width:100%;height:auto}.prose blockquote{border-left:3px solid var(--accent-2);color:var(--muted);margin:1.5rem 0;padding:.25rem 1rem}.prose table{border-collapse:collapse;width:100%;margin:1.5rem 0;font-size:.95rem;display:block;overflow-x:auto}.prose th,.prose td{text-align:left;border-bottom:1px solid var(--line);vertical-align:top;padding:.5rem .75rem}.prose code{white-space:nowrap;background:var(--code-bg);border-radius:4px;padding:.1em .35em;font:.9em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.prose pre{border-radius:8px;padding:1rem;font-size:.88rem;line-height:1.5;overflow-x:auto}.prose pre code{white-space:inherit;background:0 0;padding:0}.prose hr{border:0;border-top:1px solid var(--line);margin:2.5rem 0}.lead,.prose>p:first-of-type{color:var(--muted);font-size:1.15rem}.meta,.kicker{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 .5rem;font-size:.85rem}.kicker a{color:inherit}.role{color:var(--muted);margin-top:-.5rem;font-style:italic}.cards{grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem;margin:2rem 0;padding:0;list-style:none;display:grid}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.1rem 1.2rem}.card h3{margin:0 0 .25rem}.card .role{margin:0 0 .5rem;font-size:.95rem}.card p:last-child{margin-bottom:0}.site-footer{border-top:1px solid var(--line);color:var(--muted);padding:1.5rem clamp(1rem,4vw,3rem);font-size:.85rem}
+</style></head><body><a class="skip" href="#main">Skip to content</a><header class="site-header"><a class="brand" href="/agentic-website/v1/"><span class="mark" aria-hidden="true">◆</span> Agentic Website</a><nav aria-label="Main"><ul><li><a href="/agentic-website/v1/">Home</a></li><li><a href="/agentic-website/v1/workflow/">Workflow</a></li><li><a href="/agentic-website/v1/how-it-works/" aria-current="page">How it works</a></li><li><a href="/agentic-website/v1/authors/">Authors</a></li></ul></nav></header><main id="main"><article class="prose"><h1>How this website works</h1><p class="meta">Last updated 2026-09-22</p><p>This is a <strong>static website</strong>: a folder of plain HTML, CSS and image files, generated once per change and then served as-is. There is no server-side code and no database, which is why it can be hosted for free.</p>
+<h2 id="1--content-is-written-in-markdown">1 · Content is written in Markdown</h2>
+<p>Every page you read is a plain-text Markdown file. The block between the <code>---</code> lines at the top is <em>frontmatter</em>: structured information about the page, such as its title and its position in the menu. Below it is the text itself.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="markdown"><code><span class="line"><span style="color:#79B8FF;font-weight:bold">---</span></span>
+<span class="line"><span style="color:#E1E4E8">title: How this website works</span></span>
+<span class="line"><span style="color:#E1E4E8">description: The technical side — how content is authored…</span></span>
+<span class="line"><span style="color:#E1E4E8">navTitle: How it works</span></span>
+<span class="line"><span style="color:#E1E4E8">order: 3</span></span>
+<span class="line"><span style="color:#79B8FF;font-weight:bold">---</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">This is a </span><span style="color:#E1E4E8;font-weight:bold">**static website**</span><span style="color:#E1E4E8">: a folder of plain HTML…</span></span></code></pre>
+<p>Links between pages are written like <code>[Authors](/authors/)</code>. Adding a new page means adding a new file — nothing else.</p>
+<h2 id="2--the-project-folder">2 · The project folder</h2>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="text"><code><span class="line"><span>Website/</span></span>
+<span class="line"><span>├── content/            ← everything a reader sees (Markdown)</span></span>
+<span class="line"><span>│   ├── pages/          ← one file per top-level page</span></span>
+<span class="line"><span>│   └── authors/        ← one file per author</span></span>
+<span class="line"><span>├── src/                ← how the site is built (rarely touched)</span></span>
+<span class="line"><span>│   ├── content.config.ts   rules for what a page/author file must contain</span></span>
+<span class="line"><span>│   ├── layouts/        ← the frame around every page: header, menu, footer</span></span>
+<span class="line"><span>│   ├── pages/          ← which URLs exist and which content they show</span></span>
+<span class="line"><span>│   └── styles/         ← colours, fonts, spacing</span></span>
+<span class="line"><span>├── public/             ← files copied unchanged (e.g. the icon)</span></span>
+<span class="line"><span>├── .github/workflows/  ← instructions for GitHub to build and publish</span></span>
+<span class="line"><span>└── astro.config.mjs    ← site address and build settings</span></span></code></pre>
+<p>The split is deliberate: <strong>editing the site</strong> happens in <code>content/</code>, <strong>changing how the site works</strong> happens in <code>src/</code>.</p>
+<h2 id="3--from-markdown-to-website-astro">3 · From Markdown to website: Astro</h2>
+<p>The files are turned into a website by <a href="https://astro.build">Astro</a>, a <em>static site generator</em>. On every build it</p>
+<ol>
+<li>reads all Markdown files in <code>content/</code> and checks their frontmatter against the rules in <code>content.config.ts</code> — a missing title stops the build with a clear error instead of producing a broken page;</li>
+<li>converts the Markdown into HTML and places it inside the shared layout;</li>
+<li>creates one page per file (plus the menu, which is generated from the <code>order</code> values);</li>
+<li>writes the finished site into a <code>dist/</code> folder.</li>
+</ol>
+<p>A small addition of our own rewrites links like <code>/authors/</code> to <code>/agentic-website/authors/</code>, because the site does not live at the root of its domain.</p>
+<h2 id="4--publishing-github-and-github-pages">4 · Publishing: GitHub and GitHub Pages</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>What</th><th>Where</th><th>Why</th></tr></thead><tbody><tr><td>Source files</td><td>Project folder on David’s laptop</td><td>Where the agent edits; David can open everything</td></tr><tr><td>Version history</td><td>Git, pushed to a public GitHub repository</td><td>Every change is recorded and can be undone</td></tr><tr><td>Build</td><td>GitHub Actions (GitHub’s free build machines)</td><td>Runs Astro on every push to the <code>main</code> branch</td></tr><tr><td>Hosting</td><td>GitHub Pages</td><td>Serves the finished files for free, with HTTPS</td></tr></tbody></table>
+<p>So publishing a change is: <em>edit Markdown → commit → push</em>. GitHub does the rest in about a minute.</p>
+<h2 id="5--where-the-agent-runs">5 · Where the agent runs</h2>
+<p>Claude Cowork runs the agent in Anthropic’s cloud, but it can reach the project folder through a <strong>shell on David’s own laptop</strong> (an isolated Linux environment that sees only the folders David connected). Edits, git and test builds happen there; web research and screenshots of the live site happen in the cloud. The only credential is a GitHub access token that can touch this one repository and nothing else; it lives in a git-ignored file and is never published.</p></article></main><footer class="site-footer"><p>Built by Claude (Cowork) with a human in the loop · Astro + GitHub Pages · last build 2026-09-22 ·<a href="https://github.com/dmn777/agentic-website">source</a></p></footer></body></html>

@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "qa:shots": "node scripts/qa/shots.mjs",
     "qa:deploy": "node scripts/qa/deploy.mjs",
-    "qa:serve": "node scripts/qa/serve.mjs"
+    "qa:serve": "node scripts/qa/serve.mjs",
+    "qa:links": "node scripts/qa/links.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.1",
