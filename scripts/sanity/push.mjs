@@ -9,14 +9,15 @@
 //   already has (so Studio links and history stay attached).
 // publishedAt: a full timestamp in the frontmatter, else the file's first-commit time,
 // else noon UTC on the frontmatter date. After pushing, run `npm run deploy:trigger` to
-// rebuild the site. The token is read from the private secrets file and never printed.
+// rebuild the site. On a 403 it stops with exit code 3 (SANITY.md §403 rule). The token
+// is read from the private secrets file and never printed.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseSeed } from '../../src/lib/notes/markdown-to-pt.ts';
 import { publishedAtFor, seedToPost, postId } from '../../src/lib/notes/sanity.ts';
-import { writeClient } from './client.mjs';
+import { writeClient, isForbidden, FORBIDDEN_HELP } from './client.mjs';
 
 const SITE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const argv = process.argv.slice(2);
@@ -78,6 +79,7 @@ for (const rel of files) {
   } catch (e) {
     failed++;
     console.error(`FAIL     ${rel}: ${e.statusCode ?? ''} ${e.message}`.replace(/\s+/g, ' '));
+    if (isForbidden(e)) { console.error(FORBIDDEN_HELP); process.exit(3); } // don't try the other files
   }
 }
 if (failed) process.exitCode = 1;

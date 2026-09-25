@@ -17,6 +17,21 @@ function token() {
 
 const base = { projectId: sanityConfig.projectId, dataset: sanityConfig.dataset, apiVersion: sanityConfig.apiVersion, useCdn: false };
 
+/** Sanity said 403: a permission this setup relied on is gone (e.g. the trial ended). */
+export const isForbidden = (e) => e?.statusCode === 403 || e?.response?.statusCode === 403;
+
+/** Printed on a 403. The project's standing rule, not a hint to fix it here. */
+export const FORBIDDEN_HELP = [
+  '',
+  '  SANITY 403: access refused. Project rule (SANITY.md §403 rule, David 2026-09-25):',
+  '  1. Stop this step. Do not work around it: no new token, no role or plan change,',
+  '     no switch of the Notes back to the local seeds.',
+  '  2. Log an open question for /spec in PROGRESS.md (template in SANITY.md).',
+  '  3. Treat every step that needs Sanity as blocked until David resolves it.',
+  '  4. Tell David in the final message of the turn.',
+  '',
+].join('\n');
+
 /** Anonymous client: what the public site and any visitor can read (published documents only). */
 export const publicClient = () => createClient(base);
 

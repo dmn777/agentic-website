@@ -28,8 +28,16 @@ function fromSeeds(): Note[] {
 async function fromSanity(): Promise<Note[]> {
   const { projectId, dataset, apiVersion } = sanityConfig;
   const client = createClient({ projectId, dataset, apiVersion, useCdn: false, perspective: 'published' });
-  const posts = await client.fetch<FetchedPost[]>(NOTES_QUERY);
-  return postsToNotes(posts);
+  try {
+    return postsToNotes(await client.fetch<FetchedPost[]>(NOTES_QUERY));
+  } catch (e) {
+    const status = (e as { statusCode?: number }).statusCode;
+    if (status === 403) {
+      // Project rule (SANITY.md §403 rule): escalate, don't work around it.
+      throw new Error('Sanity refused the public Notes query (403). Stop and escalate per the project\'s Sanity 403 rule; do not switch the Notes back to the seeds without a decision.');
+    }
+    throw e;
+  }
 }
 
 export const notesSource = (): 'seeds' | 'sanity' =>

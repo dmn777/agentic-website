@@ -7,8 +7,8 @@
 // 2. Visibility: publish a throwaway document of type smokeTest, read it WITHOUT a token
 //    (so the dataset must be public, as the Free plan and the static build require),
 //    then delete it.
-// Exits 1 on any failure. The token is never printed.
-import { publicClient, writeClient } from './client.mjs';
+// Exits 1 on any failure, 3 on a 403 (see SANITY.md §403 rule). The token is never printed.
+import { publicClient, writeClient, isForbidden, FORBIDDEN_HELP } from './client.mjs';
 
 const w = writeClient();
 const anon = publicClient();
@@ -39,4 +39,5 @@ try {
 } catch (e) {
   // Client errors carry the status and message, never the token.
   fail(`${e.statusCode ?? ''} ${e.message}`.trim());
+  if (isForbidden(e)) { console.error(FORBIDDEN_HELP); process.exitCode = 3; }
 }
