@@ -362,9 +362,12 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
         ctx.font = `600 ${px(15)}px ${MONO}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.lineWidth = px(4); ctx.strokeStyle = COLORS.slide; ctx.lineJoin = 'round';
-        const y = c.y - px(22) - (still ? 0 : age * px(28)); // above the catches, not on them
-        ctx.strokeText(e.text, c.x, y);
-        ctx.fillStyle = COLORS.glass; ctx.fillText(e.text, c.x, y);
+        let x = c.x, y = c.y - px(22) - (still ? 0 : age * px(28)); // above the catches, not on them
+        // Near the rim, pull the label in so the round canvas doesn't clip it (playtest 3).
+        const half = ctx.measureText(e.text).width / 2 + px(10), m = Math.hypot(x, y);
+        if (m + half > R) { const k = Math.max(0, R - half) / m; x *= k; y *= k; }
+        ctx.strokeText(e.text, x, y);
+        ctx.fillStyle = COLORS.glass; ctx.fillText(e.text, x, y);
         ctx.restore();
       } else if (e.kind === 'banner') {
         ctx.save();
