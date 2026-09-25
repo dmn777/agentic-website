@@ -57,13 +57,13 @@ export const plates: LabEntry[] = [
     tags: ['climate', 'data'],
   },
   {
-    slug: 'agent-loop', plate: 6, kind: 'Explainer', species: 'radial',
+    slug: 'agent-loop', plate: 6, kind: 'Explainer', species: 'contour',
     title: 'Inside the loop',
     blurb: 'Replay a real task from the session that built this site: every model turn, tool call and result, and the context growing as it goes.',
     tags: ['agents', 'Claude Code'],
   },
   {
-    slug: 'chladni', plate: 7, kind: 'Simulation', species: 'contour',
+    slug: 'chladni', plate: 7, kind: 'Simulation', species: 'flow',
     title: 'The shape of a sound',
     blurb: 'Sand on a ringing plate runs off everything that moves and gathers on the lines that stay still. Pick a mode, shake the plate, and listen if you like.',
     tags: ['physics', 'sound'],

@@ -38,6 +38,7 @@ for (const e of plates) {
               <li class="toc-series">
                 <a class="toc-row toc-row--series" href={url(series.find((x) => x.id === r.id)!.href)}>
                   <span class="label toc-row__n">{plateRange(r.id).replace('Plates ', 'Pl. ')}</span>
+                  <span class="toc-row__spec" aria-hidden="true"><Plot seed={`series/${r.id}`} species="orbit" detail={0.35} /></span>
                   <span class="toc-row__text"><span class="toc-row__title">{series.find((x) => x.id === r.id)!.title}</span><span class="toc-row__blurb">{series.find((x) => x.id === r.id)!.blurb}</span></span>
                   <span class="label toc-row__kind">Series</span>
                 </a>
@@ -75,7 +76,7 @@ for (const e of plates) {
   /* The series row keeps the plate grid, with its text in the title column, so every
      title in the index starts on one line. */
   .lab :global(.toc-row--series) { padding-block: 1rem 0.8rem; }
-  .lab :global(.toc-row--series .toc-row__text) { grid-column: 3; }
+
   .lab :global(.toc-row:hover) { background: var(--paper-raised); }
   .lab :global(.toc-row__n) { color: var(--accent-ink); white-space: nowrap; }
   .lab :global(.toc-row__spec) { display: block; width: 4.5rem; }
@@ -88,7 +89,9 @@ for (const e of plates) {
   .toc-series { border-top: var(--stroke) solid var(--rule-strong); }
   .toc-series:first-child { border-top: 0; }
   .lab :global(.toc-row--series .toc-row__title) { font-size: var(--step-2); font-weight: 560; }
-  /* Plates in a series: no indent (it broke the columns); a finer rule groups them. */
+  /* Plates in a series: a bracket in the gutter spans them, without moving the columns;
+     finer rules between them. */
+  .toc-sub { border-left: 2px solid var(--accent); margin-left: -0.9rem; padding-left: calc(0.9rem - 2px); }
   .lab :global(.toc-row--sub) { border-bottom-style: dotted; }
   .toc-sub li:last-child :global(.toc-row--sub) { border-bottom-style: solid; }
   .lab__empty { margin-left: calc(var(--margin-col) + var(--space-l)); padding-bottom: var(--space-xl); display: grid; grid-template-columns: 11rem minmax(0, 32rem); gap: var(--space-l); align-items: center; }
@@ -98,12 +101,12 @@ for (const e of plates) {
     .lab__toc, .lab__empty { margin-left: 0; }
     /* Phones: specimen on the left; number and kind as one label line above the title. */
     .lab :global(.toc-row) { grid-template-columns: 3.6rem minmax(0, 1fr); grid-template-areas: "spec n" "spec text" "spec kind"; row-gap: 0.15rem; column-gap: var(--space-s); }
-    .lab :global(.toc-row--series) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "n" "text" "kind"; }
+
     .lab :global(.toc-row__n) { grid-area: n; }
     .lab :global(.toc-row__spec) { grid-area: spec; width: 3.6rem; align-self: start; }
     .lab :global(.toc-row__text) { grid-area: text; }
     .lab :global(.toc-row__kind) { grid-area: kind; text-align: left; }
-    .lab :global(.toc-row--series .toc-row__text) { grid-column: auto; }
+    .toc-sub { margin-left: -0.6rem; padding-left: calc(0.6rem - 2px); }
     .lab__empty { grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-m); }
   }
 </style>
