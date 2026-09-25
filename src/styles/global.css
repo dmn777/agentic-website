@@ -158,6 +158,11 @@ a:hover { color: var(--accent-ink); text-decoration-thickness: 2px; }
   background: var(--paper-sunk);
   padding: 0.12em 0.36em;
   border-radius: var(--radius);
+  /* An atom: `--help` never splits after its hyphens. A token longer than the line still
+     wraps inside its own box instead of overflowing. */
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
   overflow-wrap: anywhere;
 }
 .prose table {
