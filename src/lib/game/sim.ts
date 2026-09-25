@@ -43,7 +43,7 @@ export interface Game {
   trail: Vec[]; trailLen: number;
   diatoms: Diatom[]; hazards: Hazard[];
   respawnTimer: number; nextId: number;
-  stats: { loops: number; captured: number; snaps: number; rimHits: number; runs: number };
+  stats: { loops: number; captured: number; snaps: number; rimHits: number; runs: number; bestLoop: { points: number; n: number } };
   events: GameEvent[];
   /** Test switches: freeze contaminant motion, or keep them from spawning. */
   frozenHazards?: boolean; noHazards?: boolean;
@@ -56,7 +56,7 @@ export function createGame(seed: string, opts: { spawn?: boolean; best?: number 
     score: 0, best: opts.best ?? 0, ink: 100, overReason: null,
     pen: { x: 0, y: 0, heading: -Math.PI / 2 }, trail: [], trailLen: 0,
     diatoms: [], hazards: [], respawnTimer: 0, nextId: 1,
-    stats: { loops: 0, captured: 0, snaps: 0, rimHits: 0, runs: 0 }, events: [],
+    stats: { loops: 0, captured: 0, snaps: 0, rimHits: 0, runs: 0, bestLoop: { points: 0, n: 0 } }, events: [],
   };
 }
 
@@ -69,7 +69,7 @@ export function start(g: Game): void {
   });
   g.trail = [{ x: g.pen.x, y: g.pen.y }];
   g.trailLen = 0;
-  g.stats = { loops: 0, captured: 0, snaps: 0, rimHits: 0, runs: g.stats.runs + 1 };
+  g.stats = { loops: 0, captured: 0, snaps: 0, rimHits: 0, runs: g.stats.runs + 1, bestLoop: { points: 0, n: 0 } };
   if (g.spawn) while (g.diatoms.length < g.params.diatomTarget) spawnDiatom(g);
 }
 
@@ -241,6 +241,7 @@ function closeLoop(g: Game, poly: Vec[]): void {
   g.ink = Math.max(g.ink, Math.min(100, g.ink + refill)); // a refill never lowers the ink
   g.stats.loops++;
   g.stats.captured += caught.length;
+  if (points > g.stats.bestLoop.points) g.stats.bestLoop = { points, n: caught.length };
   g.events.push({ type: 'loop', poly, caught: caught.map((dm) => ({ kind: dm.kind, x: dm.x, y: dm.y })), hazards: zapped.length, points, multiplier: caught.length });
   clearTrail(g);
 }
@@ -252,7 +253,9 @@ export function snapshot(g: Game) {
     score: g.score, best: g.best, ink: +g.ink.toFixed(3), overReason: g.overReason,
     pen: { x: +g.pen.x.toFixed(2), y: +g.pen.y.toFixed(2), heading: +g.pen.heading.toFixed(4) },
     trailLen: +g.trailLen.toFixed(2), trailPoints: g.trail.length,
-    diatoms: g.diatoms.length, hazards: g.hazards.length, stats: { ...g.stats },
+    diatoms: g.diatoms.length, hazards: g.hazards.length, stats: { ...g.stats, bestLoop: { ...g.stats.bestLoop } },
     species: g.diatoms.map((d) => d.kind),
+    diatomList: g.diatoms.map((d) => ({ x: +d.x.toFixed(1), y: +d.y.toFixed(1), kind: d.kind })),
+    hazardList: g.hazards.map((h) => ({ x: +h.x.toFixed(1), y: +h.y.toFixed(1) })),
   };
 }

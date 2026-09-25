@@ -155,6 +155,7 @@ describe('loops', () => {
     g.diatoms = [diatom(c.x, c.y), diatom(c.x + 12, c.y), diatom(c.x, c.y + 12)];
     c.drive();
     expect(g.score).toBe(90);
+    expect(g.stats.bestLoop).toEqual({ points: 90, n: 3 });
   });
   it('leaves diatoms outside the loop alone', () => {
     const g = quiet();
@@ -238,5 +239,48 @@ describe('the ink economy and difficulty', () => {
     run(g, 60 * 8);
     expect(g.diatoms.length).toBe(g.params.diatomTarget);
     for (const d of g.diatoms) expect(Math.hypot(d.x, d.y)).toBeLessThanOrEqual(R);
+  });
+});
+
+describe('species', () => {
+  it('spawns all four species in roughly their shares', () => {
+    const g = createGame('species');
+    const counts: Record<string, number> = { disc: 0, boat: 0, triangle: 0, star: 0 };
+    for (let k = 0; k < 400; k++) { start(g); for (const d of g.diatoms) counts[d.kind]++; }
+    const n = Object.values(counts).reduce((a, b) => a + b, 0);
+    expect(counts.disc / n).toBeGreaterThan(0.45);
+    expect(counts.disc / n).toBeLessThan(0.65);
+    expect(counts.star / n).toBeGreaterThan(0.015);
+    expect(counts.star / n).toBeLessThan(0.07);
+    expect(counts.boat).toBeGreaterThan(counts.triangle);
+    expect(counts.triangle).toBeGreaterThan(counts.star);
+  });
+  it('lets the star colony leave after 8 s, and scores it 100 with a 20-ink refill', () => {
+    const g = quiet();
+    g.diatoms = [diatom(300, -300, 'star')];
+    run(g, Math.round(7.9 / DT));
+    expect(g.diatoms.length).toBe(1);
+    run(g, Math.round(0.2 / DT));
+    expect(g.diatoms.length).toBe(0);
+    const h = quiet('star-catch');
+    const loop = teardrop(h);
+    h.diatoms = [diatom(loop.x, loop.y, 'star')];
+    h.ink = 50;
+    loop.drive();
+    expect(h.score).toBe(100);
+    expect(h.stats.captured).toBe(1);
+  });
+});
+
+describe('snapshot', () => {
+  it('lists where the diatoms and contaminants are, for bots and the harness', () => {
+    const g = createGame('snap');
+    start(g);
+    g.hazards = [{ id: 99, x: 12.345, y: -6.789, vx: 0, vy: 0, heading: 0, r: 12, phase: 0 }];
+    const s = snapshot(g);
+    expect(s.diatomList.length).toBe(g.diatoms.length);
+    expect(s.diatomList[0]).toEqual({ x: +g.diatoms[0].x.toFixed(1), y: +g.diatoms[0].y.toFixed(1), kind: g.diatoms[0].kind });
+    expect(s.hazardList).toEqual([{ x: 12.3, y: -6.8 }]);
+    expect(JSON.parse(JSON.stringify(s))).toEqual(s);
   });
 });

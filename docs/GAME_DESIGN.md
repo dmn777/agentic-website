@@ -72,8 +72,7 @@ fixed **60 ticks per second**. All randomness comes from the run's seed.
     starts a fresh line.
   - The four newest segments are never tested, so a line can't cross itself at the pen.
 - **Diatoms.** They spawn at random points at least 180 u from the pen, drift at
-  15–45 u/s with a slow spin, and bounce off the rim. Four species (T12; the slice has
-  only the first):
+  15–45 u/s with a slow spin, and bounce off the rim. Four species:
   | Species | Look | Points | Speed | Share |
   | --- | --- | --- | --- | --- |
   | *Coscinodiscus* (disc) | radial, round | 10 | slow | 55 % |
@@ -173,14 +172,33 @@ the *live* view the atlas was drawn from.
     state machine `title → play ⇄ paused → over → play`.
   - Seeded RNG: `src/lib/random.ts`.
 - **Shell:** `Darkfield.svelte` (overlay screens, HUD, buttons) plus
-  `src/lib/game/render.ts`, `input.ts` and `audio.ts`. The render loop accumulates real
+  `src/lib/game/render.ts` and `audio.ts`; input handling lives in the island. The render loop accumulates real
   time and runs whole ticks, so frame rate never changes the simulation.
-- **Test hook:** with `?test=1` only, the real-time loop is off and
-  `window.__game = { getState(), step(n), input(action, down), seed(s), aim(x, y) }`.
-  - Actions: `left`, `right`, `start`, `pause`, `mute`.
-  - `step(n)` advances n ticks and renders once.
-  - `getState()` returns a JSON snapshot: mode, tick, score, ink, d, params, pen,
-    trail length, counts of diatoms and contaminants, captures, best.
+- **Test hook:** with `?test=1` only, the real-time loop is off and the seed is `test`.
+  `window.__game` has:
+  - `getState()`: a JSON snapshot. It has mode, tick, t, score, best, ink, overReason, d,
+    params, pen `{x, y, heading}`, trailLen, trailPoints, counts of diatoms and
+    contaminants, `diatomList` `[{x, y, kind}]`, `hazardList` `[{x, y}]`, stats
+    `{loops, captured, snaps, rimHits, runs, bestLoop}`, `canvas {width, height}` and
+    `muted`.
+  - `step(n = 1)`: advances n ticks, renders once, returns the state.
+  - `input(action, down = true)`: `left`, `right` (held until `down = false`), and
+    `start`, `pause`, `mute` (on press). It returns the state.
+  - `aim(x, y)` steers towards a world point; `aim(null)` hands control back to the keys.
+  - `seed(s)` makes a new game on the title screen.
+  - `cheat({ ink?, hazards?: 'on' | 'frozen' | 'off' })`: harness-only switches for a
+    bottomless ink well and for contaminants.
+- **DOM contract** (for the harness and the QA states): `.darkfield` is the root, and
+  `.stage` (focusable) holds `canvas[data-qa-canvas]`. The cards are
+  `[data-screen="title" | "paused" | "over"]`. Buttons: `[data-action="start"]` (Start /
+  Play again), `[data-action="pause"]`, `[data-action="resume"]`, and
+  `[data-action="sound"]`, whose `aria-pressed` is true when the sound is on. The thumb
+  buttons are `[data-touch="left" | "right"]` (press and hold); they show on coarse
+  pointers and below 40rem. The score is `[data-score]`.
+- **On-screen sizes.** The world is scaled to the canvas, so a phone shows it at about
+  half the desktop size. The renderer keeps marks legible with minimum drawn sizes in
+  CSS pixels: diatoms at least 7 px in radius, contaminants 6 px, the nib 3.5 px. These
+  are drawn sizes only; the rules' hit radii don't change.
 - **Harness** (`npm run qa:game`, T12): the checks listed in TESTING.md §Game.
 
 ## Vertical slice (T11)
