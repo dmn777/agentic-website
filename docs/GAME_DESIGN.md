@@ -163,6 +163,27 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
   to 220 s (90th percentile 289 s, best 380 s, median score 1,580), and the naive bot's
   from 80 s to 116 s. Its catches per loop rose from 1.41 to 1.55. That puts a new
   player at about 2 minutes and a practised one at 4–6.
+  Playtest 3 then measured the shipped build at a skilled median of 204 s (3.4 min, short
+  of 4–6). Snaps rose from 3.5 to 9.1 to 13.3 per minute with 1, 2 and 3 contaminants, and
+  57% of them landed more than 300 u behind the nib.
+- **T26, polish 3 (the last; David raised the cap to 3).** The fix is **wet and set ink**:
+  only the newest 300 u of line can snap. It was chosen from five candidates, measured on
+  a bundle of the real sim with playtest 3's own bots and seeds (`qa/game/playtest-4/`):
+  - cutting the line at the touch point was worse (the contaminant chews along it);
+  - a shorter line did nothing;
+  - contaminants steering around ink worked, but made the line a shield and read poorly;
+  - for the wet span, 200 u was too easy, and 400–500 u missed ≤ 8 snaps/min.
+  The results over 40 seeds, before → after:
+  - skilled bot 204 → 286 s (200 fresh seeds: 213 → 282 s);
+  - snaps with 3 contaminants 13.3 → 5.8 per minute;
+  - snaps more than 300 u behind the nib 57% → ~0;
+  - newcomer 60 → 61 s, phone persona 124 → 119 s.
+  Greed still trades survival for points per minute (200 seeds: safe 278 s at 404 points a
+  minute, greedy 265 s at 498). The title card became a lone Start button (the demo pen
+  was hidden 55% → 0–1%).
+  Playtest 4 agreed that it's more fun, with practised runs at 4–6 minutes. Its remaining
+  weakness is that **the tension arrives late**: a competent player coasts at a full well
+  for about 3 minutes. A lower ink cap was tried and rejected, because it inverted pillar 2.
 
 ## Juice (feedback)
 
@@ -189,8 +210,11 @@ One continuous value, **d(t) = 1 − e^(−t / 200 s)**. It is monotone: 0 at th
   the verb before the rules ask for it, and stands still under reduced motion.
   - Only Start sits on the field, docked low, and the pilot leaves the clusters behind it
     alone (T26; before, the desktop rules card hid the demo pen 55% of the time, now 0–1%).
-  - The rules sit under the field: the three numbered rules on desktop, and a shorter
-    caption below the controls on phones, so the controls never move when a run starts.
+  - The rules are off the field. On wide mouse screens (the game area at least 62rem) the
+    three numbered rules sit beside it, level with it, under "How to play", and they stay
+    there during play. On narrower desktops they sit under the field on the title screen.
+    Phones get a shorter caption below the controls, so the controls never move when a run
+    starts.
 - **Low ink:** below 20, the whole ink ring and a ring round the nib pulse.
 - **Reduced motion** (`prefers-reduced-motion`): no shake, no particles, no flying
   diatoms, and fades become instant state changes. The game itself still moves (it is a

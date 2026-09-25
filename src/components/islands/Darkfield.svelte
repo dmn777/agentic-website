@@ -207,6 +207,7 @@
 <!-- Keys bubble here from the field and from every button in the island (the harness
      caught steering dying after a click on Pause or Sound). -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="darkfield-wrap">
 <div class="darkfield" bind:clientWidth={wRaw} onkeydown={(e) => onKey(e, true)} onkeyup={(e) => onKey(e, false)}>
   <div class="hud">
     <dl class="hud__stats">
@@ -270,15 +271,19 @@
     {/if}
   </div>
 
-  {#if mode === 'title'}
-    <!-- The rules sit under the field and only Start sits on it, so the demo stays in view
-         (T26: on desktop the old rules card hid the demo pen 55% of the time). Phones get a
-         shorter caption. -->
-    <ol class="title-rules">
+  <!-- Only Start sits on the field, so the demo stays in view (T26: on desktop the old rules
+       card hid the demo pen 55% of the time). The rules sit beside the field on wide screens
+       (and stay there during play), under it on narrower ones (title screen only). Phones get a
+       shorter caption. -->
+  <div class="rules" class:rules--play={mode !== 'title'}>
+    <p class="label rules__kicker">How to play</p>
+    <ol class="rules__list">
       <li>Your pen never stops. Steer it with <kbd aria-label="left arrow">◀</kbd> <kbd aria-label="right arrow">▶</kbd>, or point where it should go.</li>
-      <li>When your line crosses itself, the loop closes and catches every diatom inside. Catch several at once and they multiply, in points and in ink.</li>
+      <li>When your line crosses itself, the loop closes and catches every diatom inside. Catch several at once and they multiply, in points and in&nbsp;ink.</li>
       <li>Your ink drains all the time, and the rim costs a little. Keep your pen, and the wet ink just behind it, clear of the amber contaminants.</li>
     </ol>
+  </div>
+  {#if mode === 'title'}
     <p class="title-caption">Loop your ink around diatoms to catch them: the more in one loop, the more points and ink. Keep the amber contaminants off your pen and its wet ink. Hold a finger where the pen should go, or use ◀ ▶.</p>
   {/if}
   <div class="thumbs" aria-label="Steering buttons">
@@ -291,6 +296,7 @@
       onpointercancel={() => thumb('right', false)} onlostpointercapture={() => thumb('right', false)}
       oncontextmenu={(e) => e.preventDefault()}>▶</button>
   </div>
+</div>
 </div>
 
 <style>
@@ -335,7 +341,21 @@
   .card__unit { color: var(--ink-3); }
   /* Only Start sits on the field, low, clear of the demo. */
   .card--title { top: auto; bottom: 9%; transform: translateX(-50%); width: auto; padding: var(--space-2xs); }
-  .title-rules { margin: var(--space-2xs) 0 0; max-width: 34rem; padding-left: 1.2em; font-size: var(--step-0); line-height: 1.4; color: var(--ink-2); display: grid; gap: 0.35em; }
+  .rules { margin-top: var(--space-2xs); max-width: 34rem; }
+  .rules--play { display: none; }
+  .rules__kicker { margin: 0 0 var(--space-3xs); color: var(--ink-3); }
+  .rules__list { margin: 0; padding-left: 1.2em; font-size: var(--step-0); line-height: 1.4; color: var(--ink-2); display: grid; gap: 0.35em; }
+  .darkfield-wrap { width: 100%; container: darkfield / inline-size; }
+  /* Wide screens with a mouse: the rules beside the field, level with it, in every mode, so
+     they are in view with the field and nothing moves at Start (T26 re-playtest and QA). */
+  @media (pointer: fine) {
+    @container darkfield (min-width: 62rem) {
+      .darkfield { grid-template-columns: 680px minmax(15rem, 24rem); grid-template-areas: "hud ." "stage rules"; justify-content: center; column-gap: var(--space-l); }
+      .hud { grid-area: hud; }
+      .stage { grid-area: stage; }
+      .rules, .rules--play { display: block; grid-area: rules; align-self: center; margin: 0; }
+    }
+  }
   .title-caption { display: none; margin: 0; max-width: 34rem; font-size: var(--step-0); line-height: 1.4; color: var(--ink-2); }
   .card__best { margin: 0; font-size: var(--step--1); color: var(--ink-2); }
   .card__stats { display: flex; gap: var(--space-s); margin: 0 0 var(--space-xs); font-family: var(--font-mono); flex-wrap: wrap; }
@@ -362,7 +382,7 @@
     .hud__stats { grid-area: stats; justify-self: start; }
     .stage { grid-area: stage; }
     .hud__buttons { grid-area: mid; justify-self: center; align-self: center; }
-    .title-rules { grid-area: caption; }
+    .rules { grid-area: caption; }
     [data-touch="left"] { grid-area: left; }
     [data-touch="right"] { grid-area: right; }
   }
@@ -372,7 +392,7 @@
     .card { padding: var(--space-s); gap: var(--space-3xs); }
     .card--title { padding: var(--space-2xs); }
     .card--over { top: calc(50% + var(--away, 0) * 4%); }
-    .title-rules { display: none; }
+    .rules { display: none; }
     .title-caption { display: block; grid-area: caption; }
     .card__best { font-size: var(--step-0); }
     .card__score { font-size: var(--step-3); gap: 0.5rem; }

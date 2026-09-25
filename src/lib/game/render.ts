@@ -391,6 +391,11 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: { reducedMotion:
         // Near the rim, pull the label in so the round canvas doesn't clip it (playtest 3).
         const half = ctx.measureText(e.text).width / 2 + px(10), m = Math.hypot(x, y);
         if (m + half > R) { const k = Math.max(0, R - half) / m; x *= k; y *= k; }
+        // A dark plate under the label: a catch's flash ring can sit right behind it (T26 visual QA).
+        const a0 = ctx.globalAlpha;
+        ctx.globalAlpha = a0 * 0.72; ctx.fillStyle = COLORS.slide;
+        ctx.beginPath(); ctx.roundRect(x - half + px(4), y - px(12), 2 * half - px(8), px(24), px(4)); ctx.fill();
+        ctx.globalAlpha = a0;
         ctx.strokeText(e.text, x, y);
         ctx.fillStyle = COLORS.glass; ctx.fillText(e.text, x, y);
         ctx.restore();
